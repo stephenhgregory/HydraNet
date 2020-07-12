@@ -17,13 +17,13 @@ class ImageType(Enum):
 
 def show(x, title=None, cbar=False, figsize=None):
     """
-    Shows an input image x using matplotlib
+    Shows an input image/set of images x"" using matplotlib
 
     :param x: The input image to be shown
     :param title: The title of the matplotlib plot
     :param cbar: (bool) Whether or not we want to render a colorbar
-    :param figsize: The width/height in inches of
-    :return:
+    :param figsize: The width/height in inches of the plot to be shown
+    :return: None
     """
     import matplotlib.pyplot as plt
     plt.figure(figsize=figsize)
@@ -35,37 +35,44 @@ def show(x, title=None, cbar=False, figsize=None):
     plt.show()
 
 
-def data_aug(img, mode=0):
+def data_aug(image, mode=0):
+    """
+    A function providing multiple ways of augmenting an image
+    
+    :param image: An input image to be augmented
+    :param mode: The specific augmentation to perform on the input image
+    :return: The augmented image
+    """
     if mode == 0:
-        return img
+        return image
     elif mode == 1:
-        return np.flipud(img)
+        return np.flipud(image)
     elif mode == 2:
-        return np.rot90(img)
+        return np.rot90(image)
     elif mode == 3:
-        return np.flipud(np.rot90(img))
+        return np.flipud(np.rot90(image))
     elif mode == 4:
-        return np.rot90(img, k=2)
+        return np.rot90(image, k=2)
     elif mode == 5:
-        return np.flipud(np.rot90(img, k=2))
+        return np.flipud(np.rot90(image, k=2))
     elif mode == 6:
-        return np.rot90(img, k=3)
+        return np.rot90(image, k=3)
     elif mode == 7:
-        return np.flipud(np.rot90(img, k=3))
+        return np.flipud(np.rot90(image, k=3))
 
 
 def gen_patches(file_name):
     # read image
-    img = cv2.imread(file_name, 0)  # gray scale
-    h, w = img.shape
+    image = cv2.imread(file_name, 0)  # gray scale
+    h, w = image.shape
     patches = []
     for s in scales:
         h_scaled, w_scaled = int(h * s), int(w * s)
-        img_scaled = cv2.resize(img, (h_scaled, w_scaled), interpolation=cv2.INTER_CUBIC)
+        image_scaled = cv2.resize(image, (h_scaled, w_scaled), interpolation=cv2.INTER_CUBIC)
         # extract patches
         for i in range(0, h_scaled - patch_size + 1, stride):
             for j in range(0, w_scaled - patch_size + 1, stride):
-                x = img_scaled[i:i + patch_size, j:j + patch_size]
+                x = image_scaled[i:i + patch_size, j:j + patch_size]
                 # patches.append(x)
                 # data aug
                 for k in range(0, aug_times):
@@ -75,7 +82,20 @@ def gen_patches(file_name):
     return patches
 
 
-def datagenerator(data_dir='data/train', image_type=ImageType.CLEARIMAGE, verbose=False):
+def data_generator(data_dir='data/train', image_type=ImageType.CLEARIMAGE, verbose=False):
+    """
+    Provides a numpy array of training examples, given a path to a training directory
+
+    :param data_dir: The path of the training data directory
+    :type data_dir: basestring
+    :param image_type: The type of image that we wish to generate training data of
+    :type image_type: ImageType
+    :param verbose: Whether or not we want to log additional info about this file
+    :type verbose: bool
+    :return: training data
+    :rtype: numpy.array
+    """
+
     if image_type == ImageType.CLEARIMAGE:
         data_dir += '/CoregisteredImages'
     elif image_type == ImageType.BLURRYIMAGE:
@@ -102,7 +122,7 @@ def datagenerator(data_dir='data/train', image_type=ImageType.CLEARIMAGE, verbos
 
 
 if __name__ == '__main__':
-    data = datagenerator(data_dir='data/Train400')
+    data = data_generator(data_dir='data/Train400')
 
 #    print('Shape of result = ' + str(res.shape))
 #    print('Saving data...')
