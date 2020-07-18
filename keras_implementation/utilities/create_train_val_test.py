@@ -2,6 +2,8 @@
 
 import os
 import keras_implementation.utilities.logger as logger
+from keras_implementation.utilities.image_utils import CLAHE_image_folder, CLAHE_single_image, hist_match_image_folder,\
+    hist_match
 from os.path import isfile, join
 import numpy as np
 import shutil
@@ -21,8 +23,9 @@ def main(root_dir=(join(Path(__file__).resolve().parents[1], 'data'))):
 
     # Iterate over each volume in the root data directory
     for folder_name in os.listdir(root_dir):
+        print(join(root_dir, folder_name))
         create_train_test_val_dirs(join(root_dir, folder_name))
-        populate_train_test_val_dirs_nonrandomly(join(root_dir, folder_name))
+        populate_train_test_val_dirs_nonrandomly(join(root_dir, folder_name), preliminary_clahe=True)
 
 
 def create_train_test_val_dirs(root_dir):
@@ -53,14 +56,23 @@ def create_train_test_val_dirs(root_dir):
         if e.errno != errno.EEXIST:
             raise
 
-def populate_train_test_val_dirs_nonrandomly(root_dir, val_ratio=0.15, test_ratio=0.05):
+
+def populate_train_test_val_dirs_nonrandomly(root_dir, val_ratio=0.15, test_ratio=0.05, preliminary_clahe=True):
     """
     Populates the train, val, and test folders with the images located in root_dir,
     according to val_ratio  and test_ratio
 
     :param root_dir: The root directory of the image dataset
+    :type root_dir: basestring
     :param val_ratio: The desired ratio of val images to total images
+    :type val_ratio: float
     :param test_ratio: The desired ratio of test images to total images
+    :type test_ratio: float
+    :param preliminary_clahe: True if we want to perform CLAHE before applying further
+                                histogram equalization
+    :type preliminary_clahe: bool
+
+
     :return: None
     """
 
@@ -86,16 +98,44 @@ def populate_train_test_val_dirs_nonrandomly(root_dir, val_ratio=0.15, test_rati
     # Print the file distribution among the folders
     logger.print_file_distribution(len(all_file_names), len(train_file_names), len(val_file_names), len(test_file_names))
 
-    # Copy-Pasting Images
+    # Copy-Pasting images into train dataset, then normalizing them using CLAHE
     for name in train_file_names:
         shutil.copy(join(root_dir, 'CoregisteredBlurryImages', name), root_dir + '/train/CoregisteredBlurryImages')
         shutil.copy(join(root_dir, 'ClearImages', name), root_dir + '/train/ClearImages')
+
+    # Copy-Pasting images into val dataset, then normalizing them using CLAHE
     for name in val_file_names:
         shutil.copy(join(root_dir, 'CoregisteredBlurryImages', name), root_dir + '/val/CoregisteredBlurryImages')
         shutil.copy(join(root_dir, 'ClearImages', name), root_dir + '/val/ClearImages')
+
+    # Copy-Pasting images into test dataset, then normalizing them using CLAHE
     for name in test_file_names:
         shutil.copy(join(root_dir, 'CoregisteredBlurryImages', name), root_dir + '/test/CoregisteredBlurryImages')
         shutil.copy(join(root_dir, 'ClearImages', name), root_dir + '/test/ClearImages')
+
+    ''' Augment the images in each new folder '''
+    # If we want to use preliminary adaptive equalization...
+    if preliminary_clahe:
+        # ... then first, apply Contrast Limited Adaptive Histogram Equalization to ALL images in all folders
+        CLAHE_image_folder(root_dir + '/train/CoregisteredBlurryImages')
+        CLAHE_image_folder(root_dir + '/train/ClearImages')
+        CLAHE_image_folder(root_dir + '/val/CoregisteredBlurryImages')
+        CLAHE_image_folder(root_dir + '/val/ClearImages')
+        CLAHE_image_folder(root_dir + '/test/CoregisteredBlurryImages')
+        CLAHE_image_folder(root_dir + '/test/ClearImages')
+
+    # Then, apply histogram equalization to make the blurry images' histogram match that of the clear images
+    hist_match_image_folder(root_dir=join(root_dir, 'train'),
+                            clear_dir_name='ClearImages',
+                            blurry_dir_name='CoregisteredBlurryImages')
+    hist_match_image_folder(root_dir=join(root_dir, 'val'),
+                            clear_dir_name='ClearImages',
+                            blurry_dir_name='CoregisteredBlurryImages')
+    hist_match_image_folder(root_dir=join(root_dir, 'test'),
+                            clear_dir_name='ClearImages',
+                            blurry_dir_name='CoregisteredBlurryImages')
+
+
 
 
 def populate_train_test_val_dirs_randomly(root_dir=(os.getcwd()), val_ratio=0.15, test_ratio=0.05):
@@ -143,7 +183,7 @@ def populate_train_test_val_dirs_randomly(root_dir=(os.getcwd()), val_ratio=0.15
 if __name__ == "__main__":
 
     # Get the root directory by going "up" two directories
-    root_dir = Path(__file__).resolve().parents[1]
+    rootdir = Path(__file__).resolve().parents[1]
 
     # Pass that root directory to the main function
-    main(root_dir=join(root_dir, 'data'))
+    main(root_dir=join(rootdir, 'data'))

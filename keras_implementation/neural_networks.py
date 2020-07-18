@@ -72,3 +72,4 @@ class MyDenoiser(Model):
 
     def call(self, inputs, training=None, mask=None):
         pass
+

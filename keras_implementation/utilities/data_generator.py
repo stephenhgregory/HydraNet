@@ -2,6 +2,7 @@ import glob
 import cv2
 import numpy as np
 from enum import Enum
+from os.path import join
 
 patch_size, stride = 40, 10
 aug_times = 1
@@ -82,7 +83,7 @@ def gen_patches(file_name):
     return patches
 
 
-def data_generator(data_dir='data/train', image_type=ImageType.CLEARIMAGE, verbose=False):
+def data_generator(data_dir=join('data', 'Volume1', 'train'), image_type=ImageType.CLEARIMAGE, verbose=False):
     """
     Provides a numpy array of training examples, given a path to a training directory
 
@@ -97,15 +98,18 @@ def data_generator(data_dir='data/train', image_type=ImageType.CLEARIMAGE, verbo
     """
 
     if image_type == ImageType.CLEARIMAGE:
-        data_dir += '/CoregisteredImages'
+        data_dir += '/ClearImages'
     elif image_type == ImageType.BLURRYIMAGE:
-        data_dir += '/BlurryImages'
+        data_dir += '/CoregisteredBlurryImages'
 
     print(data_dir)
 
-    file_list = glob.glob(data_dir + '/*.jpg')  # get name list of all .png files
-    # initialize
+    # Get the name list of all .jpg files
+    file_list = glob.glob(data_dir + '/*.jpg')
+
+    # initialize data list
     data = []
+
     # generate patches
     print(f'The length of the file list is: {len(file_list)}')
     for i in range(len(file_list)):
@@ -113,11 +117,20 @@ def data_generator(data_dir='data/train', image_type=ImageType.CLEARIMAGE, verbo
         data.append(patch)
         if verbose:
             print(str(i + 1) + '/' + str(len(file_list)) + ' is done ^_^')
+
+    # Convert data to a numpy array of ints
     data = np.array(data, dtype='uint8')
+
+    # reshape data
     data = data.reshape((data.shape[0] * data.shape[1], data.shape[2], data.shape[3], 1))
+
+    # Get the number of elements of n to discard
     discard_n = len(data) - len(data) // batch_size * batch_size;
+
+    # Remove the range of "discard_n" from data
     data = np.delete(data, range(discard_n), axis=0)
     print('^_^-training data finished-^_^')
+
     return data
 
 
