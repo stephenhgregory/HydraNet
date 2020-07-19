@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from enum import Enum
 from os.path import join
+import keras_implementation.utilities.logger as logger
 
 patch_size, stride = 40, 10
 aug_times = 1
@@ -74,7 +75,6 @@ def gen_patches(file_name):
         for i in range(0, h_scaled - patch_size + 1, stride):
             for j in range(0, w_scaled - patch_size + 1, stride):
                 x = image_scaled[i:i + patch_size, j:j + patch_size]
-                # patches.append(x)
                 # data aug
                 for k in range(0, aug_times):
                     x_aug = data_aug(x, mode=np.random.randint(0, 8))
@@ -130,6 +130,8 @@ def data_generator(data_dir=join('data', 'Volume1', 'train'), image_type=ImageTy
     # Remove the range of "discard_n" from data
     data = np.delete(data, range(discard_n), axis=0)
     print('^_^-training data finished-^_^')
+
+    logger.print_numpy_statistics(data, "data")
 
     return data
 

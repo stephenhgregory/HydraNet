@@ -58,6 +58,94 @@ def CLAHE_single_image(image, clip_limit=2.0, tile_grid_size=(8,8)):
     return clahe.apply(image)
 
 
+def standardize(x):
+    """
+    Standardizes an input image as a numpy array to have a mean of 0 and standard
+    deviation of 1.
+
+    :param x: The input image
+    :type x: numpy array
+
+    :return: The standardized image as a numpy array
+    :rtype: numpy array
+    """
+
+    # Convert x to an array of single-precision floats
+    x = x.astype('float32')
+
+    # Get the global mean and standard deviation from x
+    x_mean, x_std = (x.mean(), x.std())
+
+    # GLobally standardize the pixels
+    return (x - x_mean) / x_std
+
+
+def reverse_standardize(x, original_mean, original_std):
+    """
+    Takes an input image x (which has been normalized by taking every px value and
+    subtracting the mean, then dividing by the standard deviation), and reverses
+    that normalization by taking every px value and multiplying it by the
+    standard deviation, then subsequently adding the mean.
+
+    :param x: Normalized input image
+    :type x: numpy array
+    :param original_mean: The mean of the pixel value distribution before standardization
+    :type original_mean: float
+    :param original_std: The standard deviation of the pixel value distribution before standardization
+    :type original_std: float
+
+    :return: Image x with standardization reversed
+    :rtype: numpy array
+    """
+
+    # Reverse the normalization
+    restored_x = x * original_std + original_mean
+
+    # Convert the values to ints before returning
+    return restored_x.astype(np.uint8)
+
+
+def standardize_and_positive_shift(x):
+    """
+    Standardizes an input image as a numpy array to have a mean of 0.5 and standard
+    deviation of about 0.3. This is done so that the pixel values of the image are
+    exclusively non-negative, so that we can visualize the images (We can't visualize an
+    image with negative values, most libraries only recognize a scale of [0, 1] or [0, 255]).
+
+    :param x: The input image
+    :type x: numpy array
+
+    :return: The standardized image as a numpy array
+    :rtype: numpy array
+    """
+
+    # Standardize and then positively shift x
+    return positive_shift(standardize(x))
+
+
+def positive_shift(x):
+    """
+    Positively shifts a standardized input image as a numpy array to have pixel values between 0 and 1.
+    This is done so that the pixel values of the image are
+    exclusively non-negative, so that we can visualize the images (We can't visualize an
+    image with negative values, most libraries only recognize a scale of [0, 1] or [0, 255]).
+
+    :param x: The standardized input image
+    :type x: numpy array
+
+    :return: The positively shifted image as a numpy array
+    :rtype: numpy array
+    """
+
+    # Clip the pixel values from [-1, 1]
+    x = np.clip(x, -1.0, 1.0)
+
+    # Shift from [-1, 1] to [0, 1] with 0.5 mean
+    x = (x + 1.0) / 2.0
+
+    return x
+
+
 def hist_match_image_folder(root_dir, blurry_dir_name, clear_dir_name):
     """
     Performs Histogram Equalization to match the histograms of all blurry

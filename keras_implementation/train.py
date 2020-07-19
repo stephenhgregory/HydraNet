@@ -6,9 +6,12 @@ from keras.layers import Input, Conv2D, BatchNormalization, Activation, Subtract
 from keras.models import Model, load_model
 from keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler
 from keras.optimizers import Adam
-import utilities.data_generator as data_generator
-import utilities.logger as logger
+import keras_implementation.utilities.data_generator as data_generator
+import keras_implementation.utilities.logger as logger
+import keras_implementation.utilities.image_utils as image_utils
 import keras.backend as K
+
+import cv2 # Delete this
 
 import tensorflow as tf
 
@@ -31,7 +34,9 @@ parser.add_argument('--lr', default=1e-3, type=float, help='initial learning rat
 parser.add_argument('--save_every', default=1000, type=int, help='save model at after seeing x batches')
 args = parser.parse_args()
 
-save_dir = os.path.join('models', args.model + '_' + 'sigma' + str(args.sigma))
+save_dir = os.path.join('/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation',
+                        'models',
+                        args.model + '_' + 'sigma' + str(args.sigma))
 
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
@@ -200,10 +205,6 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
             x = data_generator.data_generator(data_dir, image_type=data_generator.ImageType.CLEARIMAGE)
             y = data_generator.data_generator(data_dir, image_type=data_generator.ImageType.BLURRYIMAGE)
 
-            # Log information about x and y to the terminal
-            logger.print_numpy_statistics(x)
-            logger.print_numpy_statistics(y)
-
             # Assert that the last iteration has a full batch size
             assert len(x) % args.batch_size == 0, \
                 logger.log(
@@ -214,13 +215,14 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
                     'make sure the last iteration has a full batchsize, '
                     'this is important if you use batch normalization!')
 
-            # Convert x and y to tensors of floats with values between 0 and 1
-            x = x.astype('float32') / 255.0
-            y = y.astype('float32') / 255.0
+            # Standardize x and y to have a mean of 0 and standard deviation of 1
+            # NOTE: x and y px values are centered at 0, meaning there are negative px values. We might have trouble
+            # visualizing px that aren't either from [0, 255'4] or [0,1], so just watch out for that
+            x, y = (image_utils.standardize(x), image_utils.standardize(y))
 
-            # Log some statistics about x and y to the terminal
-            logger.print_numpy_statistics(x)
-            logger.print_numpy_statistics(y)
+            # Log information about x and y (post-standardization) to the terminal
+            logger.print_numpy_statistics(x, "x (standardized)")
+            logger.print_numpy_statistics(y, "y (standardized)")
 
             # Get a list of indices, from 0 to the total number of training examples
             indices = list(range(x.shape[0]))
@@ -243,7 +245,10 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
             # Iterate over the entire training set, skipping "batch_size" at a time
             for i in range(0, len(indices), batch_size):
                 # Get the batch x
+                print(f'Getting x from indices {i}:{i + batch_size}...')
                 batch_x = x[indices[i:i + batch_size]]
+                cv2.imshow("batch_x[50]", batch_x[50])
+                cv2.waitKey(0)
                 # Log statistics about batch_x to the console
                 logger.print_numpy_statistics(batch_x, "batch_x")
 

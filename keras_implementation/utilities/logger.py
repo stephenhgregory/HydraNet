@@ -46,10 +46,10 @@ def print_numpy_statistics(x, x_name='array'):
 
     print(f"Dimensions of {x_name}: {x.ndim}")
 
-    print(f"Mean of {x_name} (Along axis 0 by axis 1): {x.mean(axis=(0, 1))}")
-
     print(f"Mean of {x_name} (No axis specified): {x.mean()}")
 
-    print(f'Variance of {x_name} (Along axis 0 by axis 1): {x.var()}')
+    print(f'Variance of {x_name} (No axis specified): {x.var()}')
 
-    print(f'Standard deviation of {x_name} (Along axis 0 by axis 1): {x.std()}')
+    print(f'Standard deviation of {x_name} (No axis specified): {x.std()}')
+
+    print('\n\n\n')
