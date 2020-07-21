@@ -5,6 +5,7 @@ This file contains various image augmentation functions
 import cv2
 import numpy as np
 import os
+from skimage.restoration import denoise_nl_means, estimate_sigma
 
 
 def CLAHE_image_folder(image_dir, clip_limit=2.0, tile_grid_size=(8,8)):
@@ -66,7 +67,9 @@ def standardize(x):
     :param x: The input image
     :type x: numpy array
 
-    :return: The standardized image as a numpy array
+    :return: A tuple containing: 1. The standardized image
+                                 2. The mean pixel value of the original input
+                                 3. The standard deviation pixel value of the original input
     :rtype: numpy array
     """
 
@@ -74,10 +77,13 @@ def standardize(x):
     x = x.astype('float32')
 
     # Get the global mean and standard deviation from x
-    x_mean, x_std = (x.mean(), x.std())
+    original_mean, original_std = (x.mean(), x.std())
 
     # GLobally standardize the pixels
-    return (x - x_mean) / x_std
+    standardized_x = (x - original_mean) / original_std
+
+    # Return a tuple containing the image, mean, and standard deviation
+    return standardized_x, original_mean, original_std
 
 
 def reverse_standardize(x, original_mean, original_std):
@@ -101,8 +107,42 @@ def reverse_standardize(x, original_mean, original_std):
     # Reverse the normalization
     restored_x = x * original_std + original_mean
 
-    # Convert the values to ints before returning
+    # Convert the values to the proper dtype before returning
     return restored_x.astype(np.uint8)
+
+
+def nlm_denoise_single_image(image):
+    """
+    Applies Non-Local Means filtering to denoise an input image x
+
+    :param image: The input image to be denoised
+    :type image: numpy array
+
+    :return: The denoised image
+    """
+
+    # Estimate the sigma (noise) value for the image
+    sigma_estimation = np.mean(estimate_sigma(image))
+
+    # Denoise the image
+    return denoise_nl_means(image, fast_mode=True, patch_size=5, patch_distance=3)
+
+
+def nlm_denoise_single_image_name(image_name):
+    """
+    Applies Non-Local Means filtering to denoise an image located at the path <image_name>
+
+    :param image_name: The path of the image to be denoised
+    :type image_name: str
+
+    :return: The denoised image
+    """
+
+    # Read the image as grayscale
+    image = cv2.imread(image_name, 0)
+
+    # Denoise and return the image
+    return nlm_denoise_single_image(image)
 
 
 def standardize_and_positive_shift(x):

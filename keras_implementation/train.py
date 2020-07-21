@@ -4,14 +4,13 @@ import os, glob, datetime
 import numpy as np
 from keras.layers import Input, Conv2D, BatchNormalization, Activation, Subtract
 from keras.models import Model, load_model
-from keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler
+from keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
 from keras.optimizers import Adam
 import keras_implementation.utilities.data_generator as data_generator
 import keras_implementation.utilities.logger as logger
 import keras_implementation.utilities.image_utils as image_utils
 import keras.backend as K
-
-import cv2 # Delete this
+import cv2
 
 import tensorflow as tf
 
@@ -27,7 +26,8 @@ except:
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default='MyDnCNN', type=str, help='choose a type of model')
 parser.add_argument('--batch_size', default=128, type=int, help='batch size')
-parser.add_argument('--train_data', default='data/Volume1', type=str, help='path of train data')
+parser.add_argument('--train_data', default='data/Volume1/train', type=str, help='path of train data')
+parser.add_argument('--val_data', default='data/Volume1/val', type=str, help='path of val data')
 parser.add_argument('--sigma', default=25, type=int, help='noise level')
 parser.add_argument('--epoch', default=300, type=int, help='number of train epoches')
 parser.add_argument('--lr', default=1e-3, type=float, help='initial learning rate for Adam')
@@ -202,60 +202,72 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
             print(f'Accessing training data in: {data_dir}')
 
             # Get training examples from data_dir using data_generator
-            x = data_generator.data_generator(data_dir, image_type=data_generator.ImageType.CLEARIMAGE)
-            y = data_generator.data_generator(data_dir, image_type=data_generator.ImageType.BLURRYIMAGE)
+            x_original = data_generator.data_generator(data_dir, image_type=data_generator.ImageType.CLEARIMAGE)
+            y_original = data_generator.data_generator(data_dir, image_type=data_generator.ImageType.BLURRYIMAGE)
 
             # Assert that the last iteration has a full batch size
-            assert len(x) % args.batch_size == 0, \
+            assert len(x_original) % args.batch_size == 0, \
                 logger.log(
                     'make sure the last iteration has a full batchsize, '
                     'this is important if you use batch normalization!')
-            assert len(y) % args.batch_size == 0, \
+            assert len(y_original) % args.batch_size == 0, \
                 logger.log(
                     'make sure the last iteration has a full batchsize, '
                     'this is important if you use batch normalization!')
 
             # Standardize x and y to have a mean of 0 and standard deviation of 1
             # NOTE: x and y px values are centered at 0, meaning there are negative px values. We might have trouble
-            # visualizing px that aren't either from [0, 255'4] or [0,1], so just watch out for that
-            x, y = (image_utils.standardize(x), image_utils.standardize(y))
+            # visualizing px that aren't either from [0, 255] or [0, 1], so just watch out for that
+            x, x_orig_mean, x_orig_std = image_utils.standardize(x_original)
+            y, y_orig_mean, y_orig_std = image_utils.standardize(y_original)
 
-            # Log information about x and y (post-standardization) to the terminal
             logger.print_numpy_statistics(x, "x (standardized)")
             logger.print_numpy_statistics(y, "y (standardized)")
+
+            # Save the reversed standardization of x and y into variables
+            x_reversed = image_utils.reverse_standardize(x, x_orig_mean, x_orig_std)
+            y_reversed = image_utils.reverse_standardize(y, y_orig_mean, y_orig_std)
 
             # Get a list of indices, from 0 to the total number of training examples
             indices = list(range(x.shape[0]))
 
             # Make sure that x and y have the same number of training examples
-            assert indices == list(range(y.shape[0])), logger.log('Make sure x and y are paired up properly! That is, '
-                                                                  'x is a Clear, CoregisteredImage, and y is a '
-                                                                  'BlurryImage, '
-                                                                  'but still an image of the same thing at the same '
-                                                                  'time.')
+            assert indices == list(range(y.shape[0])), logger.log('Make sure x and y are paired up properly! That is, x'
+                                                                  'is a ClearImage, and y is a CoregisteredBlurryImage'
+                                                                  'but that the two frames match eachother. ')
 
             # Increment the counter
             counter += 1
 
         # Iterate over the number of epochs
         for _ in range(num_epochs):
+
             # Shuffle the indices of the training examples
             np.random.shuffle(indices)
 
             # Iterate over the entire training set, skipping "batch_size" at a time
             for i in range(0, len(indices), batch_size):
-                # Get the batch x
-                print(f'Getting x from indices {i}:{i + batch_size}...')
-                batch_x = x[indices[i:i + batch_size]]
-                cv2.imshow("batch_x[50]", batch_x[50])
-                cv2.waitKey(0)
-                # Log statistics about batch_x to the console
-                logger.print_numpy_statistics(batch_x, "batch_x")
 
-                # Get the batch y
+                # Get the batch x (clear) and y (blurry)
+                batch_x = x[indices[i:i + batch_size]]
                 batch_y = y[indices[i:i + batch_size]]
-                # Log statistics about batch_y to the console
-                logger.print_numpy_statistics(batch_y, "batch_y")
+
+                # Get equivalently indexed batches from x_original, x_reversed, y_original, and y_reversed
+                batch_x_original = x_original[indices[i:i + batch_size]]
+                batch_x_reversed = x_reversed[indices[i:i + batch_size]]
+                batch_y_original = y_original[indices[i:i + batch_size]]
+                batch_y_reversed = y_reversed[indices[i:i + batch_size]]
+
+                # Show some images from this batch
+                logger.show_images(images=[("batch_x[0]", batch_x[0]),
+                                         ("batch_x_original[0]", batch_x_original[0]),
+                                         ("batch_x_reversed[0]", batch_x_reversed[0]),
+                                         ("batch_y[0]", batch_y[0]),
+                                         ("batch_y_original[0]", batch_y_original[0]),
+                                         ("batch_y_reversed[0]", batch_y_reversed[0])])
+
+                # Denoise y preliminarily woth NLM
+
 
                 # Finally, yield x and y, as this function is a generator
                 yield batch_y, batch_x
@@ -268,9 +280,64 @@ def sum_squared_error(y_true, y_pred):
     return K.sum(K.square(y_pred - y_true)) / 2
 
 
+def original_callbacks():
+    """
+    Creates a list of callbacks for the Model Training process.
+    This is a copy of the list of callbacks used for the original DnCNN paper
+
+    :return: List of callbacks
+    :rtype: list
+    """
+
+    # noinspection PyListCreation
+    callbacks = []
+
+    # Add checkpoints every <save_every> # of iterations
+    callbacks.append(ModelCheckpoint(os.path.join(save_dir, 'model_{epoch:03d}.hdf5'),
+                                   verbose=1, save_weights_only=False, save_freq=args.save_every))
+
+    # Add the ability to log training information to <save_dir>/log.csv
+    callbacks.append(CSVLogger(os.path.join(save_dir, 'log.csv'), append=True, separator=','))
+
+    # Add a Learning Rate Scheduler to dynamically change the learning rate over time
+    callbacks.append(LearningRateScheduler(lr_schedule))
+
+    return callbacks
+
+
+def new_callbacks():
+    """
+    Creates a list of callbacks for the Model Training process.
+    This is the new list of callbacks used for MyDenoiser
+
+    :return: List of callbacks
+    :rtype: list
+    """
+
+    # noinspection PyListCreation
+    callbacks = []
+
+    # Add checkpoints every <save_every> # of iterations
+    callbacks.append(ModelCheckpoint(os.path.join(save_dir, 'model_{epoch:03d}.hdf5'),
+                                     verbose=1, save_weights_only=False, save_freq=args.save_every))
+
+    # Add the ability to log training information to <save_dir>/log.csv
+    callbacks.append(CSVLogger(os.path.join(save_dir, 'log.csv'), append=True, separator=','))
+
+    # Add a Learning Rate Scheduler to dynamically change the learning rate over time
+    callbacks.append(LearningRateScheduler(lr_schedule))
+
+    # Add Early Stopping so that we stop training once val_loss stops decreasing after <patience> # of epochs
+    callbacks.append(EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=3))
+
+    return callbacks
+
+
 def main():
     """
-    The main function which is run to train the MyDenoiser Keras model.
+    Creates and trains the MyDenoiser Keras model.
+    If no checkpoints exist, we will start from scratch.
+    Otherwise, training will resume from previous checkpoints.
 
     :return: None
     """
@@ -279,7 +346,7 @@ def main():
     model = MyDnCNN(depth=17, filters=64, image_channels=1, use_batchnorm=True)
     model.summary()
 
-    # load the last model in matconvnet style
+    # Load the last model
     initial_epoch = findLastCheckpoint(save_dir=save_dir)
     if initial_epoch > 0:
         print('resuming by loading epoch %03d' % initial_epoch)
@@ -288,18 +355,16 @@ def main():
     # compile the model
     model.compile(optimizer=Adam(0.001), loss=sum_squared_error)
 
-    # use call back functions
-    checkpointer = ModelCheckpoint(os.path.join(save_dir, 'model_{epoch:03d}.hdf5'),
-                                   verbose=1, save_weights_only=False, save_freq=args.save_every)
-    csv_logger = CSVLogger(os.path.join(save_dir, 'log.csv'), append=True, separator=',')
-    lr_scheduler = LearningRateScheduler(lr_schedule)
-
-    history = model.fit(my_train_datagen(batch_size=args.batch_size),
-                        steps_per_epoch=2000, epochs=args.epoch, verbose=1, initial_epoch=initial_epoch,
-                        callbacks=[checkpointer, csv_logger, lr_scheduler])
+    # Train the model
+    history = model.fit(my_train_datagen(batch_size=args.batch_size, data_dir=args.train_data),
+                        steps_per_epoch=2000,
+                        epochs=args.epoch,
+                        verbose=1,
+                        initial_epoch=initial_epoch,
+                        callbacks=new_callbacks(),
+                        )
 
 
 if __name__ == '__main__':
-
     # Run the main function
     main()

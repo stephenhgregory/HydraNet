@@ -1,7 +1,7 @@
 #!usr/bin/env python
 
 """
-Contains class definitions and implementations of neural networks
+Contains class definitions and implementations of neural networks using the Tensorflow Subclassing API
 """
 
 import argparse
