@@ -1,4 +1,6 @@
-# Run this script to test the model
+"""
+This script is used to run inference with MyDenoiser and test the results
+"""
 
 import argparse
 import os, time, datetime

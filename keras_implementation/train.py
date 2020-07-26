@@ -1,3 +1,7 @@
+"""
+This file is used to train MyDenoiser
+"""
+
 import argparse
 import re
 import os, glob, datetime
