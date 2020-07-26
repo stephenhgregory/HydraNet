@@ -32,6 +32,11 @@ a command line located at *.../MyDenoiser/keras_implementation/*
 
 ```
 
-
+python3 train.py /
+--batch_size=<choose_batch_size> \
+--train_data=<path_to_train_data_dir> \
+--val_data=<path_to_val_data_dir> \
+--epoch=<num_epochs> \
 
 ```
+**Note:** If you don't specify a batch_size and epoch #, a default batch_size of 128 and epoch # of 300 will be chosen
