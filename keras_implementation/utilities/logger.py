@@ -28,6 +28,9 @@ def show_images(images):
     """
 
     for image_name, image in images:
+        # Create an image window
+        cv2.namedWindow(image_name, cv2.WINDOW_AUTOSIZE)
+
         # Show each image, then wait for a keypress
         cv2.imshow(image_name, image)
         cv2.waitKey(0)

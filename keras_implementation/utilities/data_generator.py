@@ -2,6 +2,7 @@ import glob
 import cv2
 import numpy as np
 from enum import Enum
+import os
 from os.path import join
 import keras_implementation.utilities.logger as logger
 import keras_implementation.utilities.image_utils as image_utils
@@ -16,6 +17,12 @@ class ImageType(Enum):
     """An Enumerator representing a Clear Image and a Blurry Image"""
     CLEARIMAGE = 1
     BLURRYIMAGE = 2
+
+
+class ImageFormat(Enum):
+    """An Enumerator representing whether an image is a JPG image or a PNG image"""
+    JPG = 1
+    PNG = 2
 
 
 def show(x, title=None, cbar=False, figsize=None):
@@ -154,6 +161,8 @@ def generate_augmented_patches_from_file_name(file_name):
     adding a random augmentation to each patch (flip, rotate, etc.)
 
     :param file_name: The name of the image to generate patches from
+    :type file_name: str
+
     :return: patches: A list of image patches
     """
 
@@ -164,29 +173,37 @@ def generate_augmented_patches_from_file_name(file_name):
     return generate_augmented_patches(image)
 
 
-def data_generator(data_dir=join('data', 'Volume1', 'train'), image_type=ImageType.CLEARIMAGE, verbose=False):
+def data_generator(root_dir=join('data', 'Volume1', 'train'),
+                   image_type=ImageType.CLEARIMAGE,
+                   verbose=False,
+                   image_format=ImageFormat.PNG):
     """
     Provides a numpy array of training examples, given a path to a training directory
 
-    :param data_dir: The path of the training data directory
-    :type data_dir: basestring
+    :param image_format: The format of image that our training data is (JPG or PNG)
+    :type image_format: ImageFormat
+    :param root_dir: The path of the training data directory
+    :type root_dir: str
     :param image_type: The type of image that we wish to generate training data of
     :type image_type: ImageType
     :param verbose: Whether or not we want to log additional info about this file
     :type verbose: bool
+
     :return: training data
     :rtype: numpy.array
     """
 
     if image_type == ImageType.CLEARIMAGE:
-        data_dir += '/ClearImages'
+        image_dir = join(root_dir, 'ClearImages')
     elif image_type == ImageType.BLURRYIMAGE:
-        data_dir += '/CoregisteredBlurryImages'
+        image_dir = join(root_dir, 'CoregisteredBlurryImages')
 
-    print(data_dir)
-
-    # Get the name list of all .jpg files
-    file_list = glob.glob(data_dir + '/*.jpg')
+    # If data is PNGs, get the list of all .png files
+    if image_format == ImageFormat.PNG:
+        file_list = sorted(glob.glob(image_dir + '/*.png'))
+    # Else if data is JPGs, get the list of all .jpg files
+    elif image_format == ImageFormat.JPG:
+        file_list = sorted(glob.glob(image_dir + '/*.jpg'))
 
     # initialize data list
     data = []
@@ -195,21 +212,38 @@ def data_generator(data_dir=join('data', 'Volume1', 'train'), image_type=ImageTy
     print(f'The length of the file list is: {len(file_list)}')
 
     # Iterate over the entire list of images
-    for i in range(len(file_list)):
+    for i, file_name in enumerate(os.listdir(image_dir)):
+        if file_name.endswith('.jpg') or file_name.endswith('.png'):
 
-        # Read the image as a numpy array
-        image = cv2.imread(file_list[i], 0)
+            # Read the image as a numpy array
+            image = cv2.imread(os.path.join(image_dir, file_name), 0)
 
-        # Show the image (Pre-NLM denoising)
-        logger.show_images([(f'file_list[{i}] (Pre-NLM)', image)])
+            # If the image is a blurry image
+            if image_type == ImageType.BLURRYIMAGE:
+                # Read the corresponding Clear Image
+                clear_image = cv2.imread(os.path.join(root_dir, 'ClearImages', file_name))
 
-        # Generate patches from the image
-        patches = generate_patches(image)
+                # Histogram equalize the image
+                equalized_image = image_utils.hist_match(image, image).astype('uint8')
 
-        # Append the patches to data
-        data.append(patches)
-        if verbose:
-            print(str(i + 1) + '/' + str(len(file_list)) + ' is done ^_^')
+                ''' Just logging
+                # Show the blurry image (Pre-Histogram Equalization), clear image, and
+                # blurry image (Post-Histogram Equalization)
+                logger.show_images([(f'CoregisteredBlurryImage (Pre-Histogram Equalization)', image),
+                                    (f'Matching Clear Image', clear_image),
+                                    ('CoregisteredBlurryImage (Post-Histogram Equalization)', equalized_image)])
+                '''
+
+                # Set our blurry image equal to the histogram matched image
+                image = equalized_image
+
+            # Generate patches from the image
+            patches = generate_patches(image)
+
+            # Append the patches to data
+            data.append(patches)
+            if verbose:
+                print(str(i + 1) + '/' + str(len(file_list)) + ' is done ^_^')
 
     # Convert data to a numpy array of ints
     data = np.array(data, dtype='uint8')
@@ -227,13 +261,13 @@ def data_generator(data_dir=join('data', 'Volume1', 'train'), image_type=ImageTy
     return data
 
 
-def data_generator_augmented(data_dir=join('data', 'Volume1', 'train'), image_type=ImageType.CLEARIMAGE, verbose=False):
+def data_generator_augmented(root_dir=join('data', 'Volume1', 'train'), image_type=ImageType.CLEARIMAGE, verbose=False, image_format=ImageFormat.PNG):
     """
     Provides a numpy array of training examples, given a path to a training directory.
     Adds augmentation (flipping, rotation, etc.) to the training examples for rotational and flipping invariance
 
-    :param data_dir: The path of the training data directory
-    :type data_dir: basestring
+    :param root_dir: The path of the training data directory
+    :type root_dir: str
     :param image_type: The type of image that we wish to generate training data of
     :type image_type: ImageType
     :param verbose: Whether or not we want to log additional info about this file
@@ -243,9 +277,19 @@ def data_generator_augmented(data_dir=join('data', 'Volume1', 'train'), image_ty
     """
 
     if image_type == ImageType.CLEARIMAGE:
-        data_dir += '/ClearImages'
+        image_dir = join(root_dir, 'ClearImages')
     elif image_type == ImageType.BLURRYIMAGE:
-        data_dir += '/CoregisteredBlurryImages'
+        image_dir = join(root_dir, 'CoregisteredBlurryImages')
+
+    # If data is PNGs, get the list of all .png files
+    if image_format == ImageFormat.PNG:
+        file_list = sorted(glob.glob(image_dir + '/*.png'))
+    # Else if data is JPGs, get the list of all .jpg files
+    elif image_format == ImageFormat.JPG:
+        file_list = sorted(glob.glob(image_dir + '/*.jpg'))
+
+    # initialize data list
+    data = []
 
     print(data_dir)
 

@@ -14,13 +14,19 @@ import cv2
 
 import tensorflow as tf
 
+# Allow memory growth in order to fix a Tensorflow bug
 physical_devices = tf.config.list_physical_devices('GPU')
-try:
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
-except:
-    # Invalid device or cannot modify virtual devices once initialized.
-    print(f'The following line threw an exception: tf.config.experimental.set_memory_growth(physical_devices[0], True)')
-    pass
+
+# This makes sure that at runtime, the initialization of the CUDA device physical_devices[0] (The only GPU in
+# the system) will not allocate ALL of the memory on that device.
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
+
+# try:
+#     tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# except:
+#     # Invalid device or cannot modify virtual devices once initialized.
+#     print(f'The following line threw an exception: tf.config.experimental.set_memory_growth(physical_devices[0], True)')
+#     pass
 
 # Params
 parser = argparse.ArgumentParser()
@@ -36,8 +42,9 @@ args = parser.parse_args()
 
 save_dir = os.path.join('/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation',
                         'models',
-                        args.model + '_' + 'sigma' + str(args.sigma))
+                        args.model)
 
+# Create the <ssave_dir> folder if it doesn't exist already
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
@@ -105,6 +112,12 @@ def MyDnCNN(depth, filters=64, image_channels=1, use_batchnorm=True):
 
 
 def findLastCheckpoint(save_dir):
+    """
+    Finds the most recent Model checkpoint files
+
+    :param save_dir:
+    :return:
+    """
     file_list = glob.glob(os.path.join(save_dir, 'model_*.hdf5'))  # get name list of all .hdf5 files
     # file_list = os.listdir(save_dir)
     if file_list:
@@ -221,8 +234,10 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
             x, x_orig_mean, x_orig_std = image_utils.standardize(x_original)
             y, y_orig_mean, y_orig_std = image_utils.standardize(y_original)
 
+            ''' Just logging 
             logger.print_numpy_statistics(x, "x (standardized)")
             logger.print_numpy_statistics(y, "y (standardized)")
+            '''
 
             # Save the reversed standardization of x and y into variables
             x_reversed = image_utils.reverse_standardize(x, x_orig_mean, x_orig_std)
@@ -247,11 +262,11 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
 
             # Iterate over the entire training set, skipping "batch_size" at a time
             for i in range(0, len(indices), batch_size):
-
-                # Get the batch x (clear) and y (blurry)
+                # Get the batch_x (clear) and batch_y (blurry)
                 batch_x = x[indices[i:i + batch_size]]
                 batch_y = y[indices[i:i + batch_size]]
 
+                '''Just logging
                 # Get equivalently indexed batches from x_original, x_reversed, y_original, and y_reversed
                 batch_x_original = x_original[indices[i:i + batch_size]]
                 batch_x_reversed = x_reversed[indices[i:i + batch_size]]
@@ -265,9 +280,7 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
                                          ("batch_y[0]", batch_y[0]),
                                          ("batch_y_original[0]", batch_y_original[0]),
                                          ("batch_y_reversed[0]", batch_y_reversed[0])])
-
-                # Denoise y preliminarily woth NLM
-
+                '''
 
                 # Finally, yield x and y, as this function is a generator
                 yield batch_y, batch_x
@@ -294,7 +307,7 @@ def original_callbacks():
 
     # Add checkpoints every <save_every> # of iterations
     callbacks.append(ModelCheckpoint(os.path.join(save_dir, 'model_{epoch:03d}.hdf5'),
-                                   verbose=1, save_weights_only=False, save_freq=args.save_every))
+                                     verbose=1, save_weights_only=False, save_freq=args.save_every))
 
     # Add the ability to log training information to <save_dir>/log.csv
     callbacks.append(CSVLogger(os.path.join(save_dir, 'log.csv'), append=True, separator=','))

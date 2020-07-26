@@ -32,11 +32,11 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--set_dir', default='data/Volume1', type=str, help='parent directory of test dataset')
-    parser.add_argument('--set_names', default=['test'], type=list, help='name of test dataset')
+    parser.add_argument('--set_names', default=['val'], type=list, help='name of test dataset')
     parser.add_argument('--sigma', default=25, type=int, help='noise level')
-    parser.add_argument('--model_dir', default=os.path.join('models', 'MyDnCNN_sigma25'), type=str,
+    parser.add_argument('--model_dir', default=os.path.join('models', 'MyDnCNN'), type=str,
                         help='directory of the model')
-    parser.add_argument('--model_name', default='model_001.hdf5', type=str, help='the model name')
+    parser.add_argument('--model_name', default='model_023.hdf5', type=str, help='the model name')
     parser.add_argument('--result_dir', default='data/results', type=str, help='directory of results')
     parser.add_argument('--save_result', default=1, type=int, help='save the denoised image, 1 for yes or 0 for no')
     return parser.parse_args()
@@ -137,15 +137,6 @@ def main():
         for image_name in os.listdir(os.path.join(args.set_dir, set_cur, 'CoregisteredBlurryImages')):
             if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
 
-                # # Load the Clear Image x (as grayscale), and normalize the pixel values to be between 0 and 1
-                # x = np.array(imread(os.path.join(args.set_dir, set_cur, 'ClearImages', image_name), 0),
-                #              dtype=np.float32) / 255.0
-                #
-                # # Load the Coregistered Blurry Image y (as grayscale), and
-                # # normalize the pixel values to be between 0 and 1
-                # y = np.array(imread(os.path.join(args.set_dir, set_cur, 'CoregisteredBlurryImages', image_name), 0),
-                #              dtype=np.float32) / 255.0
-
                 # 1. Load the Clear Image x (as grayscale), and standardize the pixel values, and..
                 # 2. Save the original mean and standard deviation of x
                 x, x_orig_mean, x_orig_std = image_utils.standardize(imread(os.path.join(args.set_dir,
@@ -176,21 +167,17 @@ def main():
                 # Converts x_pred from a tensor to an image (numpy array)
                 x_pred = from_tensor(x_pred)
 
-                # Show x
-                cv2.imshow("x", x)
-                cv2.waitKey(0)
+                ''' Just logging 
+                # Reverse the standardization
+                x_pred_reversed = image_utils.reverse_standardize(x_pred, original_mean=x_orig_mean, original_std=x_orig_std)
+                x_reversed = image_utils.reverse_standardize(x, original_mean=x_orig_mean, original_std=x_orig_std)
 
-                # Show x_pred
-                cv2.imshow("x_pred", x_pred)
-                cv2.waitKey(0)
-
-                # Destroy both previous image windows
-                cv2.destroyWindow("x")
-                cv2.destroyWindow("x_pred")
-
-                # Print information about x and x_prediction
-                logger.print_numpy_statistics(x, "x")
-                logger.print_numpy_statistics(x_pred, "x_pred")
+                logger.show_images([("x", x),
+                                    ("x_reversed", x_reversed),
+                                    ("x_pred", x_pred),
+                                    ("x_pred_reversed", x_pred_reversed),
+                                    ("y", y)])
+                '''
 
                 # Reverse the standardization of x, x_pred, and y
                 x = image_utils.reverse_standardize(x, original_mean=x_orig_mean, original_std=x_orig_std)
@@ -205,12 +192,14 @@ def main():
                 if args.save_result:
                     name, ext = os.path.splitext(image_name)
 
+                    ''' Just logging
                     # Show the images
-                    show(np.hstack((y, x_pred)))
+                    logger.show_images([("y", y),
+                                        ("x_pred", x_pred)])
+                    '''
 
                     # Then save the denoised image
-                    save_result(x_pred, path=os.path.join(args.result_dir, set_cur,
-                                                          name + '_dncnn' + ext))
+                    cv2.imwrite(filename=os.path.join(args.result_dir, set_cur, name + '_dncnn' + ext), img=x_pred)
 
                 # Add the PSNR and SSIM to the lists of PSNRs and SSIMs, respectively
                 psnrs.append(psnr_x)

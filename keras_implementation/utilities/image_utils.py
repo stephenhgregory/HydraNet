@@ -6,6 +6,8 @@ import cv2
 import numpy as np
 import os
 from skimage.restoration import denoise_nl_means, estimate_sigma
+from skimage.measure import compare_ssim
+import keras_implementation.utilities.logger as logger
 
 
 def CLAHE_image_folder(image_dir, clip_limit=2.0, tile_grid_size=(8,8)):
@@ -13,7 +15,7 @@ def CLAHE_image_folder(image_dir, clip_limit=2.0, tile_grid_size=(8,8)):
     Performs Contrast Limited Adaptive Histogram Equalization on a directory of images
 
     :param image_dir: The directory containing images to be augmented
-    :type image_dir: basestring
+    :type image_dir: str
     :param clip_limit: The contrast limit of any given tile in the transformation
     :type clip_limit: float
     :param tile_grid_size: The size of each sub-patch that gets normalized
@@ -29,11 +31,16 @@ def CLAHE_image_folder(image_dir, clip_limit=2.0, tile_grid_size=(8,8)):
         if file_name.endswith('.jpg') or file_name.endswith('.png'):
             # Get the image
             image = cv2.imread(filename=os.path.join(image_dir, file_name), flags=0)
+
             # Equalize the image
             equalized_image = CLAHE_single_image(image)
+
+            ''' Just logging
+            logger.show_images([("image", image),
+                                ("equalized_image", equalized_image)])
+            '''
+
             # Save the image
-            print(file_name)
-            return
             cv2.imwrite(filename=os.path.join(image_dir, file_name), img=equalized_image)
 
 
@@ -107,8 +114,14 @@ def reverse_standardize(x, original_mean, original_std):
     # Reverse the normalization
     restored_x = x * original_std + original_mean
 
+    # Clip the values from [0, 255]
+    restored_x = np.clip(restored_x, 0., 255.)
+
+    # Convert the values to the proper dtype
+    restored_x = restored_x.astype(np.uint8)
+
     # Convert the values to the proper dtype before returning
-    return restored_x.astype(np.uint8)
+    return restored_x
 
 
 def nlm_denoise_single_image(image):
@@ -186,24 +199,26 @@ def positive_shift(x):
     return x
 
 
-def hist_match_image_folder(root_dir, blurry_dir_name, clear_dir_name):
+def hist_match_image_folder(root_dir, blurry_dir_name, clear_dir_name, match_to_clear=True):
     """
     Performs Histogram Equalization to match the histograms of all blurry
     photos in the passed-in image directory to all corresponding/matching clear
     photos in the directory.
 
     :param root_dir: The directory containing images to be augmented
-    :type root_dir: basestring
+    :type root_dir: str
     :param blurry_dir_name: The directory containing blurry images
-    :type blurry_dir_name: basestring
+    :type blurry_dir_name: str
     :param clear_dir_name: The directory containing clear images
-    :type clear_dir_name: basestring
+    :type clear_dir_name: str
+    :param match_to_clear: True if you want to alter the blurry image's histogram to match the clear image,
+                            False if you want to alter the clear image's histogram to match the blurry image
+    :type match_to_clear: bool
 
     :return: None
     """
 
     print(f'\nroot_dir: {root_dir}')
-    print(f'Augmenting the histograms from {os.path.join(root_dir, blurry_dir_name)} to match {os.path.join(root_dir, clear_dir_name)}')
 
     # Iterate over each file in the blurry image directory
     for file_name in os.listdir(os.path.join(root_dir, blurry_dir_name)):
@@ -216,11 +231,41 @@ def hist_match_image_folder(root_dir, blurry_dir_name, clear_dir_name):
             # Get a clear image from the (matching) clear image folder
             clear_image = cv2.imread(filename=os.path.join(root_dir, clear_dir_name, file_name), flags=0)
 
-            # Augment the blurry image's histogram to match the clear image's histogram
-            blurry_image = hist_match(blurry_image, clear_image)
+            # If we want to change the blurry image's histogram to match the clear image...
+            if match_to_clear:
+                # Augment the blurry image's histogram to match the clear image's histogram
+                blurry_image = hist_match(blurry_image, clear_image)
 
-            # Save the blurry image
-            cv2.imwrite(filename=os.path.join(root_dir, blurry_dir_name, file_name), img=blurry_image)
+                # Save the blurry image
+                cv2.imwrite(filename=os.path.join(root_dir, blurry_dir_name, file_name), img=blurry_image)
+
+            # Else, if we want to change the clear image's histogram to match the blurry image's histogram...
+            else:
+                # Augment the clear image's histogram to match the blurry image's histogram
+                clear_image = hist_match(clear_image, blurry_image)
+
+                # Save the clear image
+                cv2.imwrite(filename=os.path.join(root_dir, clear_dir_name, file_name), img=clear_image)
+
+
+def get_residual(clear_image, blurry_image):
+    """
+    Calculate the residual (difference) between a blurry image and a
+    matching clear image.
+
+    :param clear_image: A clear image
+    :type clear_image: numpy array
+    :param blurry_image: A blurry image matching the above clear_image
+    :type blurry_image: numpy array
+
+    :return: The residual difference between the clear image and blurry image
+    :rtype: numpy array
+    """
+
+    # Throw away the SSIM score and keep the residual between the two images
+    (_, residual) = compare_ssim(blurry_image, clear_image, full=True)
+
+    return residual
 
 
 def hist_match(source, template):
