@@ -40,3 +40,11 @@ python3 train.py /
 
 ```
 **Note:** If you don't specify a batch_size and epoch #, a default batch_size of 128 and epoch # of 300 will be chosen
+
+## Results
+
+| Dataset                                                     | Average PSNR | Average SSIM |
+|-------------------------------------------------------------|--------------|--------------|
+| [Volume 1 (val)](keras_implementation/data/Volume1/val)     | 29.00 dB     | 0.6466       |
+| [Volume 1 (test)](keras_implementation/data/Volume1/test)   | 28.50 dB     | 0.6720       |
+| [Volume 1 (train)](keras_implementation/data/Volume1/train) | 30.01 dB     | 0.6939       |
