@@ -21,13 +21,6 @@ physical_devices = tf.config.list_physical_devices('GPU')
 # the system) will not allocate ALL of the memory on that device.
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-# try:
-#     tf.config.experimental.set_memory_growth(physical_devices[0], True)
-# except:
-#     # Invalid device or cannot modify virtual devices once initialized.
-#     print(f'The following line threw an exception: tf.config.experimental.set_memory_growth(physical_devices[0], True)')
-#     pass
-
 # Params
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default='MyDnCNN', type=str, help='choose a type of model')
@@ -44,7 +37,7 @@ save_dir = os.path.join('/home/ubuntu/PycharmProjects/MyDenoiser/keras_implement
                         'models',
                         args.model)
 
-# Create the <ssave_dir> folder if it doesn't exist already
+# Create the <save_dir> folder if it doesn't exist already
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 

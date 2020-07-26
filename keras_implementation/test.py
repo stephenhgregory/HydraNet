@@ -33,7 +33,6 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--set_dir', default='data/Volume1', type=str, help='parent directory of test dataset')
     parser.add_argument('--set_names', default=['val'], type=list, help='name of test dataset')
-    parser.add_argument('--sigma', default=25, type=int, help='noise level')
     parser.add_argument('--model_dir', default=os.path.join('models', 'MyDnCNN'), type=str,
                         help='directory of the model')
     parser.add_argument('--model_name', default='model_023.hdf5', type=str, help='the model name')
