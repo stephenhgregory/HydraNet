@@ -39,7 +39,7 @@ python3 train.py /
 --epoch=<num_epochs> \
 
 ```
-**Note:** If you don't specify a batch_size and epoch #, a default batch_size of 128 and epoch # of 300 will be chosen
+**Note:** If you don't specify a batch_size and epoch #, a default **batch_size** of 128 and **epoch #** of 300 will be chosen
 
 ## Results
 
