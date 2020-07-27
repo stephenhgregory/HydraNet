@@ -10,7 +10,7 @@ The [environment.yaml](environment.yaml) file contains all of the packages neede
 This file is used to create a Conda environment named **MRIDenoising**. 
 1. First, create the environment by executing the following command froma terminal located at *.../MyDenoiser/*:
 ```
-conda env create -f environment.yaml
+conda env create -f dependencies/environment.yaml
 ```
 2. Then , activate the conda environment with the following command:
 ```
