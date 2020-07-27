@@ -193,11 +193,12 @@ def main():
                 if args.save_result:
                     name, ext = os.path.splitext(image_name)
 
-                    ''' Just logging
+                    ''' Just logging '''
+
                     # Show the images
                     logger.show_images([("y", y),
                                         ("x_pred", x_pred)])
-                    '''
+
 
                     # Then save the denoised image
                     cv2.imwrite(filename=os.path.join(args.result_dir, set_cur, name + '_dncnn' + ext), img=x_pred)

@@ -25,7 +25,7 @@ physical_devices = tf.config.list_physical_devices('GPU')
 # the system) will not allocate ALL of the memory on that device.
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-# Params
+# Command-line parameters
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default='MyDnCNN', type=str, help='choose a type of model')
 parser.add_argument('--batch_size', default=128, type=int, help='batch size')
