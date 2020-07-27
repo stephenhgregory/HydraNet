@@ -11,11 +11,13 @@ import os
 # Command-line parameters
 parser = argparse.ArgumentParser()
 parser.add_argument('--png_folder',
-                    default='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/Volume1/train/CoregisteredBlurryImages',
+                    default='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/Volume1/train'
+                            '/CoregisteredBlurryImages',
                     type=str,
                     help='The path to the folder containing PNG files')
 parser.add_argument('--output_folder',
-                    default='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/Volume1/train/CoregisteredBlurryImages',
+                    default='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/Volume1/train'
+                            '/CoregisteredBlurryImages',
                     type=str,
                     help='The path of the folder to which we save our .tiff')
 parser.add_argument('--output_file_name',
