@@ -48,3 +48,21 @@ python3 train.py /
 | [Volume 1 (val)](keras_implementation/data/Volume1/val)     | 29.00 dB     | 0.6466       |
 | [Volume 1 (test)](keras_implementation/data/Volume1/test)   | 28.50 dB     | 0.6720       |
 | [Volume 1 (train)](keras_implementation/data/Volume1/train) | 30.01 dB     | 0.6939       |
+
+
+## Creating TIFF from Results
+
+To convert the newly denoised PNG images after using MyDenoiser for inference, you can use the 
+[utilities/png_folder_to_tiff.py](utilities/png_folder_to_tiff.py) script by running the following
+from a command line located at *.../MyDenoiser/keras_implementation/*
+
+```
+
+python3 utilities/png_folder_to_tiff.py \
+--png_folder=data/results/<results_subfolder> \
+--output_folder=data/results/<choose_output_folder> \
+--output_file_name=<output_file_name>
+
+```
+
+**Note:** By default, the output folder of the TIFF file is the same folder as the input *png_folder*.
