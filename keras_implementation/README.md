@@ -54,7 +54,7 @@ python3 train.py /
 | train         | ![](resources/BlurryMRItrain.gif)     | ![](resources/DenoisedMRItrain.gif)     |
 
 
-## Creating TIFF from Results
+## Creating TIFF from Results - *Dependencies: ImageMagick*
 
 To convert the newly denoised PNG images after using MyDenoiser for inference, you can use the 
 [utilities/png_folder_to_tiff.py](utilities/png_folder_to_tiff.py) script by running the following
@@ -68,5 +68,6 @@ python3 utilities/png_folder_to_tiff.py \
 --output_file_name=<output_file_name>
 
 ```
+This command **will not** work if the user does not have ImageMagick installed. ImageMagick can be installed [here](https://www.tutorialspoint.com/how-to-install-imagemagick-on-ubuntu), among other places.
 
 **Note:** By default, the output folder of the TIFF file is the same folder as the input *png_folder*.
