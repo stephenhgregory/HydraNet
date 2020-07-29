@@ -291,14 +291,6 @@ def data_generator_augmented(root_dir=join('data', 'Volume1', 'train'), image_ty
     # initialize data list
     data = []
 
-    print(data_dir)
-
-    # Get the name list of all .jpg files
-    file_list = glob.glob(data_dir + '/*.jpg')
-
-    # initialize data list
-    data = []
-
     # generate patches
     print(f'The length of the file list is: {len(file_list)}')
     for i in range(len(file_list)):
