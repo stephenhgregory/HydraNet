@@ -55,7 +55,7 @@ python3 train.py /
 
 # Volume 1 Residual Patches Distribution
 
-![](resources/Volume1StdResidualPlot.png)
+![](resources/Volume1ResidualStdPlot.png)
 
 
 ## Creating TIFF from Results - *Dependencies: ImageMagick*
