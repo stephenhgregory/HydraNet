@@ -267,7 +267,8 @@ def get_residual_std(clear_patch, blurry_patch):
 
     :return:
     """
-    return np.std(image_utils.get_residual(clear_image=clear_patch, blurry_image=blurry_patch))
+    residual = image_utils.get_residual(clear_image=clear_patch, blurry_image=blurry_patch)
+    return np.std(residual)
 
 
 def generate_augmented_patches_from_file_name(file_name):
