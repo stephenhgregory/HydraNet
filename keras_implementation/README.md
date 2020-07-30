@@ -54,7 +54,7 @@ python3 train.py /
 | train         | ![](resources/BlurryMRItrain.gif)     | ![](resources/DenoisedMRItrain.gif)     |
 
 # Volume 1 Residual Patches Distribution
-![](resources/Volume1ResidualStdPlo.png)
+![](resources/Volume1ResidualStdPlot.png)
 
 
 ## Creating TIFF from Results - *Dependencies: ImageMagick*
