@@ -269,7 +269,6 @@ def plot_standard_deviations(stds):
     plt.show()
 
 
-
 def get_residual(clear_image, blurry_image):
     """
     Calculate the residual (difference) between a blurry image and a

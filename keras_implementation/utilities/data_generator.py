@@ -267,8 +267,6 @@ def get_residual_std(clear_patch, blurry_patch):
 
     :return:
     """
-
-    # Return the standard deviation of the residual between the two images
     return np.std(image_utils.get_residual(clear_image=clear_patch, blurry_image=blurry_patch))
 
 
@@ -379,10 +377,3 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
 
 if __name__ == '__main__':
     data = pair_data_generator(root_dir='../data/Volume1/train')
-
-#    print('Shape of result = ' + str(res.shape))
-#    print('Saving data...')
-#    if not os.path.exists(save_dir):
-#            os.mkdir(save_dir)
-#    np.save(save_dir+'clean_patches.npy', res)
-#    print('Done.')
