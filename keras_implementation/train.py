@@ -279,17 +279,15 @@ def main():
         print('resuming by loading epoch %03d' % initial_epoch)
         model = load_model(os.path.join(save_dir, 'model_%03d.hdf5' % initial_epoch), compile=False)
 
-    # compile the model
+    # Compile the model
     model.compile(optimizer=Adam(0.001), loss=sum_squared_error)
 
     # Train the model
     history = model.fit(my_train_datagen(batch_size=args.batch_size, data_dir=args.train_data),
                         steps_per_epoch=2000,
                         epochs=args.epoch,
-                        verbose=1,
                         initial_epoch=initial_epoch,
-                        callbacks=new_callbacks(),
-                        )
+                        callbacks=new_callbacks())
 
 
 if __name__ == '__main__':

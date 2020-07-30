@@ -1,8 +1,5 @@
-import keras_implementation.utilities.data_generator as data_generator
-import keras_implementation.utilities.image_utils as image_utils
+from keras_implementation.utilities import data_generator, image_utils, logger
 from os.path import join
-import numpy as np
-import matplotlib.pyplot as plt
 
 
 def main(data_dir):
@@ -18,8 +15,18 @@ def main(data_dir):
     # Get training examples from data_dir using data_generator
     x_original, y_original, stds = data_generator.pair_data_generator(data_dir)
 
+    # Get std[1] and corresponding x_original and y_original patch
+    std_1 = stds[1]
+    x_original_1 = x_original[1]
+    y_original_1 = y_original[1]
+
     # Plot the standard deviations
     image_utils.plot_standard_deviations(stds)
+
+    # Show the standard deviation and corresponding image patches
+    print(f'Standard Deviation = {std_1}')
+    logger.show_images([("x_original_1", x_original_1),
+                        ("y_original_1", y_original_1)])
 
 
 if __name__ == '__main__':

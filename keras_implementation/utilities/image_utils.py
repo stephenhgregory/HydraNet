@@ -8,6 +8,7 @@ import os
 from skimage.restoration import denoise_nl_means, estimate_sigma
 from skimage.measure import compare_ssim
 import matplotlib.pyplot as plt
+import seaborn as sns
 import keras_implementation.utilities.logger as logger
 
 
@@ -262,11 +263,29 @@ def plot_standard_deviations(stds):
     # Flatten the array so that it is 1-dimensional
     stds = stds.flatten()
 
-    # Plot the stds
-    fig, ax = plt.subplots()
-    ax.plot(stds)
-    ax.set_title('standard deviations of residual images')
+    # seaborn histogram
+    sns.distplot(stds, hist=True, kde=False,
+                 bins=int(20), color='blue',
+                 hist_kws={'edgecolor': 'black'})
+    # Add labels
+    plt.title('Standard deviation of residual images')
+    plt.xlabel('Residual Standard Deviation')
+    plt.ylabel('Patches')
     plt.show()
+
+
+def plot_patch(patch):
+    """
+    Takes an image patch and plots it using matplotlib
+
+    :param patch: Image patch
+    :type patch: numpy array
+
+    :return: None
+    """
+
+    # Show the image using cv2 TODO: fix documentation here
+    logger.show_images([("patch", patch)])
 
 
 def get_residual(clear_image, blurry_image):
