@@ -4,10 +4,10 @@ This file is used to train MyDenoiser
 
 import argparse
 import re
-import os, glob, datetime
+import os
+import glob
 import numpy as np
-from keras.layers import Input, Conv2D, BatchNormalization, Activation, Subtract
-from keras.models import Model, load_model
+from keras.models import load_model
 from keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
 from keras.optimizers import Adam
 import keras_implementation.utilities.data_generator as data_generator
@@ -15,7 +15,6 @@ import keras_implementation.utilities.logger as logger
 import keras_implementation.utilities.model_functions as model_functions
 import keras_implementation.utilities.image_utils as image_utils
 import keras.backend as K
-import cv2
 
 import tensorflow as tf
 
@@ -91,46 +90,6 @@ def lr_schedule(epoch):
     return lr
 
 
-def gaussian_noise_train_datagen(epoch_iter=2000, epoch_num=5, batch_size=128, data_dir=args.train_data):
-    """
-    Generator function which yields training data where a "clear" image is obtained from
-    data_dir, and a "blurry" image is obtained by adding gaussian noise to the "clear" imagef
-
-    :param epoch_iter: The number of iterations per epoch
-    :type epoch_iter: int
-    :param epoch_num: The total number of epochs
-    :type epoch_num: int
-    :param batch_size: The number of training samplesused per iteration
-    :type batch_size: int
-    :param data_dir: The directory in which our training examples are located
-    :type data_dir: str
-
-    :return: Yields a blurry image "y" and a clear image "x"
-    """
-
-    while True:
-        n_count = 0
-        if n_count == 0:
-            # print(n_count)
-            print(f'Accessing training data in: {data_dir}')
-            xs = data_generator.data_generator(data_dir)
-            assert len(xs) % args.batch_size == 0, \
-                logger.log(
-                    'make sure the last iteration has a full batchsize, '
-                    'this is important if you use batch normalization!')
-            xs = xs.astype('float32') / 255.0
-            indices = list(range(xs.shape[0]))
-            n_count = 1
-        for _ in range(epoch_num):
-            np.random.shuffle(indices)  # shuffle
-            for i in range(0, len(indices), batch_size):
-                batch_x = xs[indices[i:i + batch_size]]
-                noise = np.random.normal(0, args.sigma / 255.0, batch_x.shape)  # noise
-                # noise =  K.random_normal(ge_batch_y.shape, mean=0, stddev=args.sigma/255.0)
-                batch_y = batch_x + noise
-                yield batch_y, batch_x
-
-
 def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=args.train_data):
     """
     Generator function that yields training data samples from a specified data directory
@@ -177,9 +136,11 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
             logger.print_numpy_statistics(y, "y (standardized)")
             '''
 
+            '''Just for logging
             # Save the reversed standardization of x and y into variables
             x_reversed = image_utils.reverse_standardize(x, x_orig_mean, x_orig_std)
             y_reversed = image_utils.reverse_standardize(y, y_orig_mean, y_orig_std)
+            '''
 
             # Get a list of indices, from 0 to the total number of training examples
             indices = list(range(x.shape[0]))
@@ -224,10 +185,19 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
                 yield batch_y, batch_x
 
 
-# define loss
 def sum_squared_error(y_true, y_pred):
-    # return K.mean(K.square(y_pred - y_true), axis=-1)
-    # return K.sum(K.square(y_pred - y_true), axis=-1)/2
+    """
+    Returns sum-squared error between y_true and y_pred.
+    This is the loss function for the network
+
+    :param y_true: Target
+    :type y_true: numpy array
+    :param y_pred: Prediction
+    :type y_pred: numpy array
+
+    :return: Sum-Squared Error between the two
+    :rtype: float
+    """
     return K.sum(K.square(y_pred - y_true)) / 2
 
 
