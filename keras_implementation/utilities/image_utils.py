@@ -7,6 +7,7 @@ import numpy as np
 import os
 from skimage.restoration import denoise_nl_means, estimate_sigma
 from skimage.measure import compare_ssim
+import matplotlib.pyplot as plt
 import keras_implementation.utilities.logger as logger
 
 
@@ -246,6 +247,27 @@ def hist_match_image_folder(root_dir, blurry_dir_name, clear_dir_name, match_to_
 
                 # Save the clear image
                 cv2.imwrite(filename=os.path.join(root_dir, clear_dir_name, file_name), img=clear_image)
+
+
+def plot_standard_deviations(stds):
+    """
+    Takes a numpy array of standard deviations, performs any flattening if needed, and plots them.
+
+    :param stds: Collection of standard deviations
+    :type stds: numpy array
+
+    :return: None
+    """
+
+    # Flatten the array so that it is 1-dimensional
+    stds = stds.flatten()
+
+    # Plot the stds
+    fig, ax = plt.subplots()
+    ax.plot(stds)
+    ax.set_title('standard deviations of residual images')
+    plt.show()
+
 
 
 def get_residual(clear_image, blurry_image):

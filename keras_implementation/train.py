@@ -151,8 +151,10 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
             print(f'Accessing training data in: {data_dir}')
 
             # Get training examples from data_dir using data_generator
-            x_original = data_generator.data_generator(data_dir, image_type=data_generator.ImageType.CLEARIMAGE)
-            y_original = data_generator.data_generator(data_dir, image_type=data_generator.ImageType.BLURRYIMAGE)
+            x_original, y_original, stds = data_generator.pair_data_generator(data_dir)
+
+            # Plot the standard deviations
+            image_utils.plot_standard_deviations(stds)
 
             # Assert that the last iteration has a full batch size
             assert len(x_original) % args.batch_size == 0, \

@@ -1,0 +1,26 @@
+import keras_implementation.utilities.data_generator as data_generator
+import keras_implementation.utilities.image_utils as image_utils
+from os.path import join
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def main(data_dir):
+    """
+    The main function for this file
+
+    :param data_dir: The directory of the training data
+    :type data_dir: str
+
+    :return: None
+    """
+
+    # Get training examples from data_dir using data_generator
+    x_original, y_original, stds = data_generator.pair_data_generator(data_dir)
+
+    # Plot the standard deviations
+    image_utils.plot_standard_deviations(stds)
+
+
+if __name__ == '__main__':
+    main(data_dir=join('data', 'Volume1', 'train'))

@@ -163,7 +163,7 @@ def generate_patches(image, image_type):
     return patches
 
 
-def generate_patches_and_stds(clear_image, blurry_image):
+def generate_patches_with_std(clear_image, blurry_image):
     """
     Generates and returns a list of image patches from an input image
 
@@ -172,9 +172,9 @@ def generate_patches_and_stds(clear_image, blurry_image):
     :param blurry_image: The blurry image to generate patches from
     :type blurry_image: numpy array
 
-    :return: (clear_patches, blurry_patches): A tuple of a list of ImagePatches.
-                Each ImagePatch in the list of ImagePatches contains an image patch and the standard deviation
-                of the pixels in that image patch.
+    :return: (clear_patches, blurry_patches): A tuple of a list of tuples.
+                Each tuple in the list of tuples contains an image patch and the standard deviation of the pixels
+                in that image patch.
     :rtype: tuple
     """
 
@@ -187,9 +187,6 @@ def generate_patches_and_stds(clear_image, blurry_image):
     # Store the patches in a list
     clear_patches = []
     blurry_patches = []
-
-    # Store the stds in a list
-    stds = []
 
     # For each scale
     for scale in scales:
@@ -211,12 +208,11 @@ def generate_patches_and_stds(clear_image, blurry_image):
                 # Get the standard deviation of the residual between the two blocks
                 std = get_residual_std(clear_patch=clear_patch, blurry_patch=blurry_patch)
 
-                # Add clear_patch and blurry_patch to clear_patches blurry_patches, and add std to stds
-                clear_patches.append(clear_patch)
-                blurry_patches.append(blurry_patch)
-                stds.append(std)
+                # Add the tuple (image_patch, standard_deviation) to clear_patches AND blurry_patches
+                clear_patches.append((clear_patch, std))
+                blurry_patches.append((blurry_patch, std))
 
-    return clear_patches, blurry_patches, stds
+    return clear_patches, blurry_patches
 
 
 def generate_augmented_patches(image):
@@ -318,7 +314,6 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
     # initialize clear_data and clurry_data lists
     clear_data = []
     blurry_data = []
-    std_data = []
 
     # Iterate over the entire list of images
     for i, file_name in enumerate(os.listdir(clear_image_dir)):
@@ -340,20 +335,20 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
 
             # Generate clear and blurry patches from the clear and blurry images, respectively...
             # AND record the residual std in each of clear_patches and blurry_patches
-            clear_patches, blurry_patches, stds = generate_patches_and_stds(clear_image=clear_image,
-                                                                            blurry_image=blurry_image)
+            clear_patches, blurry_patches = generate_patches_with_std(clear_image=clear_image,
+                                                                      blurry_image=blurry_image)
 
             # Append the patches to clear_data and blurry_data
             clear_data.append(clear_patches)
             blurry_data.append(blurry_patches)
-            std_data.append(stds)
 
-    # Convert clear_data and blurry_data to numpy arrays of ints, and std_data to a numpy array of floats
-    clear_data = np.array(clear_data, dtype='uint8')
-    blurry_data = np.array(blurry_data, dtype='uint8')
-    std_data = np.array(std_data, dtype='float32')
+    # Convert clear_data and blurry_data to numpy arrays of ints
+    # clear_data = np.array(clear_data, dtype='uint8')
+    # blurry_data = np.array(blurry_data, dtype='uint8')
+    clear_data = [(np.array(clear_patch, dtype='uint8'), std) for clear_patch, std in clear_data]
+    blurry_data = [(np.array(blurry_patch, dtype='uint8'), std) for blurry_patch, std in clear_data]
 
-    # Reshape clear_data, blurry_data, and std_data
+    # Reshape clear_data and blurry_data
     clear_data = clear_data.reshape((clear_data.shape[0] * clear_data.shape[1],
                                      clear_data.shape[2],
                                      clear_data.shape[3],
@@ -362,7 +357,6 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
                                        blurry_data.shape[2],
                                        blurry_data.shape[3],
                                        1))
-    std_data = std_data.reshape((std_data.shape[0] * std_data.shape[1]))
 
     # Get the number of elements to discard
     num_elements_to_discard = len(clear_data) - len(clear_data) // batch_size * batch_size
@@ -374,11 +368,155 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
     clear_data = np.delete(clear_data, range(num_elements_to_discard), axis=0)
     blurry_data = np.delete(blurry_data, range(num_elements_to_discard), axis=0)
 
-    return clear_data, blurry_data, std_data
+    return clear_data, blurry_data;
+
+
+def data_generator(root_dir=join('data', 'Volume1', 'train'),
+                   image_type=ImageType.CLEARIMAGE,
+                   image_format=ImageFormat.PNG):
+    """
+    Provides a numpy array of training examples, given a path to a training directory
+
+    :param image_format: The format of image that our training data is (JPG or PNG)
+    :type image_format: ImageFormat
+    :param root_dir: The path of the training data directory
+    :type root_dir: str
+    :param image_type: The type of image that we wish to generate training data of
+    :type image_type: ImageType
+    :param verbose: Whether or not we want to log additional info about this file
+    :type verbose: bool
+
+    :return: training data
+    :rtype: numpy.array
+    """
+
+    if image_type == ImageType.CLEARIMAGE:
+        image_dir = join(root_dir, 'ClearImages')
+    elif image_type == ImageType.BLURRYIMAGE:
+        image_dir = join(root_dir, 'CoregisteredBlurryImages')
+
+    # If data is PNGs, get the list of all .png files
+    if image_format == ImageFormat.PNG:
+        file_list = sorted(glob.glob(image_dir + '/*.png'))
+    # Else if data is JPGs, get the list of all .jpg files
+    elif image_format == ImageFormat.JPG:
+        file_list = sorted(glob.glob(image_dir + '/*.jpg'))
+
+    # initialize data list
+    data = []
+
+    # generate patches
+    print(f'The length of the file list is: {len(file_list)}')
+
+    # Iterate over the entire list of images
+    for i, file_name in enumerate(os.listdir(image_dir)):
+        if file_name.endswith('.jpg') or file_name.endswith('.png'):
+
+            # Read the image as a numpy array
+            image = cv2.imread(os.path.join(image_dir, file_name), 0)
+
+            # If the image is a blurry image
+            if image_type == ImageType.BLURRYIMAGE:
+                # Read the corresponding Clear Image
+                clear_image = cv2.imread(os.path.join(root_dir, 'ClearImages', file_name))
+
+                # Histogram equalize the image
+                equalized_image = image_utils.hist_match(image, image).astype('uint8')
+
+                ''' Just logging 
+                # Show the blurry image (Pre-Histogram Equalization), clear image, and
+                # blurry image (Post-Histogram Equalization)
+                logger.show_images([(f'CoregisteredBlurryImage (Pre-Histogram Equalization)', image),
+                                    (f'Matching Clear Image', clear_image),
+                                    ('CoregisteredBlurryImage (Post-Histogram Equalization)', equalized_image)])
+                '''
+
+                # Set our blurry image equal to the histogram matched image
+                image = equalized_image
+
+                # Generate patches from the blurry image
+                patches = generate_patches(image, ImageType.BLURRYIMAGE)
+
+            elif image_type == ImageType.CLEARIMAGE:
+                # Generate patches from the clear image
+                patches = generate_patches(image, ImageType.CLEARIMAGE)
+
+            # Append the patches to data
+            data.append(patches)
+
+    # Convert data to a numpy array of ints
+    data = np.array(data, dtype='uint8')
+
+    # reshape data
+    data = data.reshape((data.shape[0] * data.shape[1], data.shape[2], data.shape[3], 1))
+
+    # Get the number of elements of n to discard
+    discard_n = len(data) - len(data) // batch_size * batch_size;
+
+    # Remove the range of "discard_n" from data
+    data = np.delete(data, range(discard_n), axis=0)
+
+    return data
+
+
+def data_generator_augmented(root_dir=join('data', 'Volume1', 'train'), image_type=ImageType.CLEARIMAGE, verbose=False,
+                             image_format=ImageFormat.PNG):
+    """
+    Provides a numpy array of training examples, given a path to a training directory.
+    Adds augmentation (flipping, rotation, etc.) to the training examples for rotational and flipping invariance
+
+    :param root_dir: The path of the training data directory
+    :type root_dir: str
+    :param image_type: The type of image that we wish to generate training data of
+    :type image_type: ImageType
+    :param verbose: Whether or not we want to log additional info about this file
+    :type verbose: bool
+    :return: training data
+    :rtype: numpy.array
+    """
+
+    if image_type == ImageType.CLEARIMAGE:
+        image_dir = join(root_dir, 'ClearImages')
+    elif image_type == ImageType.BLURRYIMAGE:
+        image_dir = join(root_dir, 'CoregisteredBlurryImages')
+
+    # If data is PNGs, get the list of all .png files
+    if image_format == ImageFormat.PNG:
+        file_list = sorted(glob.glob(image_dir + '/*.png'))
+    # Else if data is JPGs, get the list of all .jpg files
+    elif image_format == ImageFormat.JPG:
+        file_list = sorted(glob.glob(image_dir + '/*.jpg'))
+
+    # initialize data list
+    data = []
+
+    # generate patches
+    print(f'The length of the file list is: {len(file_list)}')
+    for i in range(len(file_list)):
+        patch = generate_augmented_patches_from_file_name(file_list[i])
+
+        data.append(patch)
+        if verbose:
+            print(str(i + 1) + '/' + str(len(file_list)) + ' is done ^_^')
+
+    # Convert data to a numpy array of ints
+    data = np.array(data, dtype='uint8')
+
+    # reshape data
+    data = data.reshape((data.shape[0] * data.shape[1], data.shape[2], data.shape[3], 1))
+
+    # Get the number of elements of n to discard
+    discard_n = len(data) - len(data) // batch_size * batch_size;
+
+    # Remove the range of "discard_n" from data
+    data = np.delete(data, range(discard_n), axis=0)
+    print('^_^-training data finished-^_^')
+
+    return data
 
 
 if __name__ == '__main__':
-    data = pair_data_generator(root_dir='../data/Volume1/train')
+    data = data_generator(data_dir='data/Train400')
 
 #    print('Shape of result = ' + str(res.shape))
 #    print('Saving data...')
