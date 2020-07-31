@@ -11,6 +11,7 @@ from keras.models import load_model
 from keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
 from keras.optimizers import Adam
 from keras_implementation.utilities import data_generator, logger, model_functions, image_utils
+from keras_implementation.utilities.data_generator import NoiseLevel
 import keras.backend as K
 
 import tensorflow as tf
@@ -88,7 +89,9 @@ def lr_schedule(epoch):
 
 
 def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=args.train_data,
-                     noise_level=data_generator.NoiseLevel.LOW):
+                     noise_level=NoiseLevel.LOW,
+                     low_noise_threshold=0.05,
+                     high_noise_threshold=0.15):
     """
     Generator function that yields training data samples from a specified data directory
 
@@ -98,8 +101,14 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
     :param data_dir: The directory in which training examples are stored
     :param noise_level: The level of noise of the training data that we want
     :type noise_level: NoiseLevel
+    :param low_noise_threshold: The lower residual image standard deviation threshold used to determine which data
+                                should go to which network
+    :type low_noise_threshold: float
+    :param high_noise_threshold: The upper residual image standard deviation threshold used to determine which data
+                                should go to which network
+    :type high_noise_threshold: float
 
-    :return: Yields a training example x and noisey image y
+    :return: Yields a training example x and noisy image y
     """
     # Loop the following indefinitely...
     while True:
@@ -113,10 +122,53 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
             # Get training examples from data_dir using data_generator
             x_original, y_original = data_generator.pair_data_generator(data_dir, noise_level)
 
-            pass
+            # Create a list to hold all of the residual stds, and a list to hold the filtered x_original and y_original
+            stds = []
+            x_filtered = []
+            y_filtered = []
 
+            # Iterate over all of the image patches
+            for x_patch, y_patch in zip(x_original, y_original):
+
+                # If the patch is black (i.e. the max px value < 10), just skip this training example
+                if np.max(x_patch) < 10:
+                    continue
+
+                # Get the residual std
+                std = data_generator.get_residual_std(clear_patch=x_patch,
+                                                      blurry_patch=y_patch)
+
+                # Add the patches to the list depending upon whether they are the proper noise level
+                if noise_level == NoiseLevel.LOW and std < low_noise_threshold:
+                    x_filtered.append(x_patch)
+                    y_filtered.append(y_patch)
+                    stds.append(std)
+                    continue
+                elif noise_level == NoiseLevel.MEDIUM and low_noise_threshold < std < high_noise_threshold:
+                    x_filtered.append(x_patch)
+                    y_filtered.append(y_patch)
+                    stds.append(std)
+                    continue
+                elif noise_level == NoiseLevel.HIGH and std > high_noise_threshold:
+                    x_filtered.append(x_patch)
+                    y_filtered.append(y_patch)
+                    stds.append(std)
+                    continue
+
+            # Convert image patches and stds into numpy arrays
+            x_filtered = np.array(x_filtered, dtype='uint8')
+            y_filtered = np.array(y_filtered, dtype='uint8')
+            stds = np.array(stds, dtype='float64')
+
+            # Convert image patches and stds from (...,x,) to (...,x,1) shaped arrays
+            x_filtered = x_filtered[..., np.newaxis]
+            y_filtered = y_filtered[..., np.newaxis]
+            stds = stds[..., np.newaxis]
+
+            ''' Just logging
             # Plot the residual standard deviation
-            # image_utils.plot_standard_deviations(stds)
+            image_utils.plot_standard_deviations(stds)
+            '''
 
             # Assert that the last iteration has a full batch size
             assert len(x_original) % args.batch_size == 0, \
@@ -131,8 +183,8 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
             # Standardize x and y to have a mean of 0 and standard deviation of 1
             # NOTE: x and y px values are centered at 0, meaning there are negative px values. We might have trouble
             # visualizing px that aren't either from [0, 255] or [0, 1], so just watch out for that
-            x, x_orig_mean, x_orig_std = image_utils.standardize(x_original)
-            y, y_orig_mean, y_orig_std = image_utils.standardize(y_original)
+            x, x_orig_mean, x_orig_std = image_utils.standardize(x_filtered)
+            y, y_orig_mean, y_orig_std = image_utils.standardize(x_filtered)
 
             ''' Just logging 
             logger.print_numpy_statistics(x, "x (standardized)")

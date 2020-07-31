@@ -226,31 +226,7 @@ def generate_patch_pairs(clear_image, blurry_image, noise_level=NoiseLevel.LOW, 
                 clear_patches.append(clear_patch)
                 blurry_patches.append(blurry_patch)
 
-                # Get the standard deviation of the residual between the two blocks
-                # std = get_residual_std(clear_patch=clear_patch, blurry_patch=blurry_patch)
 
-                # # Skip this patch preemptively if it's black (max pixel value is < 10)
-                # if np.max(clear_patch) < 10:
-                #     continue
-                #
-                # # Add the patches to the list depending upon whether they are the proper noise level
-                # if noise_level == NoiseLevel.LOW and std < low_noise_threshold:
-                #     # Add clear_patch and blurry_patch to clear_patches and blurry_patches
-                #     clear_patches.append(clear_patch)
-                #     blurry_patches.append(blurry_patch)
-                #     # continue
-                #
-                # elif noise_level == NoiseLevel.MEDIUM and low_noise_threshold < std < high_noise_threshold:
-                #     # Add clear_patch and blurry_patch to clear_patches and blurry_patches
-                #     clear_patches.append(clear_patch)
-                #     blurry_patches.append(blurry_patch)
-                #     # continue
-                #
-                # elif noise_level == NoiseLevel.HIGH and std > high_noise_threshold:
-                #     # Add clear_patch and blurry_patch to clear_patches and blurry_patches
-                #     clear_patches.append(clear_patch)
-                #     blurry_patches.append(blurry_patch)
-                #     # continue
 
     return clear_patches, blurry_patches
 
