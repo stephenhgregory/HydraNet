@@ -227,7 +227,6 @@ def generate_patch_pairs(clear_image, blurry_image, noise_level=NoiseLevel.LOW, 
                 blurry_patches.append(blurry_patch)
 
 
-
     return clear_patches, blurry_patches
 
 

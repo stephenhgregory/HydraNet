@@ -29,7 +29,7 @@ parser.add_argument('--model', default='MyDnCNN', type=str, help='choose a type 
 parser.add_argument('--batch_size', default=128, type=int, help='batch size')
 parser.add_argument('--train_data', default='data/Volume1/train', type=str, help='path of train data')
 parser.add_argument('--val_data', default='data/Volume1/val', type=str, help='path of val data')
-parser.add_argument('--sigma', default=25, type=int, help='noise level')
+parser.add_argument('--noise_level', default=25, type=str, help='Noise Level: Can be loew, medium, or high')
 parser.add_argument('--epoch', default=300, type=int, help='number of train epoches')
 parser.add_argument('--lr', default=1e-3, type=float, help='initial learning rate for Adam')
 parser.add_argument('--save_every', default=1000, type=int, help='save model at after seeing x batches')
@@ -37,7 +37,17 @@ args = parser.parse_args()
 
 save_dir = os.path.join('/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation',
                         'models',
-                        args.model)
+                        args.model + '_' + args.noise_level)
+
+noise_level = NoiseLevel.LOW
+
+# Set the noise level to decided which model to train
+if args.noise_level == 'low':
+    noise_level = NoiseLevel.LOW
+if args.noise_level == 'medium':
+    noise_level = NoiseLevel.MEDIUM
+if args.noise_level == 'high':
+    noise_level = NoiseLevel.HIGH
 
 # Create the <save_dir> folder if it doesn't exist already
 if not os.path.exists(save_dir):
