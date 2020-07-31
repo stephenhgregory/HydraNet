@@ -10,10 +10,7 @@ import numpy as np
 from keras.models import load_model
 from keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
 from keras.optimizers import Adam
-import keras_implementation.utilities.data_generator as data_generator
-import keras_implementation.utilities.logger as logger
-import keras_implementation.utilities.model_functions as model_functions
-import keras_implementation.utilities.image_utils as image_utils
+from keras_implementation.utilities import data_generator, logger, model_functions, image_utils
 import keras.backend as K
 
 import tensorflow as tf
@@ -90,7 +87,8 @@ def lr_schedule(epoch):
     return lr
 
 
-def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=args.train_data):
+def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=args.train_data,
+                     noise_level=data_generator.NoiseLevel.LOW):
     """
     Generator function that yields training data samples from a specified data directory
 
@@ -98,6 +96,9 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
     :param num_epochs: The total number of epochs
     :param batch_size: The number of training examples for each training iteration
     :param data_dir: The directory in which training examples are stored
+    :param noise_level: The level of noise of the training data that we want
+    :type noise_level: NoiseLevel
+
     :return: Yields a training example x and noisey image y
     """
     # Loop the following indefinitely...
@@ -110,10 +111,12 @@ def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=arg
             print(f'Accessing training data in: {data_dir}')
 
             # Get training examples from data_dir using data_generator
-            x_original, y_original, stds = data_generator.pair_data_generator(data_dir)
+            x_original, y_original = data_generator.pair_data_generator(data_dir, noise_level)
 
-            # Plot the standard deviations
-            image_utils.plot_standard_deviations(stds)
+            pass
+
+            # Plot the residual standard deviation
+            # image_utils.plot_standard_deviations(stds)
 
             # Assert that the last iteration has a full batch size
             assert len(x_original) % args.batch_size == 0, \

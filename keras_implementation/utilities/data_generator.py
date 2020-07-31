@@ -14,13 +14,20 @@ batch_size = 128
 
 
 class ImageType(Enum):
-    """An Enumerator representing a Clear Image and a Blurry Image"""
+    """An Enum representing a Clear Image and a Blurry Image"""
     CLEARIMAGE = 1
     BLURRYIMAGE = 2
 
 
+class NoiseLevel(Enum):
+    """An Enum representing Low, Medium, or High Noise level"""
+    LOW = 1
+    MEDIUM = 2
+    HIGH = 3
+
+
 class ImageFormat(Enum):
-    """An Enumerator representing whether an image is a JPG image or a PNG image"""
+    """An Enum representing whether an image is a JPG image or a PNG image"""
     JPG = 1
     PNG = 2
 
@@ -127,7 +134,7 @@ def generate_patches_from_file_name(file_name):
     return generate_patches(image)
 
 
-def generate_patches(image, image_type):
+def generate_patches_old(image, image_type):
     """
     Generates and returns a list of image patches from an input image
 
@@ -163,7 +170,8 @@ def generate_patches(image, image_type):
     return patches
 
 
-def generate_patches_and_stds(clear_image, blurry_image):
+def generate_patch_pairs(clear_image, blurry_image, noise_level=NoiseLevel.LOW, low_noise_threshold=0.05,
+                         high_noise_threshold=1.5):
     """
     Generates and returns a list of image patches from an input image
 
@@ -171,6 +179,15 @@ def generate_patches_and_stds(clear_image, blurry_image):
     :type clear_image: numpy array
     :param blurry_image: The blurry image to generate patches from
     :type blurry_image: numpy array
+    :param noise_level: The noise level of the data that we want
+    :type noise_level: float
+    :param low_noise_threshold: The lower residual image standard deviation threshold used to determine which data
+                                should go to which network
+    :type low_noise_threshold: float
+    :param high_noise_threshold: The upper residual image standard deviation threshold used to determine which data
+                                should go to which network
+    :type high_noise_threshold: float
+
 
     :return: (clear_patches, blurry_patches): A tuple of a list of ImagePatches.
                 Each ImagePatch in the list of ImagePatches contains an image patch and the standard deviation
@@ -187,9 +204,6 @@ def generate_patches_and_stds(clear_image, blurry_image):
     # Store the patches in a list
     clear_patches = []
     blurry_patches = []
-
-    # Store the stds in a list
-    stds = []
 
     # For each scale
     for scale in scales:
@@ -208,15 +222,37 @@ def generate_patches_and_stds(clear_image, blurry_image):
                 clear_patch = clear_image_scaled[i:i + patch_size, j:j + patch_size]
                 blurry_patch = blurry_image_scaled[i:i + patch_size, j:j + patch_size]
 
-                # Get the standard deviation of the residual between the two blocks
-                std = get_residual_std(clear_patch=clear_patch, blurry_patch=blurry_patch)
-
-                # Add clear_patch and blurry_patch to clear_patches blurry_patches, and add std to stds
+                # Add the clear_patch and blurry_patch to clear_patches and blurry_patches, respectively
                 clear_patches.append(clear_patch)
                 blurry_patches.append(blurry_patch)
-                stds.append(std)
 
-    return clear_patches, blurry_patches, stds
+                # Get the standard deviation of the residual between the two blocks
+                # std = get_residual_std(clear_patch=clear_patch, blurry_patch=blurry_patch)
+
+                # # Skip this patch preemptively if it's black (max pixel value is < 10)
+                # if np.max(clear_patch) < 10:
+                #     continue
+                #
+                # # Add the patches to the list depending upon whether they are the proper noise level
+                # if noise_level == NoiseLevel.LOW and std < low_noise_threshold:
+                #     # Add clear_patch and blurry_patch to clear_patches and blurry_patches
+                #     clear_patches.append(clear_patch)
+                #     blurry_patches.append(blurry_patch)
+                #     # continue
+                #
+                # elif noise_level == NoiseLevel.MEDIUM and low_noise_threshold < std < high_noise_threshold:
+                #     # Add clear_patch and blurry_patch to clear_patches and blurry_patches
+                #     clear_patches.append(clear_patch)
+                #     blurry_patches.append(blurry_patch)
+                #     # continue
+                #
+                # elif noise_level == NoiseLevel.HIGH and std > high_noise_threshold:
+                #     # Add clear_patch and blurry_patch to clear_patches and blurry_patches
+                #     clear_patches.append(clear_patch)
+                #     blurry_patches.append(blurry_patch)
+                #     # continue
+
+    return clear_patches, blurry_patches
 
 
 def generate_augmented_patches(image):
@@ -289,8 +325,26 @@ def generate_augmented_patches_from_file_name(file_name):
     return generate_augmented_patches(image)
 
 
+def separate_images_and_stds(patches_and_stds):
+    """
+    Separates a numpy array of image patches and residual standard deviations
+    into separate numpy arrays of patches and standard deviations, respectively
+
+    :param patches_and_stds: 2D Numpy array of image patches and stds, where patches are the first
+                                column of the array, and stds are the second column of the array
+
+    :return: (patches, stds): a numpy array of image patches and a numpy array of residual stds
+    :rtype: tuple
+    """
+    # Get patches and stds
+    patches = patches_and_stds[:, 0]
+    stds = patches_and_stds[:, 1]
+    return patches, stds
+
+
 def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
-                        image_format=ImageFormat.PNG):
+                        image_format=ImageFormat.PNG,
+                        noise_level=NoiseLevel.LOW):
     """
     Provides a numpy array of training examples, given a path to a training directory
 
@@ -298,6 +352,8 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
     :type image_format: ImageFormat
     :param root_dir: The path of the training data directory
     :type root_dir: str
+    :param noise_level: The level of noise of the training data that we want
+    :type noise_level: NoiseLevel
 
     :return: training data
     :rtype: numpy.array
@@ -317,7 +373,6 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
     # initialize clear_data and clurry_data lists
     clear_data = []
     blurry_data = []
-    std_data = []
 
     # Iterate over the entire list of images
     for i, file_name in enumerate(os.listdir(clear_image_dir)):
@@ -339,18 +394,17 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
 
             # Generate clear and blurry patches from the clear and blurry images, respectively...
             # AND record the residual std in each of clear_patches and blurry_patches
-            clear_patches, blurry_patches, stds = generate_patches_and_stds(clear_image=clear_image,
-                                                                            blurry_image=blurry_image)
+            clear_patches, blurry_patches = generate_patch_pairs(clear_image=clear_image,
+                                                                 blurry_image=blurry_image,
+                                                                 noise_level=noise_level)
 
             # Append the patches to clear_data and blurry_data
             clear_data.append(clear_patches)
             blurry_data.append(blurry_patches)
-            std_data.append(stds)
 
-    # Convert clear_data and blurry_data to numpy arrays of ints, and std_data to a numpy array of floats
+    # Convert clear_data and blurry_data to numpy arrays of ints
     clear_data = np.array(clear_data, dtype='uint8')
     blurry_data = np.array(blurry_data, dtype='uint8')
-    std_data = np.array(std_data, dtype='float32')
 
     # Reshape clear_data, blurry_data, and std_data
     clear_data = clear_data.reshape((clear_data.shape[0] * clear_data.shape[1],
@@ -361,7 +415,6 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
                                        blurry_data.shape[2],
                                        blurry_data.shape[3],
                                        1))
-    std_data = std_data.reshape((std_data.shape[0] * std_data.shape[1]))
 
     # Get the number of elements to discard
     num_elements_to_discard = len(clear_data) - len(clear_data) // batch_size * batch_size
@@ -373,7 +426,7 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
     clear_data = np.delete(clear_data, range(num_elements_to_discard), axis=0)
     blurry_data = np.delete(blurry_data, range(num_elements_to_discard), axis=0)
 
-    return clear_data, blurry_data, std_data
+    return clear_data, blurry_data
 
 
 if __name__ == '__main__':

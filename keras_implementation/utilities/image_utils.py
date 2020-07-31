@@ -274,20 +274,6 @@ def plot_standard_deviations(stds):
     plt.show()
 
 
-def plot_patch(patch):
-    """
-    Takes an image patch and plots it using matplotlib
-
-    :param patch: Image patch
-    :type patch: numpy array
-
-    :return: None
-    """
-
-    # Show the image using cv2 TODO: fix documentation here
-    logger.show_images([("patch", patch)])
-
-
 def get_residual(clear_image, blurry_image):
     """
     Calculate the residual (difference) between a blurry image and a
