@@ -25,12 +25,14 @@ def main(root_dir=(join(Path(__file__).resolve().parents[1], 'data'))):
     # Iterate over each volume in the root data directory
     for folder_name in os.listdir(root_dir):
         print(join(root_dir, folder_name))
-        create_train_test_val_dirs(join(root_dir, folder_name))
-        populate_train_test_val_dirs_nonrandomly(join(root_dir, folder_name), preliminary_clahe=True)
+        if folder_name != 'results':
+            create_train_test_val_dirs(join(root_dir, folder_name))
+            populate_train_test_val_dirs_nonrandomly(join(root_dir, folder_name), preliminary_clahe=True)
 
     # Get and save the residuals between ClearImages and CoregisteredBlurryImages
     for folder_name in os.listdir(root_dir):
-        create_and_populate_residual_dirs(join(root_dir, folder_name))
+        if folder_name != 'results':
+            create_and_populate_residual_dirs(join(root_dir, folder_name))
 
 
 def create_train_test_val_dirs(root_dir):

@@ -37,7 +37,7 @@ args = parser.parse_args()
 
 save_dir = os.path.join('/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation',
                         'models',
-                        args.model + '_' + args.noise_level)
+                        args.model + '_' + args.noise_level + '_noise')
 
 noise_level = NoiseLevel.LOW
 

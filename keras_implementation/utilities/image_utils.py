@@ -288,6 +288,10 @@ def get_residual(clear_image, blurry_image):
     :rtype: numpy array
     """
 
+    # Convert blurry_image and clear_image into 2 dimensional arrays -- from (x,x,1) to (x,x,)
+    blurry_image = blurry_image.reshape(blurry_image.shape[0], blurry_image.shape[1])
+    clear_image = clear_image.reshape(clear_image.shape[0], clear_image.shape[1])
+
     # Throw away the SSIM score and keep the residual between the two images
     (_, residual) = compare_ssim(blurry_image, clear_image, full=True)
 
