@@ -98,7 +98,10 @@ def lr_schedule(epoch):
     return lr
 
 
-def my_train_datagen(epoch_iter=2000, num_epochs=5, batch_size=128, data_dir=args.train_data,
+def my_train_datagen(epoch_iter=2000,
+                     num_epochs=5,
+                     batch_size=128,
+                     data_dir=args.train_data,
                      noise_level=NoiseLevel.LOW,
                      low_noise_threshold=0.05,
                      high_noise_threshold=0.15):
@@ -348,7 +351,9 @@ def main():
     model.compile(optimizer=Adam(0.001), loss=sum_squared_error)
 
     # Train the model
-    history = model.fit(my_train_datagen(batch_size=args.batch_size, data_dir=args.train_data),
+    history = model.fit(my_train_datagen(batch_size=args.batch_size,
+                                         data_dir=args.train_data,
+                                         noise_level=noise_level),
                         steps_per_epoch=2000,
                         epochs=args.epoch,
                         initial_epoch=initial_epoch,
