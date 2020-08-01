@@ -459,7 +459,7 @@ def data_generator(root_dir=join('data', 'Volume1', 'train'),
     return data
 
 
-def data_generator_augmented(root_dir=join('data', 'Volume1', 'train'), image_type=ImageType.CLEARIMAGE, verbose=False,
+def data_generator_augmented(root_dir=join('..', 'data', 'Volume1', 'train'), image_type=ImageType.CLEARIMAGE, verbose=False,
                              image_format=ImageFormat.PNG):
     """
     Provides a numpy array of training examples, given a path to a training directory.
@@ -516,7 +516,7 @@ def data_generator_augmented(root_dir=join('data', 'Volume1', 'train'), image_ty
 
 
 if __name__ == '__main__':
-    data = data_generator(data_dir='data/Train400')
+    data = data_generator(root_dir='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/Volume1/train')
 
 #    print('Shape of result = ' + str(res.shape))
 #    print('Saving data...')

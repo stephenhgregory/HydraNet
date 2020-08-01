@@ -385,11 +385,13 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
     clear_data = clear_data.reshape((clear_data.shape[0] * clear_data.shape[1],
                                      clear_data.shape[2],
                                      clear_data.shape[3],
-                                     1))
+                                     1
+                                     ))
     blurry_data = blurry_data.reshape((blurry_data.shape[0] * blurry_data.shape[1],
                                        blurry_data.shape[2],
                                        blurry_data.shape[3],
-                                       1))
+                                       1
+                                       ))
 
     # Get the number of elements to discard
     num_elements_to_discard = len(clear_data) - len(clear_data) // batch_size * batch_size

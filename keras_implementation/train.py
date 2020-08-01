@@ -104,7 +104,7 @@ def my_train_datagen(epoch_iter=2000,
                      data_dir=args.train_data,
                      noise_level=NoiseLevel.LOW,
                      low_noise_threshold=0.05,
-                     high_noise_threshold=0.15):
+                     high_noise_threshold=0.2):
     """
     Generator function that yields training data samples from a specified data directory
 
@@ -133,7 +133,7 @@ def my_train_datagen(epoch_iter=2000,
             print(f'Accessing training data in: {data_dir}')
 
             # Get training examples from data_dir using data_generator
-            x_original, y_original = data_generator.pair_data_generator(data_dir, noise_level)
+            x_original, y_original = data_generator.pair_data_generator(data_dir, noise_level=noise_level)
 
             # Create a list to hold all of the residual stds, and a list to hold the filtered x_original and y_original
             stds = []
@@ -174,8 +174,8 @@ def my_train_datagen(epoch_iter=2000,
             stds = np.array(stds, dtype='float64')
 
             # Convert image patches and stds from (...,x,) to (...,x,1) shaped arrays
-            x_filtered = x_filtered[..., np.newaxis]
-            y_filtered = y_filtered[..., np.newaxis]
+            # x_filtered = x_filtered[..., np.newaxis]
+            # y_filtered = y_filtered[..., np.newaxis]
             stds = stds[..., np.newaxis]
 
             ''' Just logging
