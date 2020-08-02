@@ -103,8 +103,8 @@ def my_train_datagen(epoch_iter=2000,
                      batch_size=128,
                      data_dir=args.train_data,
                      noise_level=NoiseLevel.LOW,
-                     low_noise_threshold=0.15,
-                     high_noise_threshold=0.2,
+                     low_noise_threshold=0.05,
+                     high_noise_threshold=0.25,
                      is_test_time = False):
     """
     Generator function that yields training data samples from a specified data directory
