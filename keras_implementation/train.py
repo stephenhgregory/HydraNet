@@ -104,8 +104,7 @@ def my_train_datagen(epoch_iter=2000,
                      data_dir=args.train_data,
                      noise_level=NoiseLevel.LOW,
                      low_noise_threshold=0.05,
-                     high_noise_threshold=0.25,
-                     is_test_time = False):
+                     high_noise_threshold=0.1):
     """
     Generator function that yields training data samples from a specified data directory
 
@@ -179,10 +178,6 @@ def my_train_datagen(epoch_iter=2000,
                     y_high_noise.append(y_patch)
                     stds_high_noise.append(std)
                     continue
-
-            # If we're simply getting data at test time, return all of the patches and stds for the 3 categories now
-            if is_test_time:
-                return
 
             # Get x_filtered based upon the noise level that we're looking for
             if noise_level == NoiseLevel.LOW:
