@@ -103,8 +103,9 @@ def my_train_datagen(epoch_iter=2000,
                      batch_size=128,
                      data_dir=args.train_data,
                      noise_level=NoiseLevel.LOW,
-                     low_noise_threshold=0.05,
-                     high_noise_threshold=0.2):
+                     low_noise_threshold=0.15,
+                     high_noise_threshold=0.2,
+                     is_test_time = False):
     """
     Generator function that yields training data samples from a specified data directory
 
@@ -120,6 +121,8 @@ def my_train_datagen(epoch_iter=2000,
     :param high_noise_threshold: The upper residual image standard deviation threshold used to determine which data
                                 should go to which network
     :type high_noise_threshold: float
+    :param is_test_time: True if we wish to get data at test time, False if this is used for training
+    :type is_test_time: bool
 
     :return: Yields a training example x and noisy image y
     """
@@ -133,9 +136,18 @@ def my_train_datagen(epoch_iter=2000,
             print(f'Accessing training data in: {data_dir}')
 
             # Get training examples from data_dir using data_generator
-            x_original, y_original = data_generator.pair_data_generator(data_dir, noise_level=noise_level)
+            x_original, y_original = data_generator.pair_data_generator(data_dir)
 
-            # Create a list to hold all of the residual stds, and a list to hold the filtered x_original and y_original
+            # Create lists to store all of the patches and stds for each noise level category
+            x_low_noise = []
+            y_low_noise = []
+            stds_low_noise = []
+            x_medium_noise = []
+            y_medium_noise = []
+            stds_medium_noise = []
+            x_high_noise = []
+            y_high_noise = []
+            stds_high_noise = []
             stds = []
             x_filtered = []
             y_filtered = []
@@ -151,32 +163,54 @@ def my_train_datagen(epoch_iter=2000,
                 std = data_generator.get_residual_std(clear_patch=x_patch,
                                                       blurry_patch=y_patch)
 
-                # Add the patches to the list depending upon whether they are the proper noise level
-                if noise_level == NoiseLevel.LOW and std < low_noise_threshold:
-                    x_filtered.append(x_patch)
-                    y_filtered.append(y_patch)
-                    stds.append(std)
+                # Add the patches and their residual stds to their corresponding lists based on noise level
+                if std < low_noise_threshold:
+                    x_low_noise.append(x_patch)
+                    y_low_noise.append(y_patch)
+                    stds_low_noise.append(std)
                     continue
-                elif noise_level == NoiseLevel.MEDIUM and low_noise_threshold < std < high_noise_threshold:
-                    x_filtered.append(x_patch)
-                    y_filtered.append(y_patch)
-                    stds.append(std)
+                elif low_noise_threshold < std < high_noise_threshold:
+                    x_medium_noise.append(x_patch)
+                    y_medium_noise.append(y_patch)
+                    stds_medium_noise.append(std)
                     continue
-                elif noise_level == NoiseLevel.HIGH and std > high_noise_threshold:
-                    x_filtered.append(x_patch)
-                    y_filtered.append(y_patch)
-                    stds.append(std)
+                elif std > high_noise_threshold:
+                    x_high_noise.append(x_patch)
+                    y_high_noise.append(y_patch)
+                    stds_high_noise.append(std)
                     continue
 
+            # If we're simply getting data at test time, return all of the patches and stds for the 3 categories now
+            if is_test_time:
+                return
+
+            # Get x_filtered based upon the noise level that we're looking for
+            if noise_level == NoiseLevel.LOW:
+                x_filtered = x_low_noise
+                y_filtered = y_low_noise
+                stds = stds_low_noise
+            elif noise_level == NoiseLevel.MEDIUM:
+                x_filtered = x_medium_noise
+                y_filtered = y_medium_noise
+                stds = stds_medium_noise
+            elif noise_level == NoiseLevel.HIGH:
+                x_filtered = x_high_noise
+                y_filtered = y_high_noise
+                stds = stds_high_noise
+
             # Convert image patches and stds into numpy arrays
+            x_low_noise = np.array(x_low_noise, dtype='uint8')
+            y_low_noise = np.array(y_low_noise, dtype='uint8')
+            stds_low_noise = np.array(stds_low_noise, dtype='float64')
+            x_medium_noise = np.array(x_medium_noise, dtype='uint8')
+            y_medium_noise = np.array(y_medium_noise, dtype='uint8')
+            stds_medium_noise = np.array(stds_medium_noise, dtype='float64')
+            x_high_noise = np.array(x_high_noise, dtype='uint8')
+            y_high_noise = np.array(y_high_noise, dtype='uint8')
+            stds_high_noise = np.array(stds_high_noise, dtype='float64')
             x_filtered = np.array(x_filtered, dtype='uint8')
             y_filtered = np.array(y_filtered, dtype='uint8')
             stds = np.array(stds, dtype='float64')
-
-            # Convert image patches and stds from (...,x,) to (...,x,1) shaped arrays
-            # x_filtered = x_filtered[..., np.newaxis]
-            # y_filtered = y_filtered[..., np.newaxis]
-            stds = stds[..., np.newaxis]
 
             ''' Just logging
             # Plot the residual standard deviation

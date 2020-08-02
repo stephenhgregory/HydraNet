@@ -170,8 +170,7 @@ def generate_patches_old(image, image_type):
     return patches
 
 
-def generate_patch_pairs(clear_image, blurry_image, noise_level=NoiseLevel.LOW, low_noise_threshold=0.05,
-                         high_noise_threshold=1.5):
+def generate_patch_pairs(clear_image, blurry_image):
     """
     Generates and returns a list of image patches from an input image
 
@@ -179,15 +178,6 @@ def generate_patch_pairs(clear_image, blurry_image, noise_level=NoiseLevel.LOW, 
     :type clear_image: numpy array
     :param blurry_image: The blurry image to generate patches from
     :type blurry_image: numpy array
-    :param noise_level: The noise level of the data that we want
-    :type noise_level: float
-    :param low_noise_threshold: The lower residual image standard deviation threshold used to determine which data
-                                should go to which network
-    :type low_noise_threshold: float
-    :param high_noise_threshold: The upper residual image standard deviation threshold used to determine which data
-                                should go to which network
-    :type high_noise_threshold: float
-
 
     :return: (clear_patches, blurry_patches): A tuple of a list of ImagePatches.
                 Each ImagePatch in the list of ImagePatches contains an image patch and the standard deviation
@@ -225,7 +215,6 @@ def generate_patch_pairs(clear_image, blurry_image, noise_level=NoiseLevel.LOW, 
                 # Add the clear_patch and blurry_patch to clear_patches and blurry_patches, respectively
                 clear_patches.append(clear_patch)
                 blurry_patches.append(blurry_patch)
-
 
     return clear_patches, blurry_patches
 
@@ -318,8 +307,7 @@ def separate_images_and_stds(patches_and_stds):
 
 
 def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
-                        image_format=ImageFormat.PNG,
-                        noise_level=NoiseLevel.LOW):
+                        image_format=ImageFormat.PNG):
     """
     Provides a numpy array of training examples, given a path to a training directory
 
@@ -327,8 +315,6 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
     :type image_format: ImageFormat
     :param root_dir: The path of the training data directory
     :type root_dir: str
-    :param noise_level: The level of noise of the training data that we want
-    :type noise_level: NoiseLevel
 
     :return: training data
     :rtype: numpy.array
@@ -368,10 +354,8 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
             '''
 
             # Generate clear and blurry patches from the clear and blurry images, respectively...
-            # AND record the residual std in each of clear_patches and blurry_patches
             clear_patches, blurry_patches = generate_patch_pairs(clear_image=clear_image,
-                                                                 blurry_image=blurry_image,
-                                                                 noise_level=noise_level)
+                                                                 blurry_image=blurry_image)
 
             # Append the patches to clear_data and blurry_data
             clear_data.append(clear_patches)

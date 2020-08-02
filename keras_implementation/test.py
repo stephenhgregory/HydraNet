@@ -7,11 +7,12 @@ import os, time, datetime
 # import PIL.Image as Image
 import numpy as np
 from keras.models import load_model, model_from_json
-from keras_implementation.utilities import image_utils, logger
+from keras_implementation.utilities import image_utils, logger, data_generator
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 from skimage.io import imread, imsave
 import tensorflow as tf
 import cv2
+import copy
 
 # Set Memory Growth to true to fix a small bug in Tensorflow
 
@@ -35,12 +36,112 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--set_dir', default='data/Volume1', type=str, help='parent directory of test dataset')
     parser.add_argument('--set_names', default=['train'], type=list, help='name of test dataset')
-    parser.add_argument('--model_dir', default=os.path.join('models', 'MyDnCNN'), type=str,
-                        help='directory of the model')
-    parser.add_argument('--model_name', default='model_023.hdf5', type=str, help='the model name')
+    parser.add_argument('--model_dir_original', default=os.path.join('models', 'MyDnCNN'), type=str,
+                        help='directory of the original, single-network denoising model')
+    parser.add_argument('--model_dir_low_noise', default=os.path.join('models', 'MyDnCNN_low_noise'), type=str,
+                        help='directory of the low-noise-denoising model')
+    parser.add_argument('--model_dir_medium_noise', default=os.path.join('models', 'MyDnCNN_medium_noise'), type=str,
+                        help='directory of the medium-noise-denoising model')
+    parser.add_argument('--model_dir_high_noise', default=os.path.join('models', 'MyDnCNN_high_noise'), type=str,
+                        help='directory of the high-noise-denoising model')
+    parser.add_argument('--model_name_original', default='model_023.hdf5', type=str,
+                        help='name of the original. single-network model')
+    parser.add_argument('--model_name_low_noise', default='model_004.hdf5', type=str,
+                        help='name of the low-noise model')
+    parser.add_argument('--model_name_medium_noise', default='model_020.hdf5', type=str,
+                        help='name of the medium-noise model')
+    parser.add_argument('--model_name_high_noise', default='model_020.hdf5', type=str,
+                        help='name of the high-noise model')
     parser.add_argument('--result_dir', default='data/results', type=str, help='directory of results')
+    parser.add_argument('--train_data', default='data/Volume1/train', type=str, help='path of train data')
     parser.add_argument('--save_result', default=1, type=int, help='save the denoised image, 1 for yes or 0 for no')
     return parser.parse_args()
+
+
+def retrieve_train_data(train_data_dir, low_noise_threshold=0.05, high_noise_threshold=0.2):
+    """
+    Gets and returns the image patches used during training time
+
+    :param train_data_dir: The root directory of the training data
+    :type train_data_dir: str
+    :param low_noise_threshold: The lower residual image standard deviation threshold used to determine which data
+                                should go to which network
+    :type low_noise_threshold: float
+    :param high_noise_threshold: The upper residual image standard deviation threshold used to determine which data
+                                should go to which network
+    :type high_noise_threshold: float
+
+    :return: A tuple of the following:
+                1. x_low_noise: the clear patches at a low noise level
+                2. y_low_noise: the blurry patches at a low noise level
+                3. stds_low_noise: the standard deviation of the residuals at a low noise level
+                4. x_medium_noise: the clear patches at a medium noise level
+                5. y_medium_noise: the blurry patches at a medium noise level
+                6. stds_medium_noise: the standard deviation of the residuals at a medium noise level
+                7. x_high_noise: the clear patches at a high noise level
+                8. y_high_noise: the blurry patches at a high noise level
+                9. stds_high_noise: the standard deviation of the residuals at a high noise level
+    """
+
+    print(f'Accessing training data in: {train_data_dir}')
+
+    # Get training examples from data_dir using data_generator
+    x, y = data_generator.pair_data_generator(train_data_dir)
+
+    # Create lists to store all of the patches and stds for each noise level category
+    x_low_noise = []
+    y_low_noise = []
+    stds_low_noise = []
+    x_medium_noise = []
+    y_medium_noise = []
+    stds_medium_noise = []
+    x_high_noise = []
+    y_high_noise = []
+    stds_high_noise = []
+
+    # Iterate over all of the image patches
+    for x_patch, y_patch in zip(x, y):
+
+        # If the patch is black (i.e. the max px value < 10), just skip this training example
+        if np.max(x_patch) < 10:
+            continue
+
+        # Get the residual std
+        std = data_generator.get_residual_std(clear_patch=x_patch,
+                                              blurry_patch=y_patch)
+
+        # Add the patches and their residual stds to their corresponding lists based on noise level
+        if std < low_noise_threshold:
+            x_low_noise.append(x_patch)
+            y_low_noise.append(y_patch)
+            stds_low_noise.append(std)
+            continue
+        elif low_noise_threshold < std < high_noise_threshold:
+            x_medium_noise.append(x_patch)
+            y_medium_noise.append(y_patch)
+            stds_medium_noise.append(std)
+            continue
+        elif std > high_noise_threshold:
+            x_high_noise.append(x_patch)
+            y_high_noise.append(y_patch)
+            stds_high_noise.append(std)
+            continue
+
+    # Convert image patches and stds into numpy arrays
+    x_low_noise = np.array(x_low_noise, dtype='uint8')
+    y_low_noise = np.array(y_low_noise, dtype='uint8')
+    stds_low_noise = np.array(stds_low_noise, dtype='float64')
+    x_medium_noise = np.array(x_medium_noise, dtype='uint8')
+    y_medium_noise = np.array(y_medium_noise, dtype='uint8')
+    stds_medium_noise = np.array(stds_medium_noise, dtype='float64')
+    x_high_noise = np.array(x_high_noise, dtype='uint8')
+    y_high_noise = np.array(y_high_noise, dtype='uint8')
+    stds_high_noise = np.array(stds_high_noise, dtype='float64')
+
+    # Return all of the patches and stds for the 3 categories
+    return x_low_noise, y_low_noise, stds_low_noise, \
+           x_medium_noise, y_medium_noise, stds_medium_noise, \
+           x_high_noise, y_high_noise, stds_high_noise
 
 
 def to_tensor(image):
@@ -90,94 +191,256 @@ def show(x, title=None, cbar=False, figsize=None):
     plt.show()
 
 
+def denoise_image_by_patches(y, model_original, model_low_noise, model_medium_noise, model_high_noise, args):
+    """
+    Takes an input image and denoises it using a patch-based approach
+
+    :param y: The input image to denoise
+    :type y: numpy array
+    :param model_original: The original TF model used to denoise all image patches
+    :type model_original: TF Model
+    :param model_low_noise: The TF model used to denoise low-noise image patches
+    :type model_low_noise: TF Model
+    :param model_medium_noise: The TF model used to denoise medium-noise image patches
+    :type model_medium_noise: TF Model
+    :param model_high_noise: The TF model used to denoise high-noise image patches
+    :type model_high_noise: TF Model
+    :param args: The command-line arguments for the file
+
+    :return: x_pred: A denoised image as a numpy array
+    :rtype: numpy array
+    """
+
+    # First, create a denoised x_pred to INITIALLY be a deep copy of y. Then we will modify x_pred in place
+    x_pred = copy.deepcopy(y)
+
+    # First, get our training data to use for determining which denoising network to send each patch through
+    x_low_noise, y_low_noise, stds_low_noise, x_medium_noise, y_medium_noise, stds_medium_noise, x_high_noise, y_high_noise, stds_high_noise = retrieve_train_data(
+        args.train_data)
+
+    # Loop over the indices of y to get 40x40 patches from y
+    for i in range(0, len(y[0]), 40):
+        for j in range(0, len(y[1]), 40):
+
+            # If the patch does not 'fit' within the dimensions of y, skip this and do not denoise
+            if i + 40 > len(y[0]) or j + 40 > len(y[1]):
+                continue
+
+            # Get the (40, 40) patch
+            y_patch = y[i:i + 40, j:j + 40]
+
+            # Convert y_patch to a tensor
+            y_patch_tensor = to_tensor(y_patch)
+
+            # Reshape y to be a (40, 40, 1) patch
+            y_patch = y_patch.reshape(y_patch.shape[0], y_patch.shape[1], 1)
+
+            '''Iterate over all of the training patches to get the training patch with the highest 
+            SSIM compared to y_patch. Then, use the category of that training image to determine 
+            which model to use to denoise this patch'''
+
+            # Initialize variables to hold the max SSIMfor each of the low, medium, and high noise datasets
+            max_ssim = 0
+            max_ssim_category = ''
+
+            # Iterate over every low_noise patch
+            for y_low_noise_patch in y_low_noise:
+
+                # First, reshape y_low_noise_patch and y_patch to get the ssim
+                y_low_noise_patch = y_low_noise_patch.reshape(y_low_noise_patch.shape[0],
+                                                              y_low_noise_patch.shape[1])
+                y_patch = y_patch.reshape(y_patch.shape[0],
+                                          y_patch.shape[1])
+
+                # Get the SSIM between y_patch and y_low_noise_patch
+                ssim = structural_similarity(y_low_noise_patch, y_patch)
+
+                # Then, reshape y_low_noise_patch and y_patch back
+                y_low_noise_patch = y_low_noise_patch.reshape(y_low_noise_patch.shape[0],
+                                                              y_low_noise_patch.shape[1],
+                                                              1)
+                y_patch = y_patch.reshape(y_patch.shape[0],
+                                          y_patch.shape[1],
+                                          1)
+
+                # If it's greater than the max, update the max
+                if ssim > max_ssim:
+                    max_ssim = ssim
+                    max_ssim_category = 'low'
+
+            # Iterate over every medium_noise patch
+            for y_medium_noise_patch in y_medium_noise:
+
+                # First, reshape y_medium_noise_patch and y_patch to get the ssim
+                y_medium_noise_patch = y_medium_noise_patch.reshape(y_medium_noise_patch.shape[0],
+                                                                    y_medium_noise_patch.shape[1])
+                y_patch = y_patch.reshape(y_patch.shape[0],
+                                          y_patch.shape[1])
+
+                # Get the SSIM between y_patch and y_medium_noise_patch
+                ssim = structural_similarity(y_medium_noise_patch, y_patch)
+
+                # Then, reshape y_medium_noise_patch and y_patch back to where they were
+                y_medium_noise_patch = y_medium_noise_patch.reshape(y_medium_noise_patch.shape[0],
+                                                                    y_medium_noise_patch.shape[1],
+                                                                    1)
+                y_patch = y_patch.reshape(y_patch.shape[0],
+                                          y_patch.shape[1],
+                                          1)
+
+                # If it's greater than the max, update the max
+                if ssim > max_ssim:
+                    max_ssim = ssim
+                    max_ssim_category = 'medium'
+
+            # Iterate over every high_noise patch
+            for y_high_noise_patch in y_high_noise:
+
+                # First, reshape y_high_noise_patch and y_patch to get the ssim
+                y_high_noise_patch = y_high_noise_patch.reshape(y_high_noise_patch.shape[0],
+                                                                y_high_noise_patch.shape[1])
+                y_patch = y_patch.reshape(y_patch.shape[0],
+                                          y_patch.shape[1])
+
+                # Get the SSIM between y_patch and y_high_noise_patch
+                ssim = structural_similarity(y_high_noise_patch, y_patch)
+
+                # Then, reshape y_high_noise_patch and y_patch back
+                y_high_noise_patch = y_high_noise_patch.reshape(y_high_noise_patch.shape[0],
+                                                                y_high_noise_patch.shape[1],
+                                                                1)
+                y_patch = y_patch.reshape(y_patch.shape[0],
+                                          y_patch.shape[1],
+                                          1)
+
+                # If it's greater than the max, update the max
+                if ssim > max_ssim:
+                    max_ssim = ssim
+                    max_ssim_category = 'high'
+
+            # If the max SSIM is in the low_noise image dataset, denoise the image using the low_noise
+            # denoising model
+            if max_ssim_category == 'low':
+
+                # Inference with model_low_noise (Denoise y_patch_tensor to get x_patch_pred)
+                x_patch_pred_tensor = model_original.predict(y_patch_tensor)
+
+                # Convert the denoised patch from a tensor to an image (numpy array)
+                x_patch_pred = from_tensor(x_patch_pred_tensor)
+
+                # Replace the patch in x with the new denoised patch
+                x_pred[i:i + 40, j:j + 40] = x_patch_pred
+
+            # Else, if the max SSIM is in the medium_noise image dataset, denoise the image using the
+            # medium_noise denoising model
+            elif max_ssim_category == 'medium':
+
+                # Inference with model_medium_noise (Denoise y_patch_tensor to get x_patch_pred)
+                x_patch_pred_tensor = model_original.predict(y_patch_tensor)
+
+                # Convert the denoised patch from a tensor to an image (numpy array)
+                x_patch_pred = from_tensor(x_patch_pred_tensor)
+
+                # Replace the patch in the image y with the new denoised patch
+                x_pred[i:i + 40, j:j + 40] = x_patch_pred
+
+            # Else, if the max SSIM is in the high_noise image dataset, denoise the image using the
+            # high_noise denoising model
+            elif max_ssim_category == 'high':
+
+                # Inference with model_high_noise (Denoise y_patch_tensor to get x_patch_pred)
+                x_patch_pred_tensor = model_original.predict(y_patch_tensor)
+
+                # Convert the denoised patch from a tensor to an image (numpy array)
+                x_patch_pred = from_tensor(x_patch_pred_tensor)
+
+                # Replace the patch in the image y with the new denoised patch
+                x_pred[i:i + 40, j:j + 40] = x_patch_pred
+
+    return x_pred
+
+
 def main():
     """The main function of the program"""
 
+    # Compile the command line arguments
     args = parse_args()
 
-    # =============================================================================
-    #     # serialize model to JSON
-    #     model = load_model(os.path.join(args.model_dir, args.model_name), compile=False)
-    #     model_json = model.to_json()
-    #     with open("model.json", "w") as json_file:
-    #         json_file.write(model_json)
-    #     # serialize weights to HDF5
-    #     model.save_weights("model.h5")
-    #     print("Saved model")
-    # =============================================================================
+    # Then, load our 3 denoising models
+    model_original = load_model(os.path.join(args.model_dir_original, args.model_name_original),
+                                compile=False)
+    model_low_noise = load_model(os.path.join(args.model_dir_low_noise, args.model_name_low_noise),
+                                 compile=False)
+    model_medium_noise = load_model(os.path.join(args.model_dir_medium_noise, args.model_name_medium_noise),
+                                    compile=False)
+    model_high_noise = load_model(os.path.join(args.model_dir_high_noise, args.model_name_high_noise),
+                                  compile=False)
+    log(f'Loaded all 3 trained models: {os.path.join(args.model_dir_low_noise, args.model_name_low_noise)}, '
+        f'{os.path.join(args.model_dir_medium_noise, args.model_name_medium_noise)}, and '
+        f'{os.path.join(args.model_dir_high_noise, args.model_name_high_noise)}')
 
-    if not os.path.exists(os.path.join(args.model_dir, args.model_name)):
-        print(f'No file exists with the name: {args.model_dir}/{args.model_name}')
-        # load json and create model
-        json_file = open(os.path.join(args.model_dir, 'model.json'), 'r')
-        loaded_model_json = json_file.read()
-        json_file.close()
-        model = model_from_json(loaded_model_json)
-        # load weights into new model
-        model.load_weights(os.path.join(args.model_dir, args.model_name))
-        log('load trained model on MRI Dataset by Stephen Gregory')
-    else:
-        print(f'A file DOES exist with the name: {args.model_dir}/{args.model_name}')
-        model = load_model(os.path.join(args.model_dir, args.model_name), compile=False)
-        log('load trained model')
-
+    # If the result directory doesn't exist already, just create it
     if not os.path.exists(args.result_dir):
         os.mkdir(args.result_dir)
 
-    for set_cur in args.set_names:
+    # For each dataset that we wish to test on...
+    for set_name in args.set_names:
 
-        if not os.path.exists(os.path.join(args.result_dir, set_cur)):
-            os.mkdir(os.path.join(args.result_dir, set_cur))
+        # If the <result directory>/<dataset name> doesn't exist already, just create it
+        if not os.path.exists(os.path.join(args.result_dir, set_name)):
+            os.mkdir(os.path.join(args.result_dir, set_name))
 
-        # Create a List of Peak Signal-To-Noise ratios (PSNRs)
+        # Create a List of Peak Signal-To-Noise ratios (PSNRs) and Structural Similarities (SSIMs)
         psnrs = []
-
-        # Create a List of Structural Similarities (SSIMs)
         ssims = []
 
-        for image_name in os.listdir(os.path.join(args.set_dir, set_cur, 'CoregisteredBlurryImages')):
+        for image_name in os.listdir(os.path.join(args.set_dir, set_name, 'CoregisteredBlurryImages')):
             if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
 
                 # 1. Load the Clear Image x (as grayscale), and standardize the pixel values, and..
                 # 2. Save the original mean and standard deviation of x
                 x, x_orig_mean, x_orig_std = image_utils.standardize(imread(os.path.join(args.set_dir,
-                                                                                         set_cur,
+                                                                                         set_name,
                                                                                          'ClearImages',
                                                                                          image_name), 0))
 
                 # Load the Coregistered Blurry Image y (as grayscale), and standardize the pixel values, and...
                 # 2. Save the original mean and standard deviation of y
                 y, y_orig_mean, y_orig_std = image_utils.standardize(imread(os.path.join(args.set_dir,
-                                                                                         set_cur,
+                                                                                         set_name,
                                                                                          'CoregisteredBlurryImages',
                                                                                          image_name), 0))
-
-                # Convert y from an image (numpy array) to a tensor
-                y_tensor = to_tensor(y)
 
                 # Start a timer
                 start_time = time.time()
 
-                # Inference (Denoise y_tensor to get x_pred)
-                x_pred = model.predict(y_tensor)
+                # Denoise y by calling denoise_image_by_patches, which using the 3 denoising models to denoise each
+                # patch of the image separately
+                x_pred = denoise_image_by_patches(y, model_original, model_low_noise, model_medium_noise,
+                                                  model_high_noise, args)
 
                 # Record the inference time
                 elapsed_time = time.time() - start_time
-                print('%10s : %10s : %2.4f second' % (set_cur, image_name, elapsed_time))
+                print('%10s : %10s : %2.4f second' % (set_name, image_name, elapsed_time))
 
-                # Converts x_pred from a tensor to an image (numpy array)
-                x_pred = from_tensor(x_pred)
-
-                ''' Just logging 
+                ''' Just logging
                 # Reverse the standardization
-                x_pred_reversed = image_utils.reverse_standardize(x_pred, original_mean=x_orig_mean, original_std=x_orig_std)
-                x_reversed = image_utils.reverse_standardize(x, original_mean=x_orig_mean, original_std=x_orig_std)
+                x_pred_reversed = image_utils.reverse_standardize(x_pred,
+                                                                  original_mean=x_orig_mean,
+                                                                  original_std=x_orig_std)
+                x_reversed = image_utils.reverse_standardize(x,
+                                                             original_mean=x_orig_mean,
+                                                             original_std=x_orig_std)
+                y_reversed = image_utils.reverse_standardize(y,
+                                                             original_mean=y_orig_mean,
+                                                             original_std=y_orig_std)
 
                 logger.show_images([("x", x),
                                     ("x_reversed", x_reversed),
                                     ("x_pred", x_pred),
                                     ("x_pred_reversed", x_pred_reversed),
-                                    ("y", y)])
+                                    ("y", y),
+                                    ("y_reversed", y_reversed)])
                 '''
 
                 # Reverse the standardization of x, x_pred, and y
@@ -199,9 +462,8 @@ def main():
                     logger.show_images([("y", y),
                                         ("x_pred", x_pred)])
 
-
                     # Then save the denoised image
-                    cv2.imwrite(filename=os.path.join(args.result_dir, set_cur, name + '_dncnn' + ext), img=x_pred)
+                    cv2.imwrite(filename=os.path.join(args.result_dir, set_name, name + '_dncnn' + ext), img=x_pred)
 
                 # Add the PSNR and SSIM to the lists of PSNRs and SSIMs, respectively
                 psnrs.append(psnr_x)
@@ -217,11 +479,11 @@ def main():
 
         # If we want to save the result
         if args.save_result:
-            # Save the result to <result_dir>/<set_cur>/results.txt
-            save_result(np.hstack((psnrs, ssims)), path=os.path.join(args.result_dir, set_cur, 'results.txt'))
+            # Save the result to <result_dir>/<set_name>/results.txt
+            save_result(np.hstack((psnrs, ssims)), path=os.path.join(args.result_dir, set_name, 'results.txt'))
 
         # Log the average PSNR and SSIM to the Terminal
-        log('Datset: {0:10s} \n  Average PSNR = {1:2.2f}dB, Average SSIM = {2:1.4f}'.format(set_cur, psnr_avg,
+        log('Datset: {0:10s} \n  Average PSNR = {1:2.2f}dB, Average SSIM = {2:1.4f}'.format(set_name, psnr_avg,
                                                                                             ssim_avg))
 
 
