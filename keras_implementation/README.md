@@ -18,11 +18,11 @@ python3 test.py \
 
 ```
 
-After testing the model, a file named *results.txt* will be saved in [*data/results/<set_name>*](data/results), 
+After testing the model, a file named *results.txt* will be saved in [*data/results/<set_name>*](old_data/results), 
 where the set_name corresponds to set_names[i] from the command-line arguments shown above.  
 
 If you specify the save_result command-line argument when running test.py (as shown above),
-the denoised images will also be saved in [*data/results/<set_name>*](data/results), alongside *results.txt*
+the denoised images will also be saved in [*data/results/<set_name>*](old_data/results), alongside *results.txt*
 
 
 ## Training
