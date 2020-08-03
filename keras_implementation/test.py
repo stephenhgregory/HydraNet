@@ -35,7 +35,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--set_dir', default='data/Volume1', type=str, help='parent directory of test dataset')
-    parser.add_argument('--set_names', default=['train'], type=list, help='name of test dataset')
+    parser.add_argument('--set_names', default=['val'], type=list, help='name of test dataset')
     parser.add_argument('--model_dir_original', default=os.path.join('models', 'MyDnCNN'), type=str,
                         help='directory of the original, single-network denoising model')
     parser.add_argument('--model_dir_low_noise', default=os.path.join('models', 'MyDnCNN_low_noise'), type=str,
@@ -191,11 +191,11 @@ def show(x, title=None, cbar=False, figsize=None):
     plt.show()
 
 
-def save_image_patch(x, save_dir_name, save_file_name, original_mean, original_std):
+def save_image(x, save_dir_name, save_file_name, original_mean, original_std):
     """
-    Save an image patch x
+    Save an image x
 
-    :param x: The image patch to save
+    :param x: The image to save
     :type x: numpy array
     :param save_dir_name: The save directory of the image patch
     :type save_dir_name: str
@@ -218,11 +218,11 @@ def save_image_patch(x, save_dir_name, save_file_name, original_mean, original_s
     if not os.path.exists(save_dir_name):
         os.mkdir(save_dir_name)
 
-    # Save the image patch
+    # Save the image
     cv2.imwrite(filename=os.path.join(save_dir_name, save_file_name), img=x)
 
 
-def denoise_image_by_patches(y, model_original, file_name, set_name, model_low_noise, model_medium_noise,
+def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_noise, model_medium_noise,
                              model_high_noise, args, original_mean, original_std, save_patches=False):
     """
     Takes an input image and denoises it using a patch-based approach
@@ -254,6 +254,9 @@ def denoise_image_by_patches(y, model_original, file_name, set_name, model_low_n
     :return: x_pred: A denoised image as a numpy array
     :rtype: numpy array
     """
+
+    print(args.result_dir)
+    save_dir_name = os.path.join(args.result_dir, set_name, file_name + '_patches')
 
     # First, create a denoised x_pred to INITIALLY be a deep copy of y. Then we will modify x_pred in place
     x_pred = copy.deepcopy(y)
@@ -367,7 +370,7 @@ def denoise_image_by_patches(y, model_original, file_name, set_name, model_low_n
             if max_ssim_category == 'low':
 
                 # Inference with model_low_noise (Denoise y_patch_tensor to get x_patch_pred)
-                x_patch_pred_tensor = model_low_noise.predict(y_patch_tensor)
+                x_patch_pred_tensor = model_original.predict(y_patch_tensor)
 
                 # Convert the denoised patch from a tensor to an image (numpy array)
                 x_patch_pred = from_tensor(x_patch_pred_tensor)
@@ -377,18 +380,18 @@ def denoise_image_by_patches(y, model_original, file_name, set_name, model_low_n
 
                 if save_patches:
                     # Save the denoised patch
-                    save_image_patch(x=x_patch_pred,
-                                     save_dir_name=os.path.join(args.result_dir, set_name, file_name + '_patches'),
-                                     save_file_name=file_name + '_i-' + i + '_j-' + j + '.png',
-                                     original_mean=original_mean,
-                                     original_std=original_std)
+                    save_image(x=x_patch_pred,
+                               save_dir_name=os.path.join(args.result_dir, set_name, file_name + '_patches'),
+                               save_file_name=file_name + '_i-' + str(i) + '_j-' + str(j) + '.png',
+                               original_mean=original_mean,
+                               original_std=original_std)
 
             # Else, if the max SSIM is in the medium_noise image dataset, denoise the image using the
             # medium_noise denoising model
             elif max_ssim_category == 'medium':
 
                 # Inference with model_medium_noise (Denoise y_patch_tensor to get x_patch_pred)
-                x_patch_pred_tensor = model_medium_noise.predict(y_patch_tensor)
+                x_patch_pred_tensor = model_original.predict(y_patch_tensor)
 
                 # Convert the denoised patch from a tensor to an image (numpy array)
                 x_patch_pred = from_tensor(x_patch_pred_tensor)
@@ -398,18 +401,18 @@ def denoise_image_by_patches(y, model_original, file_name, set_name, model_low_n
 
                 if save_patches:
                     # Save the denoised patch
-                    save_image_patch(x=x_patch_pred,
-                                     save_dir_name=os.path.join(args.result_dir, set_name, file_name + '_patches'),
-                                     save_file_name=file_name + '_i-' + i + '_j-' + j + '.png',
-                                     original_mean=original_mean,
-                                     original_std=original_std)
+                    save_image(x=x_patch_pred,
+                               save_dir_name=os.path.join(args.result_dir, set_name, file_name + '_patches'),
+                               save_file_name=file_name + '_i-' + str(i) + '_j-' + str(j) + '.png',
+                               original_mean=original_mean,
+                               original_std=original_std)
 
             # Else, if the max SSIM is in the high_noise image dataset, denoise the image using the
             # high_noise denoising model
             elif max_ssim_category == 'high':
 
                 # Inference with model_high_noise (Denoise y_patch_tensor to get x_patch_pred)
-                x_patch_pred_tensor = model_high_noise.predict(y_patch_tensor)
+                x_patch_pred_tensor = model_original.predict(y_patch_tensor)
 
                 # Convert the denoised patch from a tensor to an image (numpy array)
                 x_patch_pred = from_tensor(x_patch_pred_tensor)
@@ -419,11 +422,11 @@ def denoise_image_by_patches(y, model_original, file_name, set_name, model_low_n
 
                 if save_patches:
                     # Save the denoised patch
-                    save_image_patch(x=x_patch_pred,
-                                     save_dir_name=os.path.join(args.result_dir, set_name, file_name + '_patches'),
-                                     save_file_name=file_name + '_i-' + i + '_j-' + j + '.png',
-                                     original_mean=original_mean,
-                                     original_std=original_std)
+                    save_image(x=x_patch_pred,
+                               save_dir_name=os.path.join(args.result_dir, set_name, file_name + '_patches'),
+                               save_file_name=file_name + '_i-' + str(i) + '_j-' + str(j) + '.png',
+                               original_mean=original_mean,
+                               original_std=original_std)
 
     return x_pred
 
@@ -465,6 +468,9 @@ def main():
         for image_name in os.listdir(os.path.join(args.set_dir, set_name, 'CoregisteredBlurryImages')):
             if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
 
+                # Get the image name minus the file extension
+                image_name_no_extension, _ = os.path.splitext(image_name)
+
                 # 1. Load the Clear Image x (as grayscale), and standardize the pixel values, and..
                 # 2. Save the original mean and standard deviation of x
                 x, x_orig_mean, x_orig_std = image_utils.standardize(imread(os.path.join(args.set_dir,
@@ -484,7 +490,7 @@ def main():
 
                 # Denoise y by calling denoise_image_by_patches, which using the 3 denoising models to denoise each
                 # patch of the image separately
-                x_pred = denoise_image_by_patches(y, os.path.splitext(image_name)[0], set_name, model_original,
+                x_pred = denoise_image_by_patches(y, image_name_no_extension, set_name, model_original,
                                                   model_low_noise, model_medium_noise, model_high_noise, args,
                                                   x_orig_mean, x_orig_std, save_patches=True)
 
@@ -526,15 +532,14 @@ def main():
 
                 # If we want to save the result...
                 if args.save_result:
-                    name, ext = os.path.splitext(image_name)
-
-                    ''' Just logging '''
+                    ''' Just logging
                     # Show the images
                     logger.show_images([("y", y),
                                         ("x_pred", x_pred)])
+                    '''
 
                     # Then save the denoised image
-                    cv2.imwrite(filename=os.path.join(args.result_dir, set_name, name + '_dncnn' + ext), img=x_pred)
+                    cv2.imwrite(filename=os.path.join(args.result_dir, set_name, image_name), img=x_pred)
 
                 # Add the PSNR and SSIM to the lists of PSNRs and SSIMs, respectively
                 psnrs.append(psnr_x)
