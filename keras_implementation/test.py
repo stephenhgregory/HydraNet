@@ -53,6 +53,9 @@ def parse_args():
     parser.add_argument('--model_name_high_noise', default='model_025.hdf5', type=str,
                         help='name of the high-noise model')
     parser.add_argument('--result_dir', default='data/results/Volume2', type=str, help='directory of results')
+    parser.add_argument('--reanalyze_data', default=True, type=bool, help='True if we want to simply reanalyze '
+                                                                          'results that have already been produced '
+                                                                          'and saved')
     parser.add_argument('--train_data', default='data/Volume1/train', type=str, help='path of train data')
     parser.add_argument('--save_result', default=1, type=int, help='save the denoised image, 1 for yes or 0 for no')
     return parser.parse_args()
@@ -431,7 +434,7 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
     return x_pred
 
 
-def main():
+def main(args):
     """The main function of the program"""
 
     # Compile the command line arguments
@@ -559,9 +562,83 @@ def main():
             save_result(np.hstack((psnrs, ssims)), path=os.path.join(args.result_dir, set_name, 'results.txt'))
 
         # Log the average PSNR and SSIM to the Terminal
-        log('Datset: {0:10s} \n  Average PSNR = {1:2.2f}dB, Average SSIM = {2:1.4f}'.format(set_name, psnr_avg,
-                                                                                            ssim_avg))
+        log('Dataset: {0:10s} \n  Average PSNR = {1:2.2f}dB, Average SSIM = {2:1.4f}'.format(set_name, psnr_avg,
+                                                                                             ssim_avg))
+
+
+def reanalyze_data(args):
+    """
+    Analyzes the already-produced inference results to get SSIM and PSNR values.
+    If necessary, may also apply masking to remove artifacts from patch denoising
+
+    :param args: The command-line arguments
+
+    :return: None
+    """
+
+    # For each dataset that we wish to test on...
+    for set_name in args.set_names:
+
+        # Create a List of Peak Signal-To-Noise ratios (PSNRs) and Structural Similarities (SSIMs)
+        psnrs = []
+        ssims = []
+
+        # Iterate over each image in the set
+        for image_name in os.listdir(os.path.join(args.set_dir, set_name, 'CoregisteredBlurryImages')):
+            if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
+                # Make sure that we have a matching ClearImage, Mask, and Denoised Image
+                assert (os.path.exists(os.path.join(args.set_dir, set_name, 'ClearImages', image_name)))
+                assert (os.path.exists(os.path.join(args.set_dir, set_name, 'Masks', image_name)))
+                assert (os.path.exists(os.path.join(args.result_dir, set_name, image_name)))
+
+                # Load the images and standardize them, saving their mean and std along the way
+                clear_image = imread(os.path.join(args.set_dir, set_name, 'ClearImages', image_name), 0)
+                mask_image = imread(os.path.join(args.set_dir, set_name, 'Masks', image_name), 0)
+                denoised_image = imread(os.path.join(args.result_dir, set_name, image_name), 0)
+
+                ''' Just logging '''
+                logger.show_images([("clear_image", clear_image),
+                                    ("mask_image", mask_image),
+                                    ("denoised_image", denoised_image)])
+
+                # Apply the mask to the denoised image AND the clear image
+                denoised_image = denoised_image * (mask_image // 255)
+                clear_image = clear_image * (mask_image // 255)
+
+                # Save the denoised image back
+                cv2.imwrite(filename=os.path.join(args.result_dir, set_name, image_name), img=denoised_image)
+
+                # Get the PSNR and SSIM between clear_image and denoised_image
+                psnr = peak_signal_noise_ratio(clear_image, denoised_image)
+                ssim = structural_similarity(clear_image, denoised_image, multichannel=True)
+
+                # Add the psnr and ssim to the psnrs and ssim lists, respectively
+                psnrs.append(psnr)
+                ssims.append(ssim)
+
+                ''' Just logging '''
+                logger.show_images([("clear_image", clear_image),
+                                    ("mask_image", mask_image),
+                                    ("denoised_image", denoised_image)])
+
+        # Get the average PSNR and SSIM
+
+
+        psnr_avg = np.mean(psnrs)
+        ssim_avg = np.mean(ssims)
+
+        # Log the average PSNR and SSIM to the Terminal
+        log('Dataset: {0:10s} \n  Average PSNR = {1:2.2f}dB, Average SSIM = {2:1.4f}'.format(set_name, psnr_avg,
+                                                                                             ssim_avg))
 
 
 if __name__ == '__main__':
-    main()
+
+    # Get command-line arguments
+    args = parse_args()
+
+    if not args.reanalyze_data:
+        main(args)
+
+    else:
+        reanalyze_data(args)
