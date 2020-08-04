@@ -43,11 +43,11 @@ python3 train.py /
 
 ## Results
 
-| Dataset                                                     | Average PSNR | Average SSIM |
-|-------------------------------------------------------------|--------------|--------------|
-| [Volume 1 (val)](keras_implementation/data/Volume1/val)     | 29.00 dB     | 0.6466       |
-| [Volume 1 (test)](keras_implementation/data/Volume1/test)   | 28.50 dB     | 0.6720       |
-| [Volume 1 (train)](keras_implementation/data/Volume1/train) | 30.01 dB     | 0.6939       |
+| Dataset                                                     | Average PSNR (pre-Hydra) | Average SSIM (pre-Hydra) | Average PSNR (pre-Hydra) | Average SSIM (pre-Hydra) |
+|-------------------------------------------------------------|--------------------------|--------------------------|--------------------------|--------------------------|
+| [Volume 1 (val)](keras_implementation/data/Volume1/val)     | 29.00 dB                 | 0.6466                   | 28.47 dB                 | 0.9286
+| [Volume 1 (test)](keras_implementation/data/Volume1/test)   | 28.50 dB                 | 0.6720                   |
+| [Volume 1 (train)](keras_implementation/data/Volume1/train) | 30.01 dB                 | 0.6939                   |
 
 | Image dataset | Noisy Image                           | Denoised Image                          |
 |:-------------:|:-------------------------------------:|:---------------------------------------:|
