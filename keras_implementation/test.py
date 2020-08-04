@@ -34,7 +34,7 @@ def parse_args():
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--set_dir', default='data/Volume1', type=str, help='parent directory of test dataset')
+    parser.add_argument('--set_dir', default='data/Volume2', type=str, help='parent directory of test dataset')
     parser.add_argument('--set_names', default=['val'], type=list, help='name of test dataset')
     parser.add_argument('--model_dir_original', default=os.path.join('models', 'MyDnCNN'), type=str,
                         help='directory of the original, single-network denoising model')
@@ -52,7 +52,7 @@ def parse_args():
                         help='name of the medium-noise model')
     parser.add_argument('--model_name_high_noise', default='model_025.hdf5', type=str,
                         help='name of the high-noise model')
-    parser.add_argument('--result_dir', default='data/results', type=str, help='directory of results')
+    parser.add_argument('--result_dir', default='data/results/Volume2', type=str, help='directory of results')
     parser.add_argument('--train_data', default='data/Volume1/train', type=str, help='path of train data')
     parser.add_argument('--save_result', default=1, type=int, help='save the denoised image, 1 for yes or 0 for no')
     return parser.parse_args()
@@ -370,7 +370,7 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
             if max_ssim_category == 'low':
 
                 # Inference with model_low_noise (Denoise y_patch_tensor to get x_patch_pred)
-                x_patch_pred_tensor = model_low_noise.predict(y_patch_tensor)
+                x_patch_pred_tensor = model_original.predict(y_patch_tensor)
 
                 # Convert the denoised patch from a tensor to an image (numpy array)
                 x_patch_pred = from_tensor(x_patch_pred_tensor)
@@ -391,7 +391,7 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
             elif max_ssim_category == 'medium':
 
                 # Inference with model_medium_noise (Denoise y_patch_tensor to get x_patch_pred)
-                x_patch_pred_tensor = model_medium_noise.predict(y_patch_tensor)
+                x_patch_pred_tensor = model_original.predict(y_patch_tensor)
 
                 # Convert the denoised patch from a tensor to an image (numpy array)
                 x_patch_pred = from_tensor(x_patch_pred_tensor)
@@ -412,7 +412,7 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
             elif max_ssim_category == 'high':
 
                 # Inference with model_high_noise (Denoise y_patch_tensor to get x_patch_pred)
-                x_patch_pred_tensor = model_high_noise.predict(y_patch_tensor)
+                x_patch_pred_tensor = model_original.predict(y_patch_tensor)
 
                 # Convert the denoised patch from a tensor to an image (numpy array)
                 x_patch_pred = from_tensor(x_patch_pred_tensor)
