@@ -48,7 +48,7 @@ python3 train.py /
 | [Volume 1 (val)](keras_implementation/data/Volume1/val)     | 29.00 dB                 | 0.6466                   | 28.47 dB                  | 0.9286                    | 
 | [Volume 1 (test)](keras_implementation/data/Volume1/test)   | 28.50 dB                 | 0.6720                   |
 | [Volume 1 (train)](keras_implementation/data/Volume1/train) | 30.01 dB                 | 0.6939                   |
-| [Volume 2 (val)](keras_implementation/data/Volume2/val)     | N/A                      | N/A                      | 28.94 dB                  | 0.9623                    | 19.26                | 0.4914               |
+| [Volume 2 (val)](keras_implementation/data/Volume2/val)     | N/A                      | N/A                      | 28.94 dB                  | 0.9623                    | 19.26 dB             | 0.4914               |
 
 | Image dataset | Noisy Image                           | Denoised Image                          |
 |:-------------:|:-------------------------------------:|:---------------------------------------:|
