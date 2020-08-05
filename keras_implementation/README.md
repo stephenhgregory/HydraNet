@@ -50,14 +50,14 @@ python3 train.py /
 | [Volume 1 (train)](keras_implementation/data/Volume1/train) | 30.01 dB                 | 0.6939                   |
 | [Volume 2 (val)](keras_implementation/data/Volume2/val)     | N/A                      | N/A                      | 28.94 dB                  | 0.9623                    | 19.26 dB             | 0.4914               |
 
-## [Volume 2 (val)](keras_implementation/data/Volume2/val) results
+## [Volume 2 (val)](keras_implementation/data/Volume2/val) Results
 
-| Denoiser                                                    | Average PSNR   | Average SSIM |
-|-------------------------------------------------------------|-------------------------------|
-| HydraNet                                                    | 28.9390 dB     | 0.9689       |
-| [DnCNN (single branch)](https://github.com/cszn/DnCNN)      | 27.9831 dB     | 0.9647       |
-| [DnCNN (synthetic noise)](https://github.com/cszn/DnCNN)    | 28.1132 dB     | 0.9684       |
-| [BM3D-Brushlet](https://github.com/gfacciol/bm3d)           | 27.7017 dB     | 0.9640       |
+| Denoiser                                                    | Average PSNR       | Average SSIM     |
+|-------------------------------------------------------------|--------------------|------------------|
+| HydraNet                                                    | **28.9390 dB**     | **0.9689**       |
+| [DnCNN (single branch)](https://github.com/cszn/DnCNN)      | 27.9831 dB         | 0.9647           |
+| [DnCNN (synthetic noise)](https://github.com/cszn/DnCNN)    | 28.1132 dB         | 0.9684           |
+| [BM3D-Brushlet](https://github.com/gfacciol/bm3d)           | 27.7017 dB         | 0.9640           |
 
 
 | Image dataset | Noisy Image                           | Denoised Image                          |
