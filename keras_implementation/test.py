@@ -566,12 +566,14 @@ def main(args):
                                                                                              ssim_avg))
 
 
-def reanalyze_data(args):
+def reanalyze_data(args, save_results=True):
     """
     Analyzes the already-produced inference results to get SSIM and PSNR values.
     If necessary, may also apply masking to remove artifacts from patch denoising
 
     :param args: The command-line arguments
+    :param save_results: True if we wish to save our results after masking and reanalyzing
+    :type save_results: bool
 
     :return: None
     """
@@ -641,4 +643,4 @@ if __name__ == '__main__':
         main(args)
 
     else:
-        reanalyze_data(args)
+        reanalyze_data(args, args.save_result)
