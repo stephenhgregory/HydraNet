@@ -26,12 +26,17 @@ def main(root_dir=(join(Path(__file__).resolve().parents[1], 'data'))):
     for folder_name in os.listdir(root_dir):
         print(join(root_dir, folder_name))
         if 'results' not in folder_name:
+
+            # Create all of the directories and subdirectories
             create_train_test_val_dirs(join(root_dir, folder_name))
+
+            # Populate the train, val, and test directories and their subdirectories
             populate_train_test_val_dirs_nonrandomly(join(root_dir, folder_name), preliminary_clahe=True)
 
-    # Get and save the residuals between ClearImages and CoregisteredBlurryImages
-    for folder_name in os.listdir(root_dir):
-        if 'results' not in folder_name:
+            # Apply masks to all of the images in this volume
+            apply_masks_to_volume(join(root_dir, folder_name))
+
+            # Get and save the residuals between ClearImages and CoregisteredBlurryImages
             create_and_populate_residual_dirs(join(root_dir, folder_name))
 
 
@@ -131,7 +136,6 @@ def populate_residual_dirs(root_dir):
     # Get the full path of the ClearImages and CoregisteredBlurryImages directories
     clear_image_dir = join(root_dir, 'ClearImages')
     blurry_image_dir = join(root_dir, 'CoregisteredBlurryImages')
-    mask_dir = join(root_dir, 'Masks')
     residual_dir = join(root_dir, 'Residuals')
 
     # Iterate over the entire list of images (doesn't matter if it's clear_image_dir or blurry_image_dir)
@@ -141,15 +145,6 @@ def populate_residual_dirs(root_dir):
             # Read the clear and blurry images as grayscale images in the form of numpy arrays
             clear_image = cv2.imread(join(clear_image_dir, file_name), 0)
             blurry_image = cv2.imread(join(blurry_image_dir, file_name), 0)
-            mask_image = cv2.imread(join(mask_dir, file_name), 0)
-
-            # Apply the mask to the clear image AND the blurry image
-            clear_image = clear_image * (mask_image // 255)
-            blurry_image = blurry_image * (mask_image // 255)
-
-            # Save the clear and blurry image back
-            cv2.imwrite(filename=join(clear_image_dir, file_name), img=clear_image)
-            cv2.imwrite(filename=join(blurry_image_dir, file_name), img=blurry_image)
 
             # Calculate the residual of the two images
             residual_image = get_residual(clear_image=clear_image, blurry_image=blurry_image)
@@ -174,6 +169,47 @@ def populate_residual_dirs(root_dir):
             cv2.imwrite(filename=join(residual_dir, file_name), img=scaled_residual_image)
 
             print(f'Saved a residual image. The filename is {join(residual_dir, file_name)}')
+
+
+def apply_masks_to_volume(root_dir):
+    """
+    Applies masks to each image to zero-out the non-brain region
+
+    :param root_dir: The directory under which train, val, and test subdirectories live, each of which having
+                        subdirectories of ClearImages, CoregisteredBlurryImages, and Masks
+    :type root_dir: str
+
+    :return: None
+    """
+
+    # Get the full path of the ClearImages, CoregisteredBlurryImages, and Masks directories
+    clear_image_dir = join(root_dir, 'ClearImages')
+    blurry_image_dir = join(root_dir, 'CoregisteredBlurryImages')
+    mask_dir = join(root_dir, 'Masks')
+
+    # Iterate over the entire list of images (doesn't matter if it's clear_image_dir or blurry_image_dir)
+    for file_name in os.listdir(clear_image_dir):
+        if file_name.endswith('.jpg') or file_name.endswith('.png'):
+            # Read the clear and blurry images as grayscale images in the form of numpy arrays
+            clear_image = cv2.imread(join(clear_image_dir, file_name), 0)
+            blurry_image = cv2.imread(join(blurry_image_dir, file_name), 0)
+            mask_image = cv2.imread(join(mask_dir, file_name), 0)
+
+            # Apply the mask to the clear image AND the blurry image
+            clear_image_masked = clear_image * (mask_image // 255)
+            blurry_image_masked = blurry_image * (mask_image // 255)
+
+            # Save the clear and blurry image back
+            cv2.imwrite(filename=join(clear_image_dir, file_name), img=clear_image_masked)
+            cv2.imwrite(filename=join(blurry_image_dir, file_name), img=blurry_image_masked)
+
+            ''' Just logging
+            # Show the clear image, clear masked image, blurry image, and blurry masked image
+            logger.show_images([("clear_image", clear_image),
+                                ("blurry_image", blurry_image),
+                                ("clear_image_masked", clear_image_masked),
+                                ("blurry_image_masked", blurry_image_masked)])
+            '''
 
 
 def populate_train_test_val_dirs_nonrandomly(root_dir, val_ratio=0.15, test_ratio=0.05, preliminary_clahe=True):
