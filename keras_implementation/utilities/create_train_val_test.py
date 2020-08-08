@@ -25,13 +25,13 @@ def main(root_dir=(join(Path(__file__).resolve().parents[1], 'data'))):
     # Iterate over each volume in the root data directory
     for folder_name in os.listdir(root_dir):
         print(join(root_dir, folder_name))
-        if folder_name != 'results':
+        if 'results' not in folder_name:
             create_train_test_val_dirs(join(root_dir, folder_name))
             populate_train_test_val_dirs_nonrandomly(join(root_dir, folder_name), preliminary_clahe=True)
 
     # Get and save the residuals between ClearImages and CoregisteredBlurryImages
     for folder_name in os.listdir(root_dir):
-        if folder_name != 'results':
+        if 'results' not in folder_name:
             create_and_populate_residual_dirs(join(root_dir, folder_name))
 
 
@@ -50,16 +50,20 @@ def create_train_test_val_dirs(root_dir):
         os.makedirs(root_dir + '/train')
         os.makedirs(root_dir + '/train/CoregisteredBlurryImages')
         os.makedirs(root_dir + '/train/ClearImages')
+        os.makedirs(root_dir + '/train/Masks')
 
         # Create validation data directories
         os.makedirs(root_dir + '/val')
         os.makedirs(root_dir + '/val/CoregisteredBlurryImages')
         os.makedirs(root_dir + '/val/ClearImages')
+        os.makedirs(root_dir + '/val/Masks')
 
         # Create testing data directories
         os.makedirs(root_dir + '/test')
         os.makedirs(root_dir + '/test/CoregisteredBlurryImages')
         os.makedirs(root_dir + '/test/ClearImages')
+        os.makedirs(root_dir + '/test/Masks')
+
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
@@ -127,6 +131,7 @@ def populate_residual_dirs(root_dir):
     # Get the full path of the ClearImages and CoregisteredBlurryImages directories
     clear_image_dir = join(root_dir, 'ClearImages')
     blurry_image_dir = join(root_dir, 'CoregisteredBlurryImages')
+    mask_dir = join(root_dir, 'Masks')
     residual_dir = join(root_dir, 'Residuals')
 
     # Iterate over the entire list of images (doesn't matter if it's clear_image_dir or blurry_image_dir)
@@ -136,6 +141,15 @@ def populate_residual_dirs(root_dir):
             # Read the clear and blurry images as grayscale images in the form of numpy arrays
             clear_image = cv2.imread(join(clear_image_dir, file_name), 0)
             blurry_image = cv2.imread(join(blurry_image_dir, file_name), 0)
+            mask_image = cv2.imread(join(mask_dir, file_name), 0)
+
+            # Apply the mask to the clear image AND the blurry image
+            clear_image = clear_image * (mask_image // 255)
+            blurry_image = blurry_image * (mask_image // 255)
+
+            # Save the clear and blurry image back
+            cv2.imwrite(filename=join(clear_image_dir, file_name), img=clear_image)
+            cv2.imwrite(filename=join(blurry_image_dir, file_name), img=blurry_image)
 
             # Calculate the residual of the two images
             residual_image = get_residual(clear_image=clear_image, blurry_image=blurry_image)
@@ -202,33 +216,32 @@ def populate_train_test_val_dirs_nonrandomly(root_dir, val_ratio=0.15, test_rati
     # Print the file distribution among the folders
     logger.print_file_distribution(len(all_file_names), len(train_file_names), len(val_file_names), len(test_file_names))
 
-    # Copy-Pasting images into train dataset, then normalizing them using CLAHE
+    # Copy-Pasting images into train dataset
     for name in train_file_names:
         shutil.copy(join(root_dir, 'CoregisteredBlurryImages', name), root_dir + '/train/CoregisteredBlurryImages')
         shutil.copy(join(root_dir, 'ClearImages', name), root_dir + '/train/ClearImages')
+        shutil.copy(join(root_dir, 'Masks', name), root_dir + '/train/Masks')
 
-    # Copy-Pasting images into val dataset, then normalizing them using CLAHE
+    # Copy-Pasting images into val dataset
     for name in val_file_names:
         shutil.copy(join(root_dir, 'CoregisteredBlurryImages', name), root_dir + '/val/CoregisteredBlurryImages')
         shutil.copy(join(root_dir, 'ClearImages', name), root_dir + '/val/ClearImages')
+        shutil.copy(join(root_dir, 'Masks', name), root_dir + '/val/Masks')
 
-    # Copy-Pasting images into test dataset, then normalizing them using CLAHE
+    # Copy-Pasting images into test dataset
     for name in test_file_names:
         shutil.copy(join(root_dir, 'CoregisteredBlurryImages', name), root_dir + '/test/CoregisteredBlurryImages')
         shutil.copy(join(root_dir, 'ClearImages', name), root_dir + '/test/ClearImages')
+        shutil.copy(join(root_dir, 'Masks', name), root_dir + '/test/Masks')
 
     ''' Augment the images in each new folder '''
     # If we want to use preliminary adaptive equalization...
     if preliminary_clahe:
         pass
-        # ... then first, apply Contrast Limited Adaptive Histogram Equalization to ALL images in all folders
-        # CLAHE_image_folder(root_dir + '/train/CoregisteredBlurryImages')
+        # ... then first, apply Contrast Limited Adaptive Histogram Equalization to clear images in all folders
         CLAHE_image_folder(root_dir + '/train/ClearImages')
-        # CLAHE_image_folder(root_dir + '/val/CoregisteredBlurryImages')
         CLAHE_image_folder(root_dir + '/val/ClearImages')
-        # CLAHE_image_folder(root_dir + '/test/CoregisteredBlurryImages')
         CLAHE_image_folder(root_dir + '/test/ClearImages')
-
 
     # Then, apply histogram equalization to make the blurry images' histogram match that of the clear images
     hist_match_image_folder(root_dir=join(root_dir, 'train'),
