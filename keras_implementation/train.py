@@ -27,10 +27,10 @@ tf.config.experimental.set_memory_growth(physical_devices[0], True)
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default='MyDnCNN', type=str, help='choose a type of model')
 parser.add_argument('--batch_size', default=128, type=int, help='batch size')
-parser.add_argument('--train_data', default='data/Volume1/train', type=str, help='path of train data')
-parser.add_argument('--val_data', default='data/Volume1/val', type=str, help='path of val data')
-parser.add_argument('--noise_level', default=25, type=str, help='Noise Level: Can be loew, medium, or high')
-parser.add_argument('--epoch', default=300, type=int, help='number of train epoches')
+parser.add_argument('--train_data', default='data/Volume2/train', type=str, help='path of train data')
+parser.add_argument('--val_data', default='data/Volume2/val', type=str, help='path of val data')
+parser.add_argument('--noise_level', default=25, type=str, help='Noise Level: Can be low, medium, or high')
+parser.add_argument('--epoch', default=25, type=int, help='number of train epoches')
 parser.add_argument('--lr', default=1e-3, type=float, help='initial learning rate for Adam')
 parser.add_argument('--save_every', default=1000, type=int, help='save model at after seeing x batches')
 args = parser.parse_args()
@@ -103,7 +103,7 @@ def my_train_datagen(epoch_iter=2000,
                      batch_size=128,
                      data_dir=args.train_data,
                      noise_level=NoiseLevel.LOW,
-                     low_noise_threshold=0.2,
+                     low_noise_threshold=0.25,
                      high_noise_threshold=0.):
     """
     Generator function that yields training data samples from a specified data directory
