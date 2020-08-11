@@ -34,29 +34,35 @@ def parse_args():
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--set_dir', default='data/Volume2', type=str, help='parent directory of test dataset')
+    parser.add_argument('--set_dir', default='data/Volume1', type=str, help='parent directory of test dataset')
     parser.add_argument('--set_names', default=['val'], type=list, help='name of test dataset')
-    parser.add_argument('--model_dir_original', default=os.path.join('models', 'MyDnCNN'), type=str,
+    parser.add_argument('--model_dir_original', default=os.path.join('models', 'Volume1Trained', 'MyDnCNN'), type=str,
                         help='directory of the original, single-network denoising model')
-    parser.add_argument('--model_dir_low_noise', default=os.path.join('models', 'MyDnCNN_low_noise'), type=str,
+    parser.add_argument('--model_dir_low_noise', default=os.path.join('models', 'Volume2Trained', 'MyDnCNN_low_noise'),
+                        type=str,
                         help='directory of the low-noise-denoising model')
-    parser.add_argument('--model_dir_medium_noise', default=os.path.join('models', 'MyDnCNN_medium_noise'), type=str,
+    parser.add_argument('--model_dir_medium_noise',
+                        default=os.path.join('models', 'Volume2Trained', 'MyDnCNN_medium_noise'), type=str,
+
+
                         help='directory of the medium-noise-denoising model')
-    parser.add_argument('--model_dir_high_noise', default=os.path.join('models', 'MyDnCNN_high_noise'), type=str,
+    parser.add_argument('--model_dir_high_noise',
+                        default=os.path.join('models', 'Volume2Trained', 'MyDnCNN_high_noise'), type=str,
                         help='directory of the high-noise-denoising model')
     parser.add_argument('--model_name_original', default='model_023.hdf5', type=str,
                         help='name of the original. single-network model')
-    parser.add_argument('--model_name_low_noise', default='model_022.hdf5', type=str,
+    parser.add_argument('--model_name_low_noise', default='model_025.hdf5', type=str,
                         help='name of the low-noise model')
     parser.add_argument('--model_name_medium_noise', default='model_025.hdf5', type=str,
                         help='name of the medium-noise model')
     parser.add_argument('--model_name_high_noise', default='model_025.hdf5', type=str,
                         help='name of the high-noise model')
-    parser.add_argument('--result_dir', default='data/results/Volume2', type=str, help='directory of results')
+    parser.add_argument('--result_dir', default='data/Volume2Trained_originalresults/Volume1', type=str,
+                        help='directory of results')
     parser.add_argument('--reanalyze_data', default=True, type=bool, help='True if we want to simply reanalyze '
                                                                           'results that have already been produced '
                                                                           'and saved')
-    parser.add_argument('--train_data', default='data/Volume1/train', type=str, help='path of train data')
+    parser.add_argument('--train_data', default='data/Volume2/train', type=str, help='path of train data')
     parser.add_argument('--save_result', default=1, type=int, help='save the denoised image, 1 for yes or 0 for no')
     return parser.parse_args()
 
@@ -226,7 +232,7 @@ def save_image(x, save_dir_name, save_file_name, original_mean, original_std):
 
 
 def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_noise, model_medium_noise,
-                             model_high_noise, args, original_mean, original_std, save_patches=False):
+                             model_high_noise, args, original_mean, original_std, save_patches=True):
     """
     Takes an input image and denoises it using a patch-based approach
 
@@ -258,7 +264,6 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
     :rtype: numpy array
     """
 
-    print(args.result_dir)
     save_dir_name = os.path.join(args.result_dir, set_name, file_name + '_patches')
 
     # First, create a denoised x_pred to INITIALLY be a deep copy of y. Then we will modify x_pred in place
@@ -431,6 +436,10 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
                                original_mean=original_mean,
                                original_std=original_std)
 
+    '''Just logging
+    logger.show_images([("y", y), ("x_pred", x_pred)])
+    '''
+
     return x_pred
 
 
@@ -495,13 +504,13 @@ def main(args):
                 # patch of the image separately
                 x_pred = denoise_image_by_patches(y, image_name_no_extension, set_name, model_original,
                                                   model_low_noise, model_medium_noise, model_high_noise, args,
-                                                  x_orig_mean, x_orig_std, save_patches=True)
+                                                  x_orig_mean, x_orig_std, save_patches=False)
 
                 # Record the inference time
                 elapsed_time = time.time() - start_time
                 print('%10s : %10s : %2.4f second' % (set_name, image_name, elapsed_time))
 
-                ''' Just logging
+                ''' Just logging 
                 # Reverse the standardization
                 x_pred_reversed = image_utils.reverse_standardize(x_pred,
                                                                   original_mean=x_orig_mean,
@@ -526,12 +535,15 @@ def main(args):
                 x_pred = image_utils.reverse_standardize(x_pred, original_mean=x_orig_mean, original_std=x_orig_std)
                 y = image_utils.reverse_standardize(y, original_mean=y_orig_mean, original_std=y_orig_std)
 
+                ''' Just logging
+                logger.show_images([("x", x),
+                                    ("x_pred", x_pred),
+                                    ("y", y)])
+                '''
+
                 # Get the PSNR and SSIM for x
                 psnr_x = peak_signal_noise_ratio(x, x_pred)
                 ssim_x = structural_similarity(x, x_pred, multichannel=True)
-
-                ''' Just logging '''
-                # Show the PSNR and SSIM for x_prediction
 
                 # If we want to save the result...
                 if args.save_result:
@@ -625,6 +637,71 @@ def reanalyze_data(args, save_results=True):
 
         # Get the average PSNR and SSIM
 
+        psnr_avg = np.mean(psnrs)
+        ssim_avg = np.mean(ssims)
+
+        # Log the average PSNR and SSIM to the Terminal
+        log('Dataset: {0:10s} \n  Average PSNR = {1:2.2f}dB, Average SSIM = {2:1.4f}'.format(set_name, psnr_avg,
+                                                                                             ssim_avg))
+
+
+def analyze_blurry_data(args, save_results=True):
+    """
+    Analyzes the blurry data to get SSIM and PSNR values compared to the clean data.
+    If necessary, may also apply masking to remove artifacts from patch denoising
+
+    :param args: The command-line arguments
+    :param save_results: True if we wish to save our results after masking and reanalyzing
+    :type save_results: bool
+
+    :return: None
+    """
+
+    # For each dataset that we wish to test on...
+    for set_name in args.set_names:
+
+        # Create a List of Peak Signal-To-Noise ratios (PSNRs) and Structural Similarities (SSIMs)
+        psnrs = []
+        ssims = []
+
+        # Iterate over each image in the set
+        for image_name in os.listdir(os.path.join(args.set_dir, set_name, 'CoregisteredBlurryImages')):
+            if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
+                # Make sure that we have a matching ClearImage, Mask, and Blurry Image
+                assert (os.path.exists(os.path.join(args.set_dir, set_name, 'ClearImages', image_name)))
+                assert (os.path.exists(os.path.join(args.set_dir, set_name, 'Masks', image_name)))
+                assert (os.path.exists(os.path.join(args.set_dir, set_name, 'CoregisteredBlurryImages', image_name)))
+
+                # Load the images and standardize them, saving their mean and std along the way
+                clear_image = imread(os.path.join(args.set_dir, set_name, 'ClearImages', image_name), 0)
+                mask_image = imread(os.path.join(args.set_dir, set_name, 'Masks', image_name), 0)
+                blurry_image = imread(os.path.join(args.set_dir, set_name, 'CoregisteredBlurryImages', image_name), 0)
+
+                ''' Just logging
+                logger.show_images([("clear_image", clear_image),
+                                    ("mask_image", mask_image),
+                                    ("blurry_image", blurry_image)])
+                '''
+
+                # Apply the mask to the blurry image AND the clear image
+                blurry_image = blurry_image * (mask_image // 255)
+                clear_image = clear_image * (mask_image // 255)
+
+                # Get the PSNR and SSIM between clear_image and blurry_image
+                psnr = peak_signal_noise_ratio(clear_image, blurry_image)
+                ssim = structural_similarity(clear_image, blurry_image, multichannel=True)
+
+                # Add the psnr and ssim to the psnrs and ssim lists, respectively
+                psnrs.append(psnr)
+                ssims.append(ssim)
+
+                ''' Just logging
+                logger.show_images([("clear_image", clear_image),
+                                    ("mask_image", mask_image),
+                                    ("blurry_image", blurry_image)])
+                '''
+
+        # Get the average PSNR and SSIM
 
         psnr_avg = np.mean(psnrs)
         ssim_avg = np.mean(ssims)

@@ -103,8 +103,8 @@ def my_train_datagen(epoch_iter=2000,
                      batch_size=128,
                      data_dir=args.train_data,
                      noise_level=NoiseLevel.LOW,
-                     low_noise_threshold=0.02,
-                     high_noise_threshold=0.05):
+                     low_noise_threshold=0.07,
+                     high_noise_threshold=0.07):
     """
     Generator function that yields training data samples from a specified data directory
 
@@ -120,8 +120,6 @@ def my_train_datagen(epoch_iter=2000,
     :param high_noise_threshold: The upper residual image standard deviation threshold used to determine which data
                                 should go to which network
     :type high_noise_threshold: float
-    :param is_test_time: True if we wish to get data at test time, False if this is used for training
-    :type is_test_time: bool
 
     :return: Yields a training example x and noisy image y
     """
@@ -226,7 +224,7 @@ def my_train_datagen(epoch_iter=2000,
             # NOTE: x and y px values are centered at 0, meaning there are negative px values. We might have trouble
             # visualizing px that aren't either from [0, 255] or [0, 1], so just watch out for that
             x, x_orig_mean, x_orig_std = image_utils.standardize(x_filtered)
-            y, y_orig_mean, y_orig_std = image_utils.standardize(x_filtered)
+            y, y_orig_mean, y_orig_std = image_utils.standardize(y_filtered)
 
             ''' Just logging 
             logger.print_numpy_statistics(x, "x (standardized)")
