@@ -131,7 +131,7 @@ def generate_patches_from_file_name(file_name):
     image = cv2.imread(file_name, 0)
 
     # Generate and return a list of patches from the image
-    return generate_patches(image)
+    return generate_patch_pairs(image)
 
 
 def generate_patches_old(image, image_type):
