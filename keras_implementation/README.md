@@ -59,6 +59,12 @@ python3 train.py /
 | [DnCNN (synthetic noise)](https://github.com/cszn/DnCNN)    | 28.1132 dB         | 0.9684           |
 | [BM3D-Brushlet](https://github.com/gfacciol/bm3d)           | 27.7017 dB         | 0.9640           |
 
+## [Volume 1 (val)](keras_implementation/data/Volume2/val) Results
+
+| Denoiser                                                    | Average PSNR       | Average SSIM     |
+|-------------------------------------------------------------|--------------------|------------------|
+| HydraNet                                                    | **29.4300 dB**     | **0.9653**       |
+
 
 | Image dataset | Noisy Image                           | Denoised Image                          |
 |:-------------:|:-------------------------------------:|:---------------------------------------:|
