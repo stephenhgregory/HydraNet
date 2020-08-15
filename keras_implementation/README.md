@@ -63,7 +63,7 @@ python3 train.py /
 
 | Denoiser                                                    | Average PSNR       | Average SSIM     |
 |-------------------------------------------------------------|--------------------|------------------|
-| HydraNet                                                    | **29.4300 dB**     | **0.9653**       |
+| HydraNet                                                    | **27.6800 dB**     | **0.9524**       |
 
 
 | Image dataset | Noisy Image                           | Denoised Image                          |
