@@ -6,6 +6,8 @@ import argparse
 import re
 import os
 import glob
+import sys
+
 import numpy as np
 from keras.models import load_model
 from keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
@@ -29,25 +31,29 @@ parser.add_argument('--model', default='MyDnCNN', type=str, help='choose a type 
 parser.add_argument('--batch_size', default=128, type=int, help='batch size')
 parser.add_argument('--train_data', default='data/Volume2/train', type=str, help='path of train data')
 parser.add_argument('--val_data', default='data/Volume2/val', type=str, help='path of val data')
-parser.add_argument('--noise_level', default=25, type=str, help='Noise Level: Can be low, medium, or high')
+parser.add_argument('--noise_level', default='all', type=str, help='Noise Level: Can be low, medium, high, or all')
 parser.add_argument('--epoch', default=25, type=int, help='number of train epoches')
 parser.add_argument('--lr', default=1e-3, type=float, help='initial learning rate for Adam')
 parser.add_argument('--save_every', default=1000, type=int, help='save model at after seeing x batches')
 args = parser.parse_args()
 
+# Set the noise level to decided which model to train
+if args.noise_level == 'low':
+    noise_level = NoiseLevel.LOW
+elif args.noise_level == 'medium':
+    noise_level = NoiseLevel.MEDIUM
+elif args.noise_level == 'high':
+    noise_level = NoiseLevel.HIGH
+elif args.noise_level == 'all':
+    noise_level = NoiseLevel.ALL
+else:
+    sys.exit("noise_level must be 'low', 'medium', 'high', or 'all'. Try again!")
+
+# Set the save directory of the trained model hdf5 file
 save_dir = os.path.join('/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation',
                         'models',
                         args.model + '_' + args.noise_level + '_noise')
 
-noise_level = NoiseLevel.LOW
-
-# Set the noise level to decided which model to train
-if args.noise_level == 'low':
-    noise_level = NoiseLevel.LOW
-if args.noise_level == 'medium':
-    noise_level = NoiseLevel.MEDIUM
-if args.noise_level == 'high':
-    noise_level = NoiseLevel.HIGH
 
 # Create the <save_dir> folder if it doesn't exist already
 if not os.path.exists(save_dir):
@@ -103,7 +109,7 @@ def my_train_datagen(epoch_iter=2000,
                      batch_size=128,
                      data_dir=args.train_data,
                      noise_level=NoiseLevel.LOW,
-                     low_noise_threshold=0.07,
+                     low_noise_threshold=0.28,
                      high_noise_threshold=0.07):
     """
     Generator function that yields training data samples from a specified data directory
@@ -145,6 +151,9 @@ def my_train_datagen(epoch_iter=2000,
             x_high_noise = []
             y_high_noise = []
             stds_high_noise = []
+            x_all_noise = []
+            y_all_noise = []
+            stds_all_noise = []
             stds = []
             x_filtered = []
             y_filtered = []
@@ -176,6 +185,9 @@ def my_train_datagen(epoch_iter=2000,
                     y_high_noise.append(y_patch)
                     stds_high_noise.append(std)
                     continue
+                x_all_noise.append(x_patch)
+                y_all_noise.append(y_patch)
+                stds_all_noise.append(x_patch)
 
             # Get x_filtered based upon the noise level that we're looking for
             if noise_level == NoiseLevel.LOW:
@@ -189,6 +201,10 @@ def my_train_datagen(epoch_iter=2000,
             elif noise_level == NoiseLevel.HIGH:
                 x_filtered = x_high_noise
                 y_filtered = y_high_noise
+                stds = stds_high_noise
+            elif noise_level == NoiseLevel.ALL:
+                x_filtered = x_all_noise
+                y_filtered = y_all_noise
                 stds = stds_high_noise
 
             # Convert image patches and stds into numpy arrays
@@ -280,6 +296,119 @@ def my_train_datagen(epoch_iter=2000,
                 yield batch_y, batch_x
 
 
+def my_train_datagen_single_model(epoch_iter=2000,
+                                  num_epochs=5,
+                                  batch_size=128,
+                                  data_dir=args.train_data):
+    """
+    Generator function that yields training data samples from a specified data directory.
+    This is used to generate all patches at once regardless of the noise level.
+
+    :param epoch_iter: The number of iterations per epoch
+    :param num_epochs: The total number of epochs
+    :param batch_size: The number of training examples for each training iteration
+    :param data_dir: The directory in which training examples are stored
+
+    :return: Yields a training example x and noisy image y
+    """
+
+    # Set the directory of blurry and clear data
+    clear_data_dir = os.path.join(data_dir, 'ClearImages')
+    blurry_data_dir = os.path.join(data_dir, 'CoregisteredBlurryImages')
+
+    # Loop the following indefinitely...
+    while True:
+        # Set a counter variable
+        counter = 0
+
+        # If this is the first iteration...
+        if counter == 0:
+            print(f'Accessing training data in: {data_dir}')
+
+            # Get training examples from data_dir using data_generator
+            x_original, y_original = data_generator.pair_data_generator(data_dir)
+
+            # Create lists to store all of the clear patches (x) and blurry patches (y)
+            x = []
+            y = []
+
+            # Iterate over all of the image patches
+            for x_patch, y_patch in zip(x_original, y_original):
+
+                # If the patch is black (i.e. the max px value < 10), just skip this training example
+                if np.max(x_patch) < 10:
+                    continue
+
+                # Add x_patch and y_patch to the list
+                x.append(x_patch)
+                y.append(y_patch)
+
+            # Convert image patches and stds into numpy arrays
+            x = np.array(x, dtype='uint8')
+            y = np.array(y, dtype='uint8')
+
+            # Assert that the last iteration has a full batch size
+            assert len(x_original) % args.batch_size == 0, \
+                logger.log(
+                    'make sure the last iteration has a full batchsize, '
+                    'this is important if you use batch normalization!')
+            assert len(y_original) % args.batch_size == 0, \
+                logger.log(
+                    'make sure the last iteration has a full batchsize, '
+                    'this is important if you use batch normalization!')
+
+            # Standardize x and y to have a mean of 0 and standard deviation of 1
+            # NOTE: x and y px values are centered at 0, meaning there are negative px values. Most libraries have
+            # trouble visualizing px that aren't either from [0, 255] or [0, 1], so watch out for that
+            x, x_orig_mean, x_orig_std = image_utils.standardize(x)
+            y, y_orig_mean, y_orig_std = image_utils.standardize(y)
+
+            '''Just for logging
+            # Save the reversed standardization of x and y into variables
+            x_reversed = image_utils.reverse_standardize(x, x_orig_mean, x_orig_std)
+            y_reversed = image_utils.reverse_standardize(y, y_orig_mean, y_orig_std)
+            '''
+
+            # Get a list of indices, from 0 to the total number of training examples
+            indices = list(range(x.shape[0]))
+
+            # Make sure that x and y have the same number of training examples
+            assert indices == list(range(y.shape[0])), logger.log('Make sure x and y are paired up properly! That is, x'
+                                                                  'is a ClearImage, and y is a CoregisteredBlurryImage'
+                                                                  'but that the two frames match eachother. ')
+
+            # Increment the counter
+            counter = 1
+
+        # Iterate over the number of epochs
+        for _ in range(num_epochs):
+
+            # Shuffle the indices of the training examples
+            np.random.shuffle(indices)
+
+            # Iterate over the entire training set, skipping "batch_size" at a time
+            for i in range(0, len(indices), batch_size):
+                # Get the batch_x (clear) and batch_y (blurry)
+                batch_x = x[indices[i:i + batch_size]]
+                batch_y = y[indices[i:i + batch_size]]
+
+                '''Just logging
+                # Get equivalently indexed batches from x_original, x_reversed, y_original, and y_reversed
+                batch_x_reversed = x_reversed[indices[i:i + batch_size]]
+                batch_y_reversed = y_reversed[indices[i:i + batch_size]]
+                
+
+                # Show some images from this batch
+                logger.show_images(images=[("batch_x[0]", batch_x[0]),
+                                         ("batch_x_reversed[0]", batch_x_reversed[0]),
+                                         ("batch_y[0]", batch_y[0]),
+                                         ("batch_y_reversed[0]", batch_y_reversed[0])])
+                '''
+
+                # Finally, yield x and y, as this function is a generator
+                yield batch_y, batch_x
+
+
 def sum_squared_error(y_true, y_pred):
     """
     Returns sum-squared error between y_true and y_pred.
@@ -344,7 +473,7 @@ def new_callbacks():
     callbacks.append(LearningRateScheduler(lr_schedule))
 
     # Add Early Stopping so that we stop training once val_loss stops decreasing after <patience> # of epochs
-    callbacks.append(EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=3))
+    # callbacks.append(EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=3))
 
     return callbacks
 
@@ -377,14 +506,48 @@ def main():
     # Compile the model
     model.compile(optimizer=Adam(0.001), loss=sum_squared_error)
 
-    # Train the model
-    history = model.fit(my_train_datagen(batch_size=args.batch_size,
-                                         data_dir=args.train_data,
-                                         noise_level=noise_level),
-                        steps_per_epoch=2000,
-                        epochs=args.epoch,
-                        initial_epoch=initial_epoch,
-                        callbacks=new_callbacks())
+    if noise_level == NoiseLevel.ALL:
+        # Train the model on all noise levels
+        history = model.fit(my_train_datagen_single_model(batch_size=args.batch_size,
+                                                          data_dir=args.train_data,
+                                                          noise_level=noise_level),
+                            steps_per_epoch=2000,
+                            epochs=args.epoch,
+                            initial_epoch=initial_epoch,
+                            callbacks=new_callbacks())
+    elif noise_level == NoiseLevel.LOW:
+        # Train the model on the individual noise level
+        history = model.fit(my_train_datagen(batch_size=args.batch_size,
+                                             data_dir=args.train_data,
+                                             noise_level=noise_level,
+                                             low_noise_threshold=0.28,
+                                             high_noise_threshold=1),
+                            steps_per_epoch=2000,
+                            epochs=args.epoch,
+                            initial_epoch=initial_epoch,
+                            callbacks=new_callbacks())
+    elif noise_level == NoiseLevel.MEDIUM:
+        # Train the model on the individual noise level
+        history = model.fit(my_train_datagen(batch_size=args.batch_size,
+                                             data_dir=args.train_data,
+                                             noise_level=noise_level,
+                                             low_noise_threshold=0.03,
+                                             high_noise_threshold=0.32),
+                            steps_per_epoch=2000,
+                            epochs=args.epoch,
+                            initial_epoch=initial_epoch,
+                            callbacks=new_callbacks())
+    elif noise_level == NoiseLevel.HIGH:
+        # Train the model on the individual noise level
+        history = model.fit(my_train_datagen(batch_size=args.batch_size,
+                                             data_dir=args.train_data,
+                                             noise_level=noise_level,
+                                             low_noise_threshold=0.01,
+                                             high_noise_threshold=0.06),
+                            steps_per_epoch=2000,
+                            epochs=args.epoch,
+                            initial_epoch=initial_epoch,
+                            callbacks=new_callbacks())
 
 
 if __name__ == '__main__':
