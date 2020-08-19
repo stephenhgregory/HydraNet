@@ -23,7 +23,7 @@ physical_devices = tf.config.list_physical_devices('GPU')
 
 # This makes sure that at runtime, the initialization of the CUDA device physical_devices[0] (The only GPU in
 # the system) will not allocate ALL of the memory on that device.
-tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 # Command-line parameters
 parser = argparse.ArgumentParser()
@@ -50,9 +50,7 @@ else:
     sys.exit("noise_level must be 'low', 'medium', 'high', or 'all'. Try again!")
 
 # Set the save directory of the trained model hdf5 file
-save_dir = os.path.join('/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation',
-                        'models',
-                        args.model + '_' + args.noise_level + '_noise')
+save_dir = os.path.join('models', args.model + '_' + args.noise_level + '_noise')
 
 
 # Create the <save_dir> folder if it doesn't exist already
@@ -506,6 +504,9 @@ def main():
     # Compile the model
     model.compile(optimizer=Adam(0.001), loss=sum_squared_error)
 
+    # TODO: Simply exit the program (This is for debugging, delete this line!
+    sys.exit("Model was compiled! This is for debugging, no training was done. Quitting now.")
+
     if noise_level == NoiseLevel.ALL:
         # Train the model on all noise levels
         history = model.fit(my_train_datagen_single_model(batch_size=args.batch_size,
@@ -520,8 +521,8 @@ def main():
         history = model.fit(my_train_datagen(batch_size=args.batch_size,
                                              data_dir=args.train_data,
                                              noise_level=noise_level,
-                                             low_noise_threshold=0.28,
-                                             high_noise_threshold=1),
+                                             low_noise_threshold=0.00,
+                                             high_noise_threshold=0.15),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
@@ -531,8 +532,8 @@ def main():
         history = model.fit(my_train_datagen(batch_size=args.batch_size,
                                              data_dir=args.train_data,
                                              noise_level=noise_level,
-                                             low_noise_threshold=0.03,
-                                             high_noise_threshold=0.32),
+                                             low_noise_threshold=0.02,
+                                             high_noise_threshold=0.20),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
@@ -542,8 +543,8 @@ def main():
         history = model.fit(my_train_datagen(batch_size=args.batch_size,
                                              data_dir=args.train_data,
                                              noise_level=noise_level,
-                                             low_noise_threshold=0.01,
-                                             high_noise_threshold=0.06),
+                                             low_noise_threshold=0.06,
+                                             high_noise_threshold=2),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,

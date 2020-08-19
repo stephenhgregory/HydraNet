@@ -16,13 +16,13 @@ import copy
 
 # Set Memory Growth to true to fix a small bug in Tensorflow
 
-physical_devices = tf.config.list_physical_devices('GPU')
-try:
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
-except:
-    # Invalid device or cannot modify virtual devices once initialized.
-    print(f'The following line threw an exception: tf.config.experimental.set_memory_growth(physical_devices[0], True)')
-    pass
+# physical_devices = tf.config.list_physical_devices('GPU')
+# try:
+#     tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# except:
+#     # Invalid device or cannot modify virtual devices once initialized.
+#     print(f'The following line threw an exception: tf.config.experimental.set_memory_growth(physical_devices[0], True)')
+#     pass
 
 
 #############################################################
@@ -68,7 +68,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def retrieve_train_data(train_data_dir, low_noise_threshold=0.05, high_noise_threshold=0.3):
+def retrieve_train_data(train_data_dir, low_noise_threshold=0, high_noise_threshold=3):
     """
     Gets and returns the image patches used during training time
 
@@ -322,7 +322,7 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
                 # If it's greater than the max, update the max
                 if ssim > max_ssim:
                     max_ssim = ssim
-                    max_ssim_category = 'low'
+                    max_ssim_category = 'high'  ###YG: LOW->HIGH DUE TO THE INTERESTING THRESHOLD SETTING
 
             # Iterate over every medium_noise patch
             for y_medium_noise_patch in y_medium_noise:
@@ -372,12 +372,12 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
                 # If it's greater than the max, update the max
                 if ssim > max_ssim:
                     max_ssim = ssim
-                    max_ssim_category = 'high'
+                    max_ssim_category = 'low'  ##YG
 
             # If the max SSIM is in the low_noise image dataset, denoise the image using the low_noise
             # denoising model
             if max_ssim_category == 'low':
-
+                print('Calling model low!')
                 # Inference with model_low_noise (Denoise y_patch_tensor to get x_patch_pred)
                 x_patch_pred_tensor = model_low_noise.predict(y_patch_tensor)
 
@@ -398,7 +398,7 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
             # Else, if the max SSIM is in the medium_noise image dataset, denoise the image using the
             # medium_noise denoising model
             elif max_ssim_category == 'medium':
-
+                print('Calling model medium!')
                 # Inference with model_medium_noise (Denoise y_patch_tensor to get x_patch_pred)
                 x_patch_pred_tensor = model_medium_noise.predict(y_patch_tensor)
 
@@ -419,7 +419,7 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
             # Else, if the max SSIM is in the high_noise image dataset, denoise the image using the
             # high_noise denoising model
             elif max_ssim_category == 'high':
-
+                print('Calling model high!')
                 # Inference with model_high_noise (Denoise y_patch_tensor to get x_patch_pred)
                 x_patch_pred_tensor = model_low_noise.predict(y_patch_tensor)
 
