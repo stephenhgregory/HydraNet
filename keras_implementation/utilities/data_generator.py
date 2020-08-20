@@ -358,8 +358,13 @@ def datagenerator(data_dir=join('data', 'Volume1', 'train'), image_type=ImageTyp
         data.append(patch)
     data = np.array(data, dtype='uint8')
     data = data.reshape((data.shape[0] * data.shape[1], data.shape[2], data.shape[3], 1))
+
+    ''' Commenting this out, as it is done in train_datagen
+    # Remove elements from data so that it has the right number of patches 
     discard_n = len(data) - len(data) // batch_size * batch_size;
     data = np.delete(data, range(discard_n), axis=0)
+    '''
+
     print('^_^-training data finished-^_^')
     return data
 

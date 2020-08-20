@@ -154,12 +154,17 @@ def my_new_train_datagen_single_model(epoch_iter=2000,
             x_filtered = np.array(x_filtered, dtype='uint8')
             y_filtered = np.array(y_filtered, dtype='uint8')
 
+            # Remove elements from x_filtered and y_filtered so thatthey has the right number of patches
+            discard_n = len(x_filtered) - len(y_filtered) // batch_size * batch_size;
+            x_filtered = np.delete(x_filtered, range(discard_n), axis=0)
+            y_filtered = np.delete(y_filtered, range(discard_n), axis=0)
+
             # Assert that the last iteration has a full batch size
-            assert len(x) % args.batch_size == 0, \
+            assert len(x_filtered) % args.batch_size == 0, \
                 logger.log(
                     'make sure the last iteration has a full batchsize, '
                     'this is important if you use batch normalization!')
-            assert len(y) % args.batch_size == 0, \
+            assert len(y_filtered) % args.batch_size == 0, \
                 logger.log(
                     'make sure the last iteration has a full batchsize, '
                     'this is important if you use batch normalization!')
@@ -200,12 +205,11 @@ def my_new_train_datagen_single_model(epoch_iter=2000,
                 batch_x = x_filtered[indices[i:i + batch_size]]
                 batch_y = y_filtered[indices[i:i + batch_size]]
 
-                '''Just logging
+                '''Just logging 
                 # Get equivalently indexed batches from x_original, x_reversed, y_original, and y_reversed
                 batch_x_reversed = x_reversed[indices[i:i + batch_size]]
                 batch_y_reversed = y_reversed[indices[i:i + batch_size]]
                 
-
                 # Show some images from this batch
                 logger.show_images(images=[("batch_x[0]", batch_x[0]),
                                          ("batch_x_reversed[0]", batch_x_reversed[0]),
@@ -337,6 +341,11 @@ def my_new_train_datagen(epoch_iter=2000,
             x_filtered = np.array(x_filtered, dtype='uint8')
             y_filtered = np.array(y_filtered, dtype='uint8')
             stds = np.array(stds, dtype='float64')
+
+            # Remove elements from x_filtered and y_filtered so thatthey has the right number of patches
+            discard_n = len(x_filtered) - len(y_filtered) // batch_size * batch_size;
+            x_filtered = np.delete(x_filtered, range(discard_n), axis=0)
+            y_filtered = np.delete(y_filtered, range(discard_n), axis=0)
 
             ''' Just logging
             # Plot the residual standard deviation
