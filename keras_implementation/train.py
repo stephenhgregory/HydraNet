@@ -19,11 +19,11 @@ import keras.backend as K
 import tensorflow as tf
 
 # Allow memory growth in order to fix a Tensorflow bug
-# physical_devices = tf.config.list_physical_devices('GPU')
+physical_devices = tf.config.list_physical_devices('GPU')
 
 # This makes sure that at runtime, the initialization of the CUDA device physical_devices[0] (The only GPU in
 # the system) will not allocate ALL of the memory on that device.
-# tf.config.experimental.set_memory_growth(physical_devices[0], True)
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 # Command-line parameters
 parser = argparse.ArgumentParser()
@@ -523,8 +523,9 @@ def my_train_datagen(epoch_iter=2000,
             y_filtered = np.array(y_filtered, dtype='uint8')
             stds = np.array(stds, dtype='float64')
 
-            # Remove elements from x_filtered and y_filtered so thatthey has the right number of patches
-            discard_n = len(x_filtered) - len(y_filtered) // batch_size * batch_size;
+            # Remove elements from x_filtered and y_filtered so that they has the right number of patches
+            discard_n = len(x_filtered) - len(x_filtered) // batch_size * batch_size;
+            print(f'discard_n ={discard_n}')
             x_filtered = np.delete(x_filtered, range(discard_n), axis=0)
             y_filtered = np.delete(y_filtered, range(discard_n), axis=0)
 
@@ -533,12 +534,16 @@ def my_train_datagen(epoch_iter=2000,
             image_utils.plot_standard_deviations(stds)
             '''
 
+            # Delete this
+            print(f'The length of x_filtered: {len(x_filtered)}')
+            print(f'The length of y_filtered: {len(y_filtered)}')
+
             # Assert that the last iteration has a full batch size
-            assert len(x_original) % args.batch_size == 0, \
+            assert len(x_filtered) % args.batch_size == 0, \
                 logger.log(
                     'make sure the last iteration has a full batchsize, '
                     'this is important if you use batch normalization!')
-            assert len(y_original) % args.batch_size == 0, \
+            assert len(y_filtered) % args.batch_size == 0, \
                 logger.log(
                     'make sure the last iteration has a full batchsize, '
                     'this is important if you use batch normalization!')
