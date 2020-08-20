@@ -102,9 +102,9 @@ def lr_schedule(epoch):
 
 
 def my_train_datagen_single_model(epoch_iter=2000,
-                                      num_epochs=5,
-                                      batch_size=128,
-                                      data_dir=args.train_data):
+                                  num_epochs=5,
+                                  batch_size=128,
+                                  data_dir=args.train_data):
     """
     Generator function that yields training data samples from a specified data directory.
     This is used to generate all patches at once regardless of the noise level.
@@ -702,41 +702,41 @@ def main():
 
     if noise_level == NoiseLevel.ALL:
         # Train the model on all noise levels
-        history = model.fit(my_new_train_datagen_single_model(batch_size=args.batch_size,
-                                                              data_dir=args.train_data),
+        history = model.fit(my_train_datagen_single_model(batch_size=args.batch_size,
+                                                          data_dir=args.train_data),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
                             callbacks=new_callbacks())
     elif noise_level == NoiseLevel.LOW:
         # Train the model on the individual noise level
-        history = model.fit(my_new_train_datagen(batch_size=args.batch_size,
-                                                 data_dir=args.train_data,
-                                                 noise_level=noise_level,
-                                                 low_noise_threshold=0.00,
-                                                 high_noise_threshold=0.15),
+        history = model.fit(my_train_datagen(batch_size=args.batch_size,
+                                             data_dir=args.train_data,
+                                             noise_level=noise_level,
+                                             low_noise_threshold=0.00,
+                                             high_noise_threshold=0.15),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
                             callbacks=new_callbacks())
     elif noise_level == NoiseLevel.MEDIUM:
         # Train the model on the individual noise level
-        history = model.fit(my_new_train_datagen(batch_size=args.batch_size,
-                                                 data_dir=args.train_data,
-                                                 noise_level=noise_level,
-                                                 low_noise_threshold=0.02,
-                                                 high_noise_threshold=0.20),
+        history = model.fit(my_train_datagen(batch_size=args.batch_size,
+                                             data_dir=args.train_data,
+                                             noise_level=noise_level,
+                                             low_noise_threshold=0.02,
+                                             high_noise_threshold=0.20),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
                             callbacks=new_callbacks())
     elif noise_level == NoiseLevel.HIGH:
         # Train the model on the individual noise level
-        history = model.fit(my_new_train_datagen(batch_size=args.batch_size,
-                                                 data_dir=args.train_data,
-                                                 noise_level=noise_level,
-                                                 low_noise_threshold=0.06,
-                                                 high_noise_threshold=2),
+        history = model.fit(my_train_datagen(batch_size=args.batch_size,
+                                             data_dir=args.train_data,
+                                             noise_level=noise_level,
+                                             low_noise_threshold=0.06,
+                                             high_noise_threshold=2),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
