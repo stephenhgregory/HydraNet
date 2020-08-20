@@ -23,7 +23,7 @@ physical_devices = tf.config.list_physical_devices('GPU')
 
 # This makes sure that at runtime, the initialization of the CUDA device physical_devices[0] (The only GPU in
 # the system) will not allocate ALL of the memory on that device.
-# tf.config.experimental.set_memory_growth(physical_devices[0], True)
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 # Command-line parameters
 parser = argparse.ArgumentParser()
@@ -139,6 +139,10 @@ def my_train_datagen(epoch_iter=2000,
             # Get training examples from data_dir using data_generator
             x_original, y_original = data_generator.pair_data_generator(data_dir)
 
+            ''' Just logging '''
+            logger.show_images([("x_original", x_original),
+                                ("y_original", y_original)])
+
             # Create lists to store all of the patches and stds for each noise level category
             x_low_noise = []
             y_low_noise = []
@@ -206,15 +210,6 @@ def my_train_datagen(epoch_iter=2000,
                 stds = stds_high_noise
 
             # Convert image patches and stds into numpy arrays
-            x_low_noise = np.array(x_low_noise, dtype='uint8')
-            y_low_noise = np.array(y_low_noise, dtype='uint8')
-            stds_low_noise = np.array(stds_low_noise, dtype='float64')
-            x_medium_noise = np.array(x_medium_noise, dtype='uint8')
-            y_medium_noise = np.array(y_medium_noise, dtype='uint8')
-            stds_medium_noise = np.array(stds_medium_noise, dtype='float64')
-            x_high_noise = np.array(x_high_noise, dtype='uint8')
-            y_high_noise = np.array(y_high_noise, dtype='uint8')
-            stds_high_noise = np.array(stds_high_noise, dtype='float64')
             x_filtered = np.array(x_filtered, dtype='uint8')
             y_filtered = np.array(y_filtered, dtype='uint8')
             stds = np.array(stds, dtype='float64')
@@ -504,14 +499,10 @@ def main():
     # Compile the model
     model.compile(optimizer=Adam(0.001), loss=sum_squared_error)
 
-    # TODO: Simply exit the program (This is for debugging, delete this line!
-    sys.exit("Model was compiled! This is for debugging, no training was done. Quitting now.")
-
     if noise_level == NoiseLevel.ALL:
         # Train the model on all noise levels
         history = model.fit(my_train_datagen_single_model(batch_size=args.batch_size,
-                                                          data_dir=args.train_data,
-                                                          noise_level=noise_level),
+                                                          data_dir=args.train_data),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,

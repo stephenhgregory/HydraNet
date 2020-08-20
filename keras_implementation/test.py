@@ -16,13 +16,13 @@ import copy
 
 # Set Memory Growth to true to fix a small bug in Tensorflow
 
-# physical_devices = tf.config.list_physical_devices('GPU')
-# try:
-#     tf.config.experimental.set_memory_growth(physical_devices[0], True)
-# except:
-#     # Invalid device or cannot modify virtual devices once initialized.
-#     print(f'The following line threw an exception: tf.config.experimental.set_memory_growth(physical_devices[0], True)')
-#     pass
+physical_devices = tf.config.list_physical_devices('GPU')
+try:
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+except:
+    # Invalid device or cannot modify virtual devices once initialized.
+    print(f'The following line threw an exception: tf.config.experimental.set_memory_growth(physical_devices[0], True)')
+    pass
 
 
 #############################################################
@@ -38,6 +38,10 @@ def parse_args():
     parser.add_argument('--set_names', default=['val'], type=list, help='name of test dataset')
     parser.add_argument('--model_dir_original', default=os.path.join('models', 'Volume1Trained', 'MyDnCNN'), type=str,
                         help='directory of the original, single-network denoising model')
+    parser.add_argument('--model_dir_all_noise',
+                        default=os.path.join('models', 'Volume2Trained', 'MyDnCNN_all_noise'),
+                        type=str,
+                        help='directory of the all-noise-denoising model')
     parser.add_argument('--model_dir_low_noise',
                         default=os.path.join('models', 'Volume2Trained', 'MyDnCNN_low_noise'),
                         type=str,
@@ -52,19 +56,22 @@ def parse_args():
                         help='directory of the high-noise-denoising model')
     parser.add_argument('--model_name_original', default='model_023.hdf5', type=str,
                         help='name of the original. single-network model')
+    parser.add_argument('--model_name_all_noise', default='model_025.hdf5', type=str,
+                        help='name of the all-noise model')
     parser.add_argument('--model_name_low_noise', default='model_025.hdf5', type=str,
                         help='name of the low-noise model')
     parser.add_argument('--model_name_medium_noise', default='model_025.hdf5', type=str,
                         help='name of the medium-noise model')
     parser.add_argument('--model_name_high_noise', default='model_025.hdf5', type=str,
                         help='name of the high-noise model')
-    parser.add_argument('--result_dir', default='data/Volume2Trained_newresults/Volume1', type=str,
+    parser.add_argument('--result_dir', default='data/Volume2Trained_newresults1/Volume1', type=str,
                         help='directory of results')
     parser.add_argument('--reanalyze_data', default=False, type=bool, help='True if we want to simply reanalyze '
                                                                            'results that have already been produced '
                                                                            'and saved')
     parser.add_argument('--train_data', default='data/Volume2/train', type=str, help='path of train data')
     parser.add_argument('--save_result', default=1, type=int, help='save the denoised image, 1 for yes or 0 for no')
+    parser.add_argument('--single_denoiser', default=0, type=int, help='save the denoised image, 1 for yes or 0 for no')
     return parser.parse_args()
 
 
@@ -232,19 +239,22 @@ def save_image(x, save_dir_name, save_file_name, original_mean, original_std):
     cv2.imwrite(filename=os.path.join(save_dir_name, save_file_name), img=x)
 
 
-def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_noise, model_medium_noise,
-                             model_high_noise, args, original_mean, original_std, save_patches=True):
+def denoise_image_by_patches(y, file_name, set_name, model_original, model_all_noise, model_low_noise,
+                             model_medium_noise, model_high_noise, args, original_mean, original_std, save_patches=True,
+                             single_denoiser=False):
     """
     Takes an input image and denoises it using a patch-based approach
 
     :param y: The input image to denoise
     :type y: numpy array
-    :param model_original: The original TF model used to denoise all image patches
-    :type model_original: TF Model
     :param file_name: The name of the file
     :type file_name: str
     :param set_name: The name of the set containing our test data
     :type set_name: str
+    :param model_original: The original TF model used to denoise all image patches
+    :type model_original: TF Model
+    :param model_all_noise: The TF model used to denoise all image patches
+    :type model_all_noise: TF Model
     :param model_low_noise: The TF model used to denoise low-noise image patches
     :type model_low_noise: TF Model
     :param model_medium_noise: The TF model used to denoise medium-noise image patches
@@ -260,6 +270,8 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
     :type original_std: float
     :param save_patches: True if we wish to save the individual patches
     :type save_patches: bool
+    :param single_denoiser: True if we wish to denoise patches using only a single denoiser
+    :type single_denoiser: bool
 
     :return: x_pred: A denoised image as a numpy array
     :rtype: numpy array
@@ -299,6 +311,30 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
             max_ssim = 0
             max_ssim_category = ''
 
+            # If we wish to use a single denoiser, skip the standard deviation retrieval and parsing into categories,
+            # and just denoise each patch
+            if single_denoiser:
+                print('Calling all-noise model!')
+                # Inference with model_low_noise (Denoise y_patch_tensor to get x_patch_pred)
+                x_patch_pred_tensor = model_all_noise.predict(y_patch_tensor)
+
+                # Convert the denoised patch from a tensor to an image (numpy array)
+                x_patch_pred = from_tensor(x_patch_pred_tensor)
+
+                # Replace the patch in x with the new denoised patch
+                x_pred[i:i + 40, j:j + 40] = x_patch_pred
+
+                if save_patches:
+                    # Save the denoised patch
+                    save_image(x=x_patch_pred,
+                               save_dir_name=os.path.join(args.result_dir, set_name, file_name + '_patches'),
+                               save_file_name=file_name + '_i-' + str(i) + '_j-' + str(j) + '.png',
+                               original_mean=original_mean,
+                               original_std=original_std)
+
+                # Finally, skip to the next loop
+                continue
+
             # Iterate over every low_noise patch
             for y_low_noise_patch in y_low_noise:
 
@@ -322,9 +358,9 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
                 # If it's greater than the max, update the max
                 if ssim > max_ssim:
                     max_ssim = ssim
-                    max_ssim_category = 'high'  ###YG: LOW->HIGH DUE TO THE INTERESTING THRESHOLD SETTING
+                    max_ssim_category = 'low'
 
-            # Iterate over every medium_noise patch
+                    # Iterate over every medium_noise patch
             for y_medium_noise_patch in y_medium_noise:
 
                 # First, reshape y_medium_noise_patch and y_patch to get the ssim
@@ -372,14 +408,14 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
                 # If it's greater than the max, update the max
                 if ssim > max_ssim:
                     max_ssim = ssim
-                    max_ssim_category = 'low'  ##YG
+                    max_ssim_category = 'high'
 
             # If the max SSIM is in the low_noise image dataset, denoise the image using the low_noise
             # denoising model
             if max_ssim_category == 'low':
                 print('Calling model low!')
                 # Inference with model_low_noise (Denoise y_patch_tensor to get x_patch_pred)
-                x_patch_pred_tensor = model_low_noise.predict(y_patch_tensor)
+                x_patch_pred_tensor = model_original.predict(y_patch_tensor)
 
                 # Convert the denoised patch from a tensor to an image (numpy array)
                 x_patch_pred = from_tensor(x_patch_pred_tensor)
@@ -400,7 +436,7 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
             elif max_ssim_category == 'medium':
                 print('Calling model medium!')
                 # Inference with model_medium_noise (Denoise y_patch_tensor to get x_patch_pred)
-                x_patch_pred_tensor = model_medium_noise.predict(y_patch_tensor)
+                x_patch_pred_tensor = model_original.predict(y_patch_tensor)
 
                 # Convert the denoised patch from a tensor to an image (numpy array)
                 x_patch_pred = from_tensor(x_patch_pred_tensor)
@@ -421,7 +457,7 @@ def denoise_image_by_patches(y, file_name, set_name, model_original, model_low_n
             elif max_ssim_category == 'high':
                 print('Calling model high!')
                 # Inference with model_high_noise (Denoise y_patch_tensor to get x_patch_pred)
-                x_patch_pred_tensor = model_low_noise.predict(y_patch_tensor)
+                x_patch_pred_tensor = model_original.predict(y_patch_tensor)
 
                 # Convert the denoised patch from a tensor to an image (numpy array)
                 x_patch_pred = from_tensor(x_patch_pred_tensor)
@@ -450,9 +486,13 @@ def main(args):
     # Compile the command line arguments
     args = parse_args()
 
+
+
     # Then, load our 3 denoising models
     model_original = load_model(os.path.join(args.model_dir_original, args.model_name_original),
                                 compile=False)
+    model_all_noise = load_model(os.path.join(args.model_dir_all_noise, args.model_name_all_noise),
+                                 compile=False)
     model_low_noise = load_model(os.path.join(args.model_dir_low_noise, args.model_name_low_noise),
                                  compile=False)
     model_medium_noise = load_model(os.path.join(args.model_dir_medium_noise, args.model_name_medium_noise),
@@ -503,9 +543,10 @@ def main(args):
 
                 # Denoise y by calling denoise_image_by_patches, which using the 3 denoising models to denoise each
                 # patch of the image separately
-                x_pred = denoise_image_by_patches(y, image_name_no_extension, set_name, model_original,
+                x_pred = denoise_image_by_patches(y, image_name_no_extension, set_name, model_original, model_all_noise,
                                                   model_low_noise, model_medium_noise, model_high_noise, args,
-                                                  x_orig_mean, x_orig_std, save_patches=False)
+                                                  x_orig_mean, x_orig_std, save_patches=False,
+                                                  single_denoiser=bool(args.single_denoiser))
 
                 # Record the inference time
                 elapsed_time = time.time() - start_time
@@ -536,7 +577,7 @@ def main(args):
                 x_pred = image_utils.reverse_standardize(x_pred, original_mean=x_orig_mean, original_std=x_orig_std)
                 y = image_utils.reverse_standardize(y, original_mean=y_orig_mean, original_std=y_orig_std)
 
-                ''' Just logging
+                ''' Just logging 
                 logger.show_images([("x", x),
                                     ("x_pred", x_pred),
                                     ("y", y)])
@@ -611,10 +652,11 @@ def reanalyze_data(args, save_results=True):
                 mask_image = imread(os.path.join(args.set_dir, set_name, 'Masks', image_name), 0)
                 denoised_image = imread(os.path.join(args.result_dir, set_name, image_name), 0)
 
-                ''' Just logging '''
+                ''' Just logging
                 logger.show_images([("clear_image", clear_image),
                                     ("mask_image", mask_image),
                                     ("denoised_image", denoised_image)])
+                '''
 
                 # Apply the mask to the denoised image AND the clear image
                 denoised_image = denoised_image * (mask_image // 255)
@@ -716,6 +758,10 @@ if __name__ == '__main__':
 
     # Get command-line arguments
     args = parse_args()
+
+    # If the result directory doesn't exist already, just create it
+    if not os.path.exists(args.result_dir):
+        os.makedirs(args.result_dir)
 
     if not args.reanalyze_data:
         main(args)
