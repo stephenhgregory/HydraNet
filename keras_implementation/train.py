@@ -101,7 +101,7 @@ def lr_schedule(epoch):
     return lr
 
 
-def my_new_train_datagen_single_model(epoch_iter=2000,
+def my_train_datagen_single_model(epoch_iter=2000,
                                       num_epochs=5,
                                       batch_size=128,
                                       data_dir=args.train_data):
@@ -131,9 +131,7 @@ def my_new_train_datagen_single_model(epoch_iter=2000,
             print(f'Accessing training data in: {data_dir}')
 
             # Get training examples from data_dir using data_generator
-            # Get training example from data_dir using data_generator
-            x = data_generator.datagenerator(data_dir, image_type=data_generator.ImageType.CLEARIMAGE)
-            y = data_generator.datagenerator(data_dir, image_type=data_generator.ImageType.BLURRYIMAGE)
+            x, y = data_generator.pair_data_generator(data_dir)
 
             # Create lists to store all of the clear patches (x) and blurry patches (y)
             x_filtered = []
@@ -449,9 +447,10 @@ def my_train_datagen(epoch_iter=2000,
             # Get training examples from data_dir using data_generator
             x_original, y_original = data_generator.pair_data_generator(data_dir)
 
-            ''' Just logging '''
+            ''' Just logging 
             logger.show_images([("x_original", x_original),
                                 ("y_original", y_original)])
+            '''
 
             # Create lists to store all of the patches and stds for each noise level category
             x_low_noise = []
@@ -523,6 +522,11 @@ def my_train_datagen(epoch_iter=2000,
             x_filtered = np.array(x_filtered, dtype='uint8')
             y_filtered = np.array(y_filtered, dtype='uint8')
             stds = np.array(stds, dtype='float64')
+
+            # Remove elements from x_filtered and y_filtered so thatthey has the right number of patches
+            discard_n = len(x_filtered) - len(y_filtered) // batch_size * batch_size;
+            x_filtered = np.delete(x_filtered, range(discard_n), axis=0)
+            y_filtered = np.delete(y_filtered, range(discard_n), axis=0)
 
             ''' Just logging
             # Plot the residual standard deviation

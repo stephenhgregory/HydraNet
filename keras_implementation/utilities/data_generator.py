@@ -440,15 +440,16 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
                                        1
                                        ))
 
+    # Make sure that clear_data and blurry_data have the same length
+    assert (len(blurry_data) == len(clear_data))
+
+    ''' Commenting this out, as it will be done in train_datagen
     # Get the number of elements to discard
     num_elements_to_discard = len(clear_data) - len(clear_data) // batch_size * batch_size
-
-    # Make sure that clear_data and blurry_data have the same length
-    assert (num_elements_to_discard == (len(blurry_data) - len(blurry_data) // batch_size * batch_size))
-
     # Remove "num_elements_to_discard" elements from from clear_data and blurry_data
     clear_data = np.delete(clear_data, range(num_elements_to_discard), axis=0)
     blurry_data = np.delete(blurry_data, range(num_elements_to_discard), axis=0)
+    '''
 
     return clear_data, blurry_data
 
