@@ -39,7 +39,7 @@ def parse_args():
     parser.add_argument('--model_dir_original', default=os.path.join('models', 'Volume1Trained', 'MyDnCNN'), type=str,
                         help='directory of the original, single-network denoising model')
     parser.add_argument('--model_dir_all_noise',
-                        default=os.path.join('models', 'Volume2Trained', 'MyDnCNN_all_noise'),
+                        default=os.path.join('models', 'Volume2Trained', 'MyDnCNN_medium_noise'),
                         type=str,
                         help='directory of the all-noise-denoising model')
     parser.add_argument('--model_dir_low_noise',
@@ -71,7 +71,9 @@ def parse_args():
                                                                            'and saved')
     parser.add_argument('--train_data', default='data/Volume2/train', type=str, help='path of train data')
     parser.add_argument('--save_result', default=1, type=int, help='save the denoised image, 1 for yes or 0 for no')
-    parser.add_argument('--single_denoiser', default=0, type=int, help='save the denoised image, 1 for yes or 0 for no')
+    parser.add_argument('--single_denoiser', default=0
+                        , type=int, help='Use a single denoiser for all noise ranges, '
+                                                                       '1 for yes or 0 for no')
     return parser.parse_args()
 
 
