@@ -19,11 +19,11 @@ import keras.backend as K
 import tensorflow as tf
 
 # Allow memory growth in order to fix a Tensorflow bug
-physical_devices = tf.config.list_physical_devices('GPU')
+# physical_devices = tf.config.list_physical_devices('GPU')
 
 # This makes sure that at runtime, the initialization of the CUDA device physical_devices[0] (The only GPU in
 # the system) will not allocate ALL of the memory on that device.
-tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 # Command-line parameters
 parser = argparse.ArgumentParser()
