@@ -19,11 +19,11 @@ import keras.backend as K
 import tensorflow as tf
 
 # Allow memory growth in order to fix a Tensorflow bug
-# physical_devices = tf.config.list_physical_devices('GPU')
+physical_devices = tf.config.list_physical_devices('GPU')
 
 # This makes sure that at runtime, the initialization of the CUDA device physical_devices[0] (The only GPU in
 # the system) will not allocate ALL of the memory on that device.
-# tf.config.experimental.set_memory_growth(physical_devices[0], True)
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 # Command-line parameters
 parser = argparse.ArgumentParser()
@@ -469,6 +469,9 @@ def my_train_datagen(epoch_iter=2000,
             x_filtered = []
             y_filtered = []
 
+            print(f'low_noise_threshold: {low_noise_threshold}')
+            print(f'high_noise_threshold: {high_noise_threshold}')
+
             # Iterate over all of the image patches
             for x_patch, y_patch in zip(x_original, y_original):
 
@@ -481,6 +484,9 @@ def my_train_datagen(epoch_iter=2000,
                                                       blurry_patch=y_patch)
 
                 # Add the patches and their residual stds to their corresponding lists based on noise level
+                x_all_noise.append(x_patch)
+                y_all_noise.append(y_patch)
+                stds_all_noise.append(x_patch)
                 if std < low_noise_threshold:
                     x_low_noise.append(x_patch)
                     y_low_noise.append(y_patch)
@@ -502,14 +508,23 @@ def my_train_datagen(epoch_iter=2000,
 
             # Get x_filtered based upon the noise level that we're looking for
             if noise_level == NoiseLevel.LOW:
+                print('Setting filtered data lists to low noise lists')
+                print(f'Length of x_low_noise: {len(x_low_noise)}')
+                print(f'Length of y_low_noise: {len(y_low_noise)}')
                 x_filtered = x_low_noise
                 y_filtered = y_low_noise
                 stds = stds_low_noise
             elif noise_level == NoiseLevel.MEDIUM:
+                print('Setting filtered data lists to medium noise lists')
+                print(f'Length of x_medium_noise: {len(x_medium_noise)}')
+                print(f'Length of y_medium_noise: {len(y_medium_noise)}')
                 x_filtered = x_medium_noise
                 y_filtered = y_medium_noise
                 stds = stds_medium_noise
             elif noise_level == NoiseLevel.HIGH:
+                print('Setting filtered data lists to high noise lists')
+                print(f'Length of x_high_noise: {len(x_high_noise)}')
+                print(f'Length of y_high_noise: {len(y_high_noise)}')
                 x_filtered = x_high_noise
                 y_filtered = y_high_noise
                 stds = stds_high_noise
@@ -718,7 +733,7 @@ def main():
         history = model.fit(my_train_datagen(batch_size=args.batch_size,
                                              data_dir=args.train_data,
                                              noise_level=noise_level,
-                                             low_noise_threshold=0.00,
+                                             low_noise_threshold=0.15,
                                              high_noise_threshold=0.15),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
@@ -741,7 +756,7 @@ def main():
                                              data_dir=args.train_data,
                                              noise_level=noise_level,
                                              low_noise_threshold=0.06,
-                                             high_noise_threshold=2),
+                                             high_noise_threshold=0.06),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
