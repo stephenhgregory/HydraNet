@@ -9,7 +9,12 @@ from skimage.restoration import denoise_nl_means, estimate_sigma
 from skimage.measure import compare_ssim
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+# This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
 import keras_implementation.utilities.logger as logger
+
+# This is for running normally, where the root directory is MyDenoiser/keras_implementation/utilities
+import logger as logger
 
 
 def CLAHE_image_folder(image_dir, clip_limit=2.0, tile_grid_size=(8,8)):

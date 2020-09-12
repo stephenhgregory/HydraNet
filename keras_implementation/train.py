@@ -12,18 +12,22 @@ import numpy as np
 from keras.models import load_model
 from keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
 from keras.optimizers import Adam
-from keras_implementation.utilities import data_generator, logger, model_functions, image_utils
-from keras_implementation.utilities.data_generator import NoiseLevel
 import keras.backend as K
 
-import tensorflow as tf
+# This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
+# from keras_implementation.utilities import data_generator, logger, model_functions, image_utils
+# from keras_implementation.utilities.data_generator import NoiseLevel
+
+# This is for running normally, where the root directory is MyDenoiser/keras_implementation
+from utilities import data_generator, logger, model_functions, image_utils
+from utilities.data_generator import NoiseLevel
 
 # Allow memory growth in order to fix a Tensorflow bug
-# physical_devices = tf.config.list_physical_devices('GPU')
-
 # This makes sure that at runtime, the initialization of the CUDA device physical_devices[0] (The only GPU in
 # the system) will not allocate ALL of the memory on that device.
-# tf.config.experimental.set_memory_growth(physical_devices[0], True)
+import tensorflow as tf
+physical_devices = tf.config.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 # Command-line parameters
 parser = argparse.ArgumentParser()

@@ -4,8 +4,14 @@ import numpy as np
 from enum import Enum
 import os
 from os.path import join
-import keras_implementation.utilities.logger as logger
-import keras_implementation.utilities.image_utils as image_utils
+
+# This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
+# import keras_implementation.utilities.logger as logger
+# import keras_implementation.utilities.image_utils as image_utils
+
+# This is for running normally, where the root directory is MyDenoiser/keras_implementation/utilities
+import logger as logger
+import image_utils as image_utils
 
 patch_size, stride = 40, 10
 aug_times = 1

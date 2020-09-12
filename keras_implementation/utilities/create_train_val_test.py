@@ -2,23 +2,34 @@
 
 import os
 import cv2
-import keras_implementation.utilities.logger as logger
-from keras_implementation.utilities.image_utils import CLAHE_image_folder, CLAHE_single_image, hist_match_image_folder,\
-    hist_match, get_residual
+
 from os.path import isfile, join
 import numpy as np
 import shutil
 import errno
 from pathlib import Path
 
+# This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
+# import keras_implementation.utilities.logger as logger
+# from keras_implementation.utilities.image_utils import CLAHE_image_folder, CLAHE_single_image, hist_match_image_folder,\
+#     hist_match, get_residual
 
-def main(root_dir=(join(Path(__file__).resolve().parents[1], 'data'))):
+# This is for running normally, where the root directory is MyDenoiser/keras_implementation/utilities
+import logger as logger
+from image_utils import CLAHE_image_folder, CLAHE_single_image, hist_match_image_folder,\
+    hist_match, get_residual
+
+
+def main(root_dir=(join(Path(__file__).resolve().parents[1], 'data')), apply_masks=True):
     """
     Main method ran by the program to create and populate train, val, and test
     datasets.
 
     :param root_dir: The root directory of the image dataset
     :type root_dir: str
+    :param apply_masks: True if we wish to apply masks to images
+    :type apply_masks: bool
+
     :return: None
     """
 
@@ -31,10 +42,13 @@ def main(root_dir=(join(Path(__file__).resolve().parents[1], 'data'))):
             create_train_test_val_dirs(join(root_dir, folder_name))
 
             # Populate the train, val, and test directories and their subdirectories
-            populate_train_test_val_dirs_nonrandomly(join(root_dir, folder_name), preliminary_clahe=True)
+            populate_train_test_val_dirs_nonrandomly(join(root_dir, folder_name),
+                                                     preliminary_clahe=True,
+                                                     apply_masks=apply_masks)
 
-            # Apply masks to all of the images in this volume
-            apply_masks_to_volume(join(root_dir, folder_name))
+            if apply_masks:
+                # Apply masks to all of the images in this volume
+                apply_masks_to_volume(join(root_dir, folder_name))
 
             # Get and save the residuals between ClearImages and CoregisteredBlurryImages
             create_and_populate_residual_dirs(join(root_dir, folder_name))
@@ -212,7 +226,8 @@ def apply_masks_to_volume(root_dir):
             '''
 
 
-def populate_train_test_val_dirs_nonrandomly(root_dir, val_ratio=0.15, test_ratio=0.05, preliminary_clahe=True):
+def populate_train_test_val_dirs_nonrandomly(root_dir, val_ratio=0.15, test_ratio=0.05, preliminary_clahe=True,
+                                             apply_masks=True):
     """
     Populates the train, val, and test folders with the images located in root_dir,
     according to val_ratio  and test_ratio
@@ -226,6 +241,8 @@ def populate_train_test_val_dirs_nonrandomly(root_dir, val_ratio=0.15, test_rati
     :param preliminary_clahe: True if we want to perform CLAHE before applying further
                                 histogram equalization
     :type preliminary_clahe: bool
+    :param apply_masks: True if we wish to have a masks directory
+    :type apply_masks: bool
 
     :return: None
     """
@@ -256,19 +273,22 @@ def populate_train_test_val_dirs_nonrandomly(root_dir, val_ratio=0.15, test_rati
     for name in train_file_names:
         shutil.copy(join(root_dir, 'CoregisteredBlurryImages', name), root_dir + '/train/CoregisteredBlurryImages')
         shutil.copy(join(root_dir, 'ClearImages', name), root_dir + '/train/ClearImages')
-        shutil.copy(join(root_dir, 'Masks', name), root_dir + '/train/Masks')
+        if apply_masks:
+            shutil.copy(join(root_dir, 'Masks', name), root_dir + '/train/Masks')
 
     # Copy-Pasting images into val dataset
     for name in val_file_names:
         shutil.copy(join(root_dir, 'CoregisteredBlurryImages', name), root_dir + '/val/CoregisteredBlurryImages')
         shutil.copy(join(root_dir, 'ClearImages', name), root_dir + '/val/ClearImages')
-        shutil.copy(join(root_dir, 'Masks', name), root_dir + '/val/Masks')
+        if apply_masks:
+            shutil.copy(join(root_dir, 'Masks', name), root_dir + '/val/Masks')
 
     # Copy-Pasting images into test dataset
     for name in test_file_names:
         shutil.copy(join(root_dir, 'CoregisteredBlurryImages', name), root_dir + '/test/CoregisteredBlurryImages')
         shutil.copy(join(root_dir, 'ClearImages', name), root_dir + '/test/ClearImages')
-        shutil.copy(join(root_dir, 'Masks', name), root_dir + '/test/Masks')
+        if apply_masks:
+            shutil.copy(join(root_dir, 'Masks', name), root_dir + '/test/Masks')
 
     ''' Augment the images in each new folder '''
     # If we want to use preliminary adaptive equalization...
