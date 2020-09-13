@@ -2,7 +2,7 @@
 # Used to train myDenoiser
 
 # Find and store the MyDenoiser repo path
-MYDENOISER_REPO=$(find ~ -type d -wholename "*/MyDenoiser" )
+MYDENOISER_REPO=$(find ~ -type d -wholename "*/MyDenoiser/keras_implementation" )
 
 # Move into the MyDenoiser repo if it exists, otherwise exit with an error message
 if [ "$MYDENOISER_REPO" == "\n" ] || [ -z "$MYDENOISER_REPO" ]
@@ -81,7 +81,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python keras_implementation/train.py --noise_level="${noise_level}" --train_data="data/Volume2/train" --val_data="data/Volume2/val"
+    python train.py --noise_level="${noise_level}" --train_data="data/Volume2/train" --val_data="data/Volume2/val"
   done
 # [3] Using subj1 for training data
 elif [ "$DATA_NUM" == 3 ]
@@ -89,7 +89,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python keras_implementation/train.py --noise_level="${noise_level}" --train_data="data/subj1/train" --val_data="data/subj1/val"
+    python train.py --noise_level="${noise_level}" --train_data="data/subj1/train" --val_data="data/subj1/val"
   done
 # [4] Using subj2 for training data
 elif [ "$DATA_NUM" == 4 ]
@@ -97,6 +97,6 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python keras_implementation/train.py --noise_level="${noise_level}" --train_data="data/subj2/train" --val_data="data/subj2/val"
+    python train.py --noise_level="${noise_level}" --train_data="data/subj2/train" --val_data="data/subj2/val"
   done
 fi

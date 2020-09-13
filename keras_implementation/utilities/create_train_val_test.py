@@ -11,12 +11,12 @@ from pathlib import Path
 
 # This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
 # import keras_implementation.utilities.logger as logger
-# from keras_implementation.utilities.image_utils import CLAHE_image_folder, CLAHE_single_image, hist_match_image_folder,\
-#     hist_match, get_residual
+# from keras_implementation.utilities.image_utils import CLAHE_image_folder, CLAHE_single_image, \
+#     hist_match_image_folder, hist_match, get_residual
 
 # This is for running normally, where the root directory is MyDenoiser/keras_implementation/utilities
 import logger as logger
-from image_utils import CLAHE_image_folder, CLAHE_single_image, hist_match_image_folder,\
+from image_utils import CLAHE_image_folder, CLAHE_single_image, hist_match_image_folder, \
     hist_match, get_residual
 
 
@@ -155,7 +155,6 @@ def populate_residual_dirs(root_dir):
     # Iterate over the entire list of images (doesn't matter if it's clear_image_dir or blurry_image_dir)
     for file_name in os.listdir(clear_image_dir):
         if file_name.endswith('.jpg') or file_name.endswith('.png'):
-
             # Read the clear and blurry images as grayscale images in the form of numpy arrays
             clear_image = cv2.imread(join(clear_image_dir, file_name), 0)
             blurry_image = cv2.imread(join(blurry_image_dir, file_name), 0)
@@ -267,7 +266,8 @@ def populate_train_test_val_dirs_nonrandomly(root_dir, val_ratio=0.15, test_rati
                         if filename not in val_file_names and filename not in test_file_names]
 
     # Print the file distribution among the folders
-    logger.print_file_distribution(len(all_file_names), len(train_file_names), len(val_file_names), len(test_file_names))
+    logger.print_file_distribution(len(all_file_names), len(train_file_names), len(val_file_names),
+                                   len(test_file_names))
 
     # Copy-Pasting images into train dataset
     for name in train_file_names:
@@ -340,7 +340,8 @@ def populate_train_test_val_dirs_randomly(root_dir=(os.getcwd()), val_ratio=0.15
                                                                          1 - val_ratio + test_ratio)),
                                                                   int(len(all_file_names) * (1 - test_ratio))])
     # Print the file distribution amongst the folders
-    logger.print_file_distribution(len(all_file_names), len(train_file_names), len(val_file_names), len(test_file_names))
+    logger.print_file_distribution(len(all_file_names), len(train_file_names), len(val_file_names),
+                                   len(test_file_names))
 
     print(train_file_names)
 
@@ -357,7 +358,6 @@ def populate_train_test_val_dirs_randomly(root_dir=(os.getcwd()), val_ratio=0.15
 
 
 if __name__ == "__main__":
-
     # Get the root directory by going "up" two directories
     rootdir = Path(__file__).resolve().parents[1]
 
