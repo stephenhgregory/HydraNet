@@ -26,7 +26,7 @@ from utilities.data_generator import NoiseLevel
 # This makes sure that at runtime, the initialization of the CUDA device physical_devices[0] (The only GPU in
 # the system) will not allocate ALL of the memory on that device.
 import tensorflow as tf
-physical_devices = tf.config.list_physical_devices('GPU')
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 # Command-line parameters
@@ -38,7 +38,7 @@ parser.add_argument('--val_data', default='data/Volume2/val', type=str, help='pa
 parser.add_argument('--noise_level', default='all', type=str, help='Noise Level: Can be low, medium, high, or all')
 parser.add_argument('--epoch', default=25, type=int, help='number of train epoches')
 parser.add_argument('--lr', default=1e-3, type=float, help='initial learning rate for Adam')
-parser.add_argument('--save_every', default=1000, type=int, help='save model at after seeing x batches')
+parser.add_argument('--save_every', default=1, type=int, help='save model every x # of epochs')
 args = parser.parse_args()
 
 # Set the noise level to decided which model to train
@@ -682,7 +682,7 @@ def new_callbacks():
 
     # Add checkpoints every <save_every> # of iterations
     callbacks.append(ModelCheckpoint(os.path.join(save_dir, 'model_{epoch:03d}.hdf5'),
-                                     verbose=1, save_weights_only=False, save_freq=args.save_every))
+                                     verbose=1, save_weights_only=False, period=args.save_every))
 
     # Add the ability to log training information to <save_dir>/log.csv
     callbacks.append(CSVLogger(os.path.join(save_dir, 'log.csv'), append=True, separator=','))
