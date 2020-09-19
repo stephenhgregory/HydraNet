@@ -1,9 +1,9 @@
 """Contains functions for creating Neural Nets using the Keras Function API"""
 
-from keras.layers import Input, Conv2D, BatchNormalization, Activation, Subtract
-from keras.models import Model, load_model
-from keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
-from keras.optimizers import Adam
+from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, Activation, Subtract
+from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
+from tensorflow.keras.optimizers import Adam
 
 
 def MyDnCNN(depth, filters=64, image_channels=1, use_batchnorm=True):

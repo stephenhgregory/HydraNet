@@ -13,6 +13,7 @@ from os.path import join
 from . import logger as logger
 from . import image_utils as image_utils
 
+# Global variable definitions
 patch_size, stride = 40, 10
 aug_times = 1
 scales = [1, 0.9, 0.8, 0.7]

@@ -2,7 +2,6 @@
 
 import os
 import cv2
-
 from os.path import isfile, join
 import numpy as np
 import shutil
@@ -10,7 +9,7 @@ import errno
 from pathlib import Path
 
 # This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
-# import keras_implementation.utilities.logger as logger
+import keras_implementation.utilities.logger as logger
 # from keras_implementation.utilities.image_utils import CLAHE_image_folder, CLAHE_single_image, \
 #     hist_match_image_folder, hist_match, get_residual
 

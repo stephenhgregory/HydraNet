@@ -7,12 +7,11 @@ import re
 import os
 import glob
 import sys
-
 import numpy as np
-from keras.models import load_model
-from keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
-from keras.optimizers import Adam
-import keras.backend as K
+from tensorflow.keras.models import load_model
+from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
+from tensorflow.keras.optimizers import Adam
+import tensorflow.keras.backend as K
 
 # This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
 # from keras_implementation.utilities import data_generator, logger, model_functions, image_utils
