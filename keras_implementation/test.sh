@@ -40,58 +40,58 @@ read -r DATA_NUM
 if [ "$MODEL_NUM" == 1 ]
 then
   TRAINED_DIR="Volume1"
-  ALL_NOISE=$False
+  ALL_NOISE=0
 # [2] Volume2-trained (all 3 models)
 elif [ "$MODEL_NUM" == 2 ]
 then
   TRAINED_DIR="Volume2"
-  ALL_NOISE=$False
+  ALL_NOISE=0
 # [3] subj1-trained (all 3 models)
 elif [ "$MODEL_NUM" == 3 ]
 then
   TRAINED_DIR="subj1"
-  ALL_NOISE=$False
+  ALL_NOISE=0
 # [4] subj2-trained (all 3 models)
 elif [ "$MODEL_NUM" == 4 ]
 then
   TRAINED_DIR="subj2"
-  ALL_NOISE=$False
+  ALL_NOISE=0
 # [5] Volume1-trained (1 all-noise model)
-elif [ "$MODEL_NUM" == 1 ]
+elif [ "$MODEL_NUM" == 5 ]
 then
   TRAINED_DIR="Volume1"
-  ALL_NOISE=$True
+  ALL_NOISE=1
 # [6] Volume2-trained (1 all-noise model)
-elif [ "$MODEL_NUM" == 2 ]
+elif [ "$MODEL_NUM" == 6 ]
 then
   TRAINED_DIR="Volume2"
-  ALL_NOISE=$True
+  ALL_NOISE=1
 # [7] subj1-trained (1 all-noise model)
-elif [ "$MODEL_NUM" == 3 ]
+elif [ "$MODEL_NUM" == 7 ]
 then
   TRAINED_DIR="subj1"
-  ALL_NOISE=$True
+  ALL_NOISE=1
 # [8] subj2-trained (1 all-noise model)
-elif [ "$MODEL_NUM" == 4 ]
+elif [ "$MODEL_NUM" == 8 ]
 then
   TRAINED_DIR="subj2"
-  ALL_NOISE=$True
+  ALL_NOISE=1
 fi
 
 # [1] Using Volume1 for test data
 if [ "$DATA_NUM" == 1 ]
 then
   SET_DIR="data/Volume1"
-# [1] Using Volume2 for test data
-elif [ "$DATA_NUM" == 1 ]
+# [2] Using Volume2 for test data
+elif [ "$DATA_NUM" == 2 ]
 then
   SET_DIR="data/Volume2"
-# [1] Using subj1 for test data
-elif [ "$DATA_NUM" == 1 ]
+# [3] Using subj1 for test data
+elif [ "$DATA_NUM" == 3 ]
 then
   SET_DIR="data/subj1"
-# [1] Using subj2 for test data
-elif [ "$DATA_NUM" == 1 ]
+# [4] Using subj2 for test data
+elif [ "$DATA_NUM" == 4 ]
 then
   SET_DIR="data/subj2"
 fi
@@ -101,7 +101,8 @@ python test.py \
     --single_denoiser="${ALL_NOISE}" \
     --set_dir="${SET_DIR}" \
     --train_data="data/${TRAINED_DIR}/train" \
-    --model_dir_all_noise="models/${TRAINED_DIR}Trained/MyDnCNN_all_noise" \
-    --model_dir_low_noise="models/${TRAINED_DIR}Trained/MyDnCNN_low_noise" \
-    --model_dir_medium_noise="models/${TRAINED_DIR}Trained/MyDnCNN_medium_noise" \
-    --model_dir_high_noise="models/${TRAINED_DIR}Trained/MyDnCNN_high_noise"
+    --result_dir="results/${TRAINED_DIR}Trained_results"
+    --model_dir_all_noise="models/${TRAINED_DIR}Trained/MyDnCNN_all_noise/" \
+    --model_dir_low_noise="models/${TRAINED_DIR}Trained/MyDnCNN_low_noise/" \
+    --model_dir_medium_noise="models/${TRAINED_DIR}Trained/MyDnCNN_medium_noise/" \
+    --model_dir_high_noise="models/${TRAINED_DIR}Trained/MyDnCNN_high_noise/"

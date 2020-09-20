@@ -44,19 +44,19 @@ def parse_args():
     parser.add_argument('--model_dir_original', default=os.path.join('models', 'Volume1Trained', 'MyDnCNN'), type=str,
                         help='directory of the original, single-network denoising model')
     parser.add_argument('--model_dir_all_noise',
-                        default=os.path.join('models', 'Volume2Trained', 'MyDnCNN_all_noise'),
+                        default=os.path.join('models', 'subj1Trained', 'MyDnCNN_all_noise'),
                         type=str,
                         help='directory of the all-noise-denoising model')
     parser.add_argument('--model_dir_low_noise',
-                        default=os.path.join('models', 'Volume2Trained', 'MyDnCNN_low_noise'),
+                        default=os.path.join('models', 'subj1Trained', 'MyDnCNN_low_noise'),
                         type=str,
                         help='directory of the low-noise-denoising model')
     parser.add_argument('--model_dir_medium_noise',
-                        default=os.path.join('models', 'Volume2Trained', 'MyDnCNN_medium_noise'),
+                        default=os.path.join('models', 'subj1Trained', 'MyDnCNN_medium_noise'),
                         type=str,
                         help='directory of the medium-noise-denoising model')
     parser.add_argument('--model_dir_high_noise',
-                        default=os.path.join('models', 'Volume2Trained', 'MyDnCNN_high_noise'),
+                        default=os.path.join('models', 'subj1Trained', 'MyDnCNN_high_noise'),
                         type=str,
                         help='directory of the high-noise-denoising model')
     parser.add_argument('--model_name_original', default='model_023.hdf5', type=str,
@@ -78,7 +78,7 @@ def parse_args():
     parser.add_argument('--save_result', default=1, type=int, help='save the denoised image, 1 for yes or 0 for no')
     parser.add_argument('--single_denoiser', default=0
                         , type=int, help='Use a single denoiser for all noise ranges, '
-                                                                       '1 for yes or 0 for no')
+                                         '1 for yes or 0 for no')
     return parser.parse_args()
 
 
@@ -492,8 +492,6 @@ def main(args):
 
     # Compile the command line arguments
     args = parse_args()
-
-
 
     # Then, load our 3 denoising models
     model_original = load_model(os.path.join(args.model_dir_original, args.model_name_original),
