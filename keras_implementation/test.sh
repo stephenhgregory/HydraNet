@@ -101,8 +101,8 @@ python test.py \
     --single_denoiser="${ALL_NOISE}" \
     --set_dir="${SET_DIR}" \
     --train_data="data/${TRAINED_DIR}/train" \
-    --result_dir="results/${TRAINED_DIR}Trained_results"
-    --model_dir_all_noise="models/${TRAINED_DIR}Trained/MyDnCNN_all_noise/" \
-    --model_dir_low_noise="models/${TRAINED_DIR}Trained/MyDnCNN_low_noise/" \
-    --model_dir_medium_noise="models/${TRAINED_DIR}Trained/MyDnCNN_medium_noise/" \
-    --model_dir_high_noise="models/${TRAINED_DIR}Trained/MyDnCNN_high_noise/"
+    --result_dir="results/${TRAINED_DIR}Trained_results" \
+    --model_dir_all_noise="models/${TRAINED_DIR}Trained/MyDnCNN_all_noise" \
+    --model_dir_low_noise="models/${TRAINED_DIR}Trained/MyDnCNN_low_noise" \
+    --model_dir_medium_noise="models/${TRAINED_DIR}Trained/MyDnCNN_medium_noise" \
+    --model_dir_high_noise="models/${TRAINED_DIR}Trained/MyDnCNN_high_noise"

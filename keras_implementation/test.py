@@ -21,13 +21,13 @@ from utilities import image_utils, logger, data_generator
 
 # Set Memory Growth to true to fix a small bug in Tensorflow
 
-physical_devices = tf.config.list_physical_devices('GPU')
-try:
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
-except:
-    # Invalid device or cannot modify virtual devices once initialized.
-    print(f'The following line threw an exception: tf.config.experimental.set_memory_growth(physical_devices[0], True)')
-    pass
+# physical_devices = tf.config.list_physical_devices('GPU')
+# try:
+#     tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# except:
+#     # Invalid device or cannot modify virtual devices once initialized.
+#     print(f'The following line threw an exception: tf.config.experimental.set_memory_growth(physical_devices[0], True)')
+#     pass
 
 
 #############################################################
@@ -61,7 +61,7 @@ def parse_args():
                         help='directory of the high-noise-denoising model')
     parser.add_argument('--model_name_original', default='model_023.hdf5', type=str,
                         help='name of the original. single-network model')
-    parser.add_argument('--model_name_all_noise', default='model_018.hdf5', type=str,
+    parser.add_argument('--model_name_all_noise', default='model_025.hdf5', type=str,
                         help='name of the all-noise model')
     parser.add_argument('--model_name_low_noise', default='model_025.hdf5', type=str,
                         help='name of the low-noise model')
@@ -493,20 +493,29 @@ def main(args):
     # Compile the command line arguments
     args = parse_args()
 
-    # Then, load our 3 denoising models
-    model_original = load_model(os.path.join(args.model_dir_original, args.model_name_original),
-                                compile=False)
-    model_all_noise = load_model(os.path.join(args.model_dir_all_noise, args.model_name_all_noise),
-                                 compile=False)
-    model_low_noise = load_model(os.path.join(args.model_dir_low_noise, args.model_name_low_noise),
-                                 compile=False)
-    model_medium_noise = load_model(os.path.join(args.model_dir_medium_noise, args.model_name_medium_noise),
+    # If we are denoising with a single denoiser...
+    if args.single_denoiser:
+        # Load our single all-noise denoising model
+        model_all_noise = load_model(os.path.join(args.model_dir_all_noise, args.model_name_all_noise),
+                                     compile=False)
+        log(f'Loaded single all-noise model: {os.path.join(args.model_dir_all_noise, args.model_name_all_noise)}. ')
+
+    # Otherwise...
+    else:
+        # Load our 3 denoising models
+        model_original = load_model(os.path.join(args.model_dir_original, args.model_name_original),
                                     compile=False)
-    model_high_noise = load_model(os.path.join(args.model_dir_high_noise, args.model_name_high_noise),
-                                  compile=False)
-    log(f'Loaded all 3 trained models: {os.path.join(args.model_dir_low_noise, args.model_name_low_noise)}, '
-        f'{os.path.join(args.model_dir_medium_noise, args.model_name_medium_noise)}, and '
-        f'{os.path.join(args.model_dir_high_noise, args.model_name_high_noise)}')
+        model_all_noise = load_model(os.path.join(args.model_dir_all_noise, args.model_name_all_noise),
+                                     compile=False)
+        model_low_noise = load_model(os.path.join(args.model_dir_low_noise, args.model_name_low_noise),
+                                     compile=False)
+        model_medium_noise = load_model(os.path.join(args.model_dir_medium_noise, args.model_name_medium_noise),
+                                        compile=False)
+        model_high_noise = load_model(os.path.join(args.model_dir_high_noise, args.model_name_high_noise),
+                                      compile=False)
+        log(f'Loaded all 3 trained models: {os.path.join(args.model_dir_low_noise, args.model_name_low_noise)}, '
+            f'{os.path.join(args.model_dir_medium_noise, args.model_name_medium_noise)}, and '
+            f'{os.path.join(args.model_dir_high_noise, args.model_name_high_noise)}')
 
     # If the result directory doesn't exist already, just create it
     if not os.path.exists(args.result_dir):
@@ -763,6 +772,8 @@ if __name__ == '__main__':
 
     # Get command-line arguments
     args = parse_args()
+
+    print(os.getcwd())
 
     # If the result directory doesn't exist already, just create it
     if not os.path.exists(args.result_dir):
