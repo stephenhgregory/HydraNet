@@ -9,7 +9,7 @@ import errno
 from pathlib import Path
 
 # This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
-import keras_implementation.utilities.logger as logger
+# import keras_implementation.utilities.logger as logger
 # from keras_implementation.utilities.image_utils import CLAHE_image_folder, CLAHE_single_image, \
 #     hist_match_image_folder, hist_match, get_residual
 
@@ -35,7 +35,7 @@ def main(root_dir=(join(Path(__file__).resolve().parents[1], 'data')), apply_mas
     # Iterate over each volume in the root data directory
     for folder_name in os.listdir(root_dir):
         print(join(root_dir, folder_name))
-        if 'results' not in folder_name:
+        if 'results' not in folder_name and 'subj' in folder_name:
 
             # Create all of the directories and subdirectories
             create_train_test_val_dirs(join(root_dir, folder_name))

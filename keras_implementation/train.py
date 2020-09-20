@@ -13,7 +13,7 @@ from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateS
 from tensorflow.keras.optimizers import Adam
 import tensorflow.keras.backend as K
 
-# This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
+# # This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
 # from keras_implementation.utilities import data_generator, logger, model_functions, image_utils
 # from keras_implementation.utilities.data_generator import NoiseLevel
 

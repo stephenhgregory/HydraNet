@@ -1,5 +1,5 @@
 """
-This file is used to convert a folder of PNG images to a single TIFF file
+Used to convert a folder of PNG images to a single TIFF file
 """
 
 import sys

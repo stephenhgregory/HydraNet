@@ -7,12 +7,17 @@ import os, time, datetime
 # import PIL.Image as Image
 import numpy as np
 from keras.models import load_model, model_from_json
-from keras_implementation.utilities import image_utils, logger, data_generator
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 from skimage.io import imread, imsave
 import tensorflow as tf
 import cv2
 import copy
+
+# # This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
+# from keras_implementation.utilities import image_utils, logger, data_generator
+
+# This is for running normally, where the root directory is MyDenoiser/keras_implementation
+from utilities import image_utils, logger, data_generator
 
 # Set Memory Growth to true to fix a small bug in Tensorflow
 
@@ -39,7 +44,7 @@ def parse_args():
     parser.add_argument('--model_dir_original', default=os.path.join('models', 'Volume1Trained', 'MyDnCNN'), type=str,
                         help='directory of the original, single-network denoising model')
     parser.add_argument('--model_dir_all_noise',
-                        default=os.path.join('models', 'Volume2Trained', 'MyDnCNN_medium_noise'),
+                        default=os.path.join('models', 'Volume2Trained', 'MyDnCNN_all_noise'),
                         type=str,
                         help='directory of the all-noise-denoising model')
     parser.add_argument('--model_dir_low_noise',

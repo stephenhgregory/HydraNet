@@ -17,11 +17,11 @@ printf "Which model do you want to test?\n"
 printf "[1] Volume1-trained (all 3 models)\n"
 printf "[2] Volume2-trained (all 3 models)\n"
 printf "[3] subj1-trained (all 3 models)\n"
-printf "[4] subj1-trained (all 3 models)\n"
+printf "[4] sub2-trained (all 3 models)\n"
 printf "[5] Volume1-trained (1 all-noise model)\n"
 printf "[6] Volume2-trained (1 all-noise model)\n"
 printf "[7] subj1-trained (1 all-noise model)\n"
-printf "[8] subj1-trained (1 all-noise model)\n"
+printf "[8] subj2-trained (1 all-noise model)\n"
 printf "\n"
 printf "Select a number: "
 read -r MODEL_NUM
@@ -81,21 +81,27 @@ fi
 # [1] Using Volume1 for test data
 if [ "$DATA_NUM" == 1 ]
 then
-  printf "Calling test.py for model trained on %s...\n" "$TRAINED_DIR"
-  python test.py --single_denoiser="${ALL_NOISE}" --set_dir="data/Volume1" --train_data="data/${TRAINED_DIR}/train"
-# [2] Using Volume2 for test data
-elif [ "$DATA_NUM" == 2 ]
+  SET_DIR="data/Volume1"
+# [1] Using Volume2 for test data
+elif [ "$DATA_NUM" == 1 ]
 then
-  printf "Calling test.py for model trained on %s...\n" "$TRAINED_DIR"
-  python test.py --single_denoiser="${ALL_NOISE}" --set_dir="data/Volume1" --train_data="data/${TRAINED_DIR}/train"
-# [3] Using subj1 for test data
-elif [ "$DATA_NUM" == 3 ]
+  SET_DIR="data/Volume2"
+# [1] Using subj1 for test data
+elif [ "$DATA_NUM" == 1 ]
 then
-  printf "Calling test.py for model trained on %s...\n" "$TRAINED_DIR"
-  python test.py --single_denoiser="${ALL_NOISE}" --set_dir="data/Volume1" --train_data="data/${TRAINED_DIR}/train"
-# [4] Using subj2 for test data
-elif [ "$DATA_NUM" == 4 ]
+  SET_DIR="data/subj1"
+# [1] Using subj2 for test data
+elif [ "$DATA_NUM" == 1 ]
 then
-  printf "Calling test.py for model trained on %s...\n" "$TRAINED_DIR"
-  python test.py --single_denoiser="${ALL_NOISE}" --set_dir="data/Volume1" --train_data="data/${TRAINED_DIR}/train"
+  SET_DIR="data/subj2"
 fi
+
+printf "Calling test.py for model trained on %s...\n" "$TRAINED_DIR"
+python test.py \
+    --single_denoiser="${ALL_NOISE}" \
+    --set_dir="${SET_DIR}" \
+    --train_data="data/${TRAINED_DIR}/train" \
+    --model_dir_all_noise="models/${TRAINED_DIR}Trained/MyDnCNN_all_noise" \
+    --model_dir_low_noise="models/${TRAINED_DIR}Trained/MyDnCNN_low_noise" \
+    --model_dir_medium_noise="models/${TRAINED_DIR}Trained/MyDnCNN_medium_noise" \
+    --model_dir_high_noise="models/${TRAINED_DIR}Trained/MyDnCNN_high_noise"
