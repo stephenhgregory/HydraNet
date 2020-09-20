@@ -6,7 +6,7 @@ import argparse
 import os, time, datetime
 # import PIL.Image as Image
 import numpy as np
-from keras.models import load_model, model_from_json
+from tensorflow.keras.models import load_model, model_from_json
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 from skimage.io import imread, imsave
 import tensorflow as tf
@@ -555,12 +555,23 @@ def main(args):
                 # Start a timer
                 start_time = time.time()
 
-                # Denoise y by calling denoise_image_by_patches, which using the 3 denoising models to denoise each
-                # patch of the image separately
-                x_pred = denoise_image_by_patches(y, image_name_no_extension, set_name, model_original, model_all_noise,
-                                                  model_low_noise, model_medium_noise, model_high_noise, args,
-                                                  x_orig_mean, x_orig_std, save_patches=False,
-                                                  single_denoiser=bool(args.single_denoiser))
+                # If we are denoising with a single denoiser...
+                if args.single_denoiser:
+                    # Denoise y by calling denoise_image_by_patches, which uses the single all-noise model to denoise
+                    # each patch of the image separately
+                    x_pred = denoise_image_by_patches(y, image_name_no_extension, set_name, model_all_noise,
+                                                      args, x_orig_mean, x_orig_std, save_patches=False,
+                                                      single_denoiser=True)
+
+                # Otherwise, if we are denoising with all 3 denoisers...
+                else:
+                    # Denoise y by calling denoise_image_by_patches, which using the 3 denoising models to denoise each
+                    # patch of the image separately
+                    x_pred = denoise_image_by_patches(y, image_name_no_extension, set_name, model_original,
+                                                      model_all_noise,
+                                                      model_low_noise, model_medium_noise, model_high_noise, args,
+                                                      x_orig_mean, x_orig_std, save_patches=False,
+                                                      single_denoiser=False)
 
                 # Record the inference time
                 elapsed_time = time.time() - start_time
