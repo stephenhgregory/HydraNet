@@ -20,14 +20,13 @@ import copy
 from utilities import image_utils, logger, data_generator
 
 # Set Memory Growth to true to fix a small bug in Tensorflow
-
-# physical_devices = tf.config.list_physical_devices('GPU')
-# try:
-#     tf.config.experimental.set_memory_growth(physical_devices[0], True)
-# except:
-#     # Invalid device or cannot modify virtual devices once initialized.
-#     print(f'The following line threw an exception: tf.config.experimental.set_memory_growth(physical_devices[0], True)')
-#     pass
+physical_devices = tf.config.list_physical_devices('GPU')
+try:
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+except:
+    # Invalid device or cannot modify virtual devices once initialized.
+    print(f'The following line threw an exception: tf.config.experimental.set_memory_growth(physical_devices[0], True)')
+    pass
 
 
 #############################################################
@@ -39,7 +38,7 @@ def parse_args():
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--set_dir', default='data/Volume1', type=str, help='parent directory of test dataset')
+    parser.add_argument('--set_dir', default='data/subj1', type=str, help='parent directory of test dataset')
     parser.add_argument('--set_names', default=['val'], type=list, help='name of test dataset')
     parser.add_argument('--model_dir_original', default=os.path.join('models', 'Volume1Trained', 'MyDnCNN'), type=str,
                         help='directory of the original, single-network denoising model')
@@ -69,16 +68,15 @@ def parse_args():
                         help='name of the medium-noise model')
     parser.add_argument('--model_name_high_noise', default='model_025.hdf5', type=str,
                         help='name of the high-noise model')
-    parser.add_argument('--result_dir', default='data/Volume2Trained_newresults1/Volume1', type=str,
+    parser.add_argument('--result_dir', default='results/subj1Trained_results/', type=str,
                         help='directory of results')
     parser.add_argument('--reanalyze_data', default=False, type=bool, help='True if we want to simply reanalyze '
                                                                            'results that have already been produced '
                                                                            'and saved')
-    parser.add_argument('--train_data', default='data/Volume2/train', type=str, help='path of train data')
+    parser.add_argument('--train_data', default='data/subj1/train', type=str, help='path of train data')
     parser.add_argument('--save_result', default=1, type=int, help='save the denoised image, 1 for yes or 0 for no')
-    parser.add_argument('--single_denoiser', default=0
-                        , type=int, help='Use a single denoiser for all noise ranges, '
-                                         '1 for yes or 0 for no')
+    parser.add_argument('--single_denoiser', default=1, type=int, help='Use a single denoiser for all noise ranges, '
+                                                                       '1 for yes or 0 for no')
     return parser.parse_args()
 
 
@@ -246,9 +244,9 @@ def save_image(x, save_dir_name, save_file_name, original_mean, original_std):
     cv2.imwrite(filename=os.path.join(save_dir_name, save_file_name), img=x)
 
 
-def denoise_image_by_patches(y, file_name, set_name, model_original, model_all_noise, model_low_noise,
-                             model_medium_noise, model_high_noise, args, original_mean, original_std, save_patches=True,
-                             single_denoiser=False):
+def denoise_image_by_patches(y, file_name, set_name, args, original_mean, original_std, save_patches=True,
+                             single_denoiser=False, model_original=None, model_all_noise=None, model_low_noise=None,
+                             model_medium_noise=None, model_high_noise=None):
     """
     Takes an input image and denoises it using a patch-based approach
 
@@ -559,19 +557,23 @@ def main(args):
                 if args.single_denoiser:
                     # Denoise y by calling denoise_image_by_patches, which uses the single all-noise model to denoise
                     # each patch of the image separately
-                    x_pred = denoise_image_by_patches(y, image_name_no_extension, set_name, model_all_noise,
-                                                      args, x_orig_mean, x_orig_std, save_patches=False,
-                                                      single_denoiser=True)
+                    x_pred = denoise_image_by_patches(y=y, file_name=image_name_no_extension, set_name=set_name,
+                                                      args=args, original_mean=x_orig_mean, original_std=x_orig_std,
+                                                      save_patches=False, single_denoiser=True,
+                                                      model_all_noise=model_all_noise)
 
                 # Otherwise, if we are denoising with all 3 denoisers...
                 else:
                     # Denoise y by calling denoise_image_by_patches, which using the 3 denoising models to denoise each
                     # patch of the image separately
-                    x_pred = denoise_image_by_patches(y, image_name_no_extension, set_name, model_original,
-                                                      model_all_noise,
-                                                      model_low_noise, model_medium_noise, model_high_noise, args,
-                                                      x_orig_mean, x_orig_std, save_patches=False,
-                                                      single_denoiser=False)
+                    x_pred = denoise_image_by_patches(y=y, file_name=image_name_no_extension, set_name=set_name,
+                                                      args=args, original_mean=x_orig_mean, original_std=x_orig_std,
+                                                      save_patches=False, single_denoiser=False,
+                                                      model_original=model_original,
+                                                      model_all_noise=model_all_noise,
+                                                      model_low_noise=model_low_noise,
+                                                      model_medium_noise=model_medium_noise,
+                                                      model_high_noise=model_high_noise)
 
                 # Record the inference time
                 elapsed_time = time.time() - start_time
@@ -783,8 +785,6 @@ if __name__ == '__main__':
 
     # Get command-line arguments
     args = parse_args()
-
-    print(os.getcwd())
 
     # If the result directory doesn't exist already, just create it
     if not os.path.exists(args.result_dir):
