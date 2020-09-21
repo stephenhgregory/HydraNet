@@ -96,12 +96,21 @@ then
   SET_DIR="data/subj2"
 fi
 
+# Set the name of the result directory based upon the training directory amd whether we are
+# training a single, all-noise denoiser
+if [ "$ALL_NOISE" == 1 ]
+then
+  RESULT_DIR="results/${TRAINED_DIR}Trained_results_single_denoiser"
+else
+  RESULT_DIR="results/${TRAINED_DIR}Trained_results"
+fi
+
 printf "Calling test.py for model trained on %s...\n" "$TRAINED_DIR"
 python test.py \
     --single_denoiser="${ALL_NOISE}" \
     --set_dir="${SET_DIR}" \
     --train_data="data/${TRAINED_DIR}/train" \
-    --result_dir="results/${TRAINED_DIR}Trained_results" \
+    --result_dir="${RESULT_DIR}" \
     --model_dir_all_noise="models/${TRAINED_DIR}Trained/MyDnCNN_all_noise" \
     --model_dir_low_noise="models/${TRAINED_DIR}Trained/MyDnCNN_low_noise" \
     --model_dir_medium_noise="models/${TRAINED_DIR}Trained/MyDnCNN_medium_noise" \
