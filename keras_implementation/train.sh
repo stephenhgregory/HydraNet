@@ -30,6 +30,7 @@ printf "[1] Volume1\n"
 printf "[2] Volume2\n"
 printf "[3] subj1\n"
 printf "[4] subj2\n"
+printf "[5] subj1 AND subj2\n"
 printf "\n"
 printf "Select a number: "
 read -r DATA_NUM
@@ -61,10 +62,10 @@ then
 # [6] train all 3 noise levels separately (low, medium, and high) + all-noise model
 elif [ "$MODEL_NUM" == 6 ]
 then
-  NOISE_LEVELS[0]="low"
-  NOISE_LEVELS[1]="medium"
-  NOISE_LEVELS[2]="high"
-  NOISE_LEVELS[3]="all"
+  NOISE_LEVELS[0]="all"
+  NOISE_LEVELS[1]="low"
+  NOISE_LEVELS[2]="medium"
+  NOISE_LEVELS[3]="high"
 fi
 
 # [1] Using Volume1 for training data
@@ -98,5 +99,15 @@ then
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
     python train.py --noise_level="${noise_level}" --train_data="data/subj2/train" --val_data="data/subj2/val"
+  done
+# [5] Using subj1 AND subj2 for training data
+elif [ "$DATA_NUM" == 5 ]
+then
+  for noise_level in "${NOISE_LEVELS[@]}"
+  do
+    printf "Calling train.py for %s-noise model...\n" "$noise_level"
+    python train.py --noise_level="${noise_level}" \
+    --train_data="data/subj2/train" --train_data="data/subj1/train" \
+    --val_data="data/subj2/val"
   done
 fi

@@ -2,6 +2,7 @@
 This file is used to train MyDenoiser
 """
 
+from deprecated import deprecated
 import argparse
 import re
 import os
@@ -32,7 +33,7 @@ tf.config.experimental.set_memory_growth(physical_devices[0], True)
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default='MyDnCNN', type=str, help='choose a type of model')
 parser.add_argument('--batch_size', default=128, type=int, help='batch size')
-parser.add_argument('--train_data', default='data/Volume2/train', type=str, help='path of train data')
+parser.add_argument('--train_data', action='append', default=[], type=str, help='path of train data')
 parser.add_argument('--val_data', default='data/Volume2/val', type=str, help='path of val data')
 parser.add_argument('--noise_level', default='all', type=str, help='Noise Level: Can be low, medium, high, or all')
 parser.add_argument('--epoch', default=25, type=int, help='number of train epoches')
@@ -120,10 +121,6 @@ def my_train_datagen_single_model(epoch_iter=2000,
     :return: Yields a training example x and noisy image y
     """
 
-    # Set the directory of blurry and clear data
-    clear_data_dir = os.path.join(data_dir, 'ClearImages')
-    blurry_data_dir = os.path.join(data_dir, 'CoregisteredBlurryImages')
-
     # Loop the following indefinitely...
     while True:
         # Set a counter variable
@@ -133,8 +130,19 @@ def my_train_datagen_single_model(epoch_iter=2000,
         if counter == 0:
             print(f'Accessing training data in: {data_dir}')
 
-            # Get training examples from data_dir using data_generator
-            x, y = data_generator.pair_data_generator(data_dir)
+            # If we are getting train data from one directory...
+            if len(data_dir) == 1:
+                # Get training examples from data_dir[0] using pair_data_generator
+                x, y = data_generator.pair_data_generator(data_dir[0])
+
+            # Else, if we're getting data from multiple directories...
+            elif len(data_dir) > 1:
+                # Get training examples from data_dir using pair_data_generator_multiple_data_dirs
+                x, y = data_generator.pair_data_generator_multiple_data_dirs(data_dir)
+
+            # Else, something is wrong - we don't have train data! Exit.
+            else:
+                sys.exit('ERROR: You didn\'t provide any data directories to train on!')
 
             # Create lists to store all of the clear patches (x) and blurry patches (y)
             x_filtered = []
@@ -222,6 +230,7 @@ def my_train_datagen_single_model(epoch_iter=2000,
                 yield batch_y, batch_x
 
 
+@deprecated(reason="You should use my_train_datagen and my_train_datagen_single_model instead")
 def my_new_train_datagen(epoch_iter=2000,
                          num_epochs=5,
                          batch_size=128,
@@ -348,10 +357,9 @@ def my_new_train_datagen(epoch_iter=2000,
             x_filtered = np.delete(x_filtered, range(discard_n), axis=0)
             y_filtered = np.delete(y_filtered, range(discard_n), axis=0)
 
-            ''' Just logging
+            ''' Just logging '''
             # Plot the residual standard deviation
             image_utils.plot_standard_deviations(stds)
-            '''
 
             # Standardize x and y to have a mean of 0 and standard deviation of 1
             # NOTE: x and y px values are centered at 0, meaning there are negative px values. We might have trouble
@@ -447,8 +455,19 @@ def my_train_datagen(epoch_iter=2000,
         if counter == 0:
             print(f'Accessing training data in: {data_dir}')
 
-            # Get training examples from data_dir using data_generator
-            x_original, y_original = data_generator.pair_data_generator(data_dir)
+            # If we are getting train data from one directory...
+            if len(data_dir) == 1:
+                # Get training examples from data_dir[0] using pair_data_generator
+                x_original, y_original = data_generator.pair_data_generator(data_dir[0])
+
+            # Else, if we're getting data from multiple directories...
+            elif len(data_dir) > 1:
+                # Get training examples from data_dir using pair_data_generator_multiple_data_dirs
+                x_original, y_original = data_generator.pair_data_generator_multiple_data_dirs(data_dir)
+
+            # Else, something is wrong - we don't have train data! Exit.
+            else:
+                sys.exit('ERROR: You didn\'t provide any data directories to train on!')
 
             ''' Just logging 
             logger.show_images([("x_original", x_original),
@@ -552,7 +571,6 @@ def my_train_datagen(epoch_iter=2000,
             image_utils.plot_standard_deviations(stds)
             '''
 
-            # Delete this
             print(f'The length of x_filtered: {len(x_filtered)}')
             print(f'The length of y_filtered: {len(y_filtered)}')
 
