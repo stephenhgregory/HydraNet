@@ -50,6 +50,14 @@ python3 train.py /
 | [Volume 1 (train)](keras_implementation/data/Volume1/train) | 30.01 dB                 | 0.6939                   |
 | [Volume 2 (val)](keras_implementation/data/Volume2/val)     | N/A                      | N/A                      | 28.94 dB                  | 0.9623                    | 19.26 dB             | 0.4914               |
 
+## New Results
+
+| **Train data** | **Test data** | **Average PSNR** | **Average SSIM** |
+|----------------|---------------|------------------|------------------|
+| subj2          | subj1         | 28.63 dB         | 0.9485           |
+|                |               |                  |                  |
+|                |               |                  |                  |
+
 ## [Volume 2 (val)](keras_implementation/data/Volume2/val) Results
 
 | Denoiser                                                    | Average PSNR       | Average SSIM     |
@@ -67,11 +75,11 @@ python3 train.py /
 
 ## Post-Conference-Submission HydraNet Results
 
-| Trained on  | Tested on | Single Denoiser? | Results                            |   |
-|-------------|-----------|------------------|------------------------------------|---|
-| subj1/train | subj1/val | Yes              | **PSNR = 27.60 dB, SSIM = 0.9405** |   |
-|             |           |                  |                                    |   |
-|             |           |                  |                                    |   |
+| **Trained on**  | **Tested on** | **Single Denoiser?** | **PSNR**      | **SSIM**     |
+|-----------------|---------------|----------------------|---------------|--------------|
+| subj1/train     | subj1/val     | Yes                  | 27.60 dB      | 0.9405       |
+| subj2/train     | subj1/val     | Yes                  | 28.63 dB      | 0.9485       |
+|                 |               |                      |               |              |
 
 
 | Image dataset | Noisy Image                           | Denoised Image                          |
