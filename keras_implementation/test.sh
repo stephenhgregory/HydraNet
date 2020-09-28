@@ -81,34 +81,34 @@ fi
 # [1] Using Volume1 for test data
 if [ "$DATA_NUM" == 1 ]
 then
-  SET_DIR="data/Volume1"
+  SET_DIR="Volume1"
 # [2] Using Volume2 for test data
 elif [ "$DATA_NUM" == 2 ]
 then
-  SET_DIR="data/Volume2"
+  SET_DIR="Volume2"
 # [3] Using subj1 for test data
 elif [ "$DATA_NUM" == 3 ]
 then
-  SET_DIR="data/subj1"
+  SET_DIR="subj1"
 # [4] Using subj2 for test data
 elif [ "$DATA_NUM" == 4 ]
 then
-  SET_DIR="data/subj2"
+  SET_DIR="subj2"
 fi
 
-# Set the name of the result directory based upon the training directory amd whether we are
+# Set the name of the result directory based upon the training directory and whether we are
 # training a single, all-noise denoiser
 if [ "$ALL_NOISE" == 1 ]
 then
-  RESULT_DIR="results/${TRAINED_DIR}Trained_results_single_denoiser"
+  RESULT_DIR="results/${TRAINED_DIR}Trained${SET_DIR}Tested_results_single_denoiser"
 else
-  RESULT_DIR="results/${TRAINED_DIR}Trained_results"
+  RESULT_DIR="results/${TRAINED_DIR}Trained${SET_DIR}Tested_results"
 fi
 
 printf "Calling test.py for model trained on %s...\n" "$TRAINED_DIR"
 python test.py \
     --single_denoiser="${ALL_NOISE}" \
-    --set_dir="${SET_DIR}" \
+    --set_dir="data/${SET_DIR}" \
     --train_data="data/${TRAINED_DIR}/train" \
     --result_dir="${RESULT_DIR}" \
     --model_dir_all_noise="models/${TRAINED_DIR}Trained/MyDnCNN_all_noise" \
