@@ -77,6 +77,12 @@ python3 train.py /
 
 | **Trained on**  | **Tested on** | **Single Denoiser?** | **PSNR**      | **SSIM**     |
 |-----------------|---------------|----------------------|---------------|--------------|
+| subj1/train     | subj2/val     | Yes                  | 27.34 dB      | 0.9467       |
+| subj2/train     | subj1/val     | Yes                  | 28.63 dB      | 0.9485       |
+|                 |               |                      |               |              |
+
+| **Trained on**  | **Tested on** | **Single Denoiser?** | **PSNR**      | **SSIM**     |
+|-----------------|---------------|----------------------|---------------|--------------|
 | subj1/train     | subj1/val     | Yes                  | 27.60 dB      | 0.9405       |
 | subj1/train     | subj2/val     | Yes                  | 27.34 dB      | 0.9467       |
 | subj2/train     | subj1/val     | Yes                  | 28.63 dB      | 0.9485       |
