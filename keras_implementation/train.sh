@@ -30,7 +30,11 @@ printf "[1] Volume1\n"
 printf "[2] Volume2\n"
 printf "[3] subj1\n"
 printf "[4] subj2\n"
-printf "[5] subj1 AND subj2\n"
+printf "[5] subj3\n"
+printf "[6] subj1 AND subj2\n"
+printf "[7] subj1 AND subj3\n"
+printf "[8] subj2 AND subj3\n"
+printf "[9] subj2, subj2 AND subj3\n"
 printf "\n"
 printf "Select a number: "
 read -r DATA_NUM
@@ -100,14 +104,52 @@ then
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
     python train.py --noise_level="${noise_level}" --train_data="data/subj2/train" --val_data="data/subj2/val"
   done
-# [5] Using subj1 AND subj2 for training data
+# [5] Using subj3 for training data
 elif [ "$DATA_NUM" == 5 ]
 then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
+    python train.py --noise_level="${noise_level}" --train_data="data/subj3/train" --val_data="data/subj3/val"
+  done
+# [6] Using subj1 AND subj2 for training data
+elif [ "$DATA_NUM" == 6 ]
+then
+  for noise_level in "${NOISE_LEVELS[@]}"
+  do
+    printf "Calling train.py for %s-noise model...\n" "$noise_level"
     python train.py --noise_level="${noise_level}" \
-    --train_data="data/subj2/train" --train_data="data/subj1/train" \
+    --train_data="data/subj1/train" --train_data="data/subj2/train" \
     --val_data="data/subj2/val"
+  done
+# [7] Using subj1 AND subj3 for training data
+elif [ "$DATA_NUM" == 7 ]
+then
+  for noise_level in "${NOISE_LEVELS[@]}"
+  do
+    printf "Calling train.py for %s-noise model...\n" "$noise_level"
+    python train.py --noise_level="${noise_level}" \
+    --train_data="data/subj1/train" --train_data="data/subj3/train" \
+    --val_data="data/subj3/val"
+  done
+# [8] Using subj2 AND subj3 for training data
+elif [ "$DATA_NUM" == 8 ]
+then
+  for noise_level in "${NOISE_LEVELS[@]}"
+  do
+    printf "Calling train.py for %s-noise model...\n" "$noise_level"
+    python train.py --noise_level="${noise_level}" \
+    --train_data="data/subj2/train" --train_data="data/subj3/train" \
+    --val_data="data/subj3/val"
+  done
+# [9] Using subj1, subj2 AND subj3 for training data
+elif [ "$DATA_NUM" == 9 ]
+then
+  for noise_level in "${NOISE_LEVELS[@]}"
+  do
+    printf "Calling train.py for %s-noise model...\n" "$noise_level"
+    python train.py --noise_level="${noise_level}" \
+    --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj3/train" \
+    --val_data="data/subj3/val"
   done
 fi

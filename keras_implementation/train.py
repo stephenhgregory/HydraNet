@@ -776,7 +776,7 @@ def main():
         history = model.fit(my_train_datagen(batch_size=args.batch_size,
                                              data_dir=args.train_data,
                                              noise_level=noise_level,
-                                             low_noise_threshold=0.04,
+                                             low_noise_threshold=0.03,
                                              high_noise_threshold=0.06),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
