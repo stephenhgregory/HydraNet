@@ -14,7 +14,7 @@ import seaborn as sns
 # import keras_implementation.utilities.logger as logger
 
 # This is for running normally, where the root directory is MyDenoiser/keras_implementation/utilities
-from . import logger as logger
+import logger as logger
 
 
 def CLAHE_image_folder(image_dir, clip_limit=2.0, tile_grid_size=(8,8)):
