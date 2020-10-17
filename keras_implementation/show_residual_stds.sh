@@ -19,10 +19,9 @@ printf "[2] Volume2\n"
 printf "[3] subj1\n"
 printf "[4] subj2\n"
 printf "[5] subj3\n"
-printf "[6] subj1 AND subj2\n"
-printf "[7] subj1 AND subj3\n"
-printf "[8] subj2 AND subj3\n"
-printf "[9] subj1, subj2 AND subj3\n"
+printf "[6] subj4\n"
+printf "[7] subj5\n"
+printf "[8] subj1, subj2, subj3, subj4 AND subj5\n"
 printf "\n"
 printf "Select a number: "
 read -r DATA_NUM
@@ -52,24 +51,20 @@ elif [ "$DATA_NUM" == 5 ]
 then
   printf "Calling show_residual_stds.py to evaluate noise residual distribution...\n"
   python show_residual_stds.py --train_data="data/subj3/train"
-# [6] Evaluating subj1 AND subj2
+# [6] Evaluating subj4
 elif [ "$DATA_NUM" == 6 ]
 then
   printf "Calling show_residual_stds.py to evaluate noise residual distribution...\n"
-  python show_residual_stds.py --train_data="data/subj2/train" --train_data="data/subj1/train"
-# [7] Evaluating subj1 AND subj3
+  python show_residual_stds.py --train_data="data/subj4/train"
+# [7] Evaluating subj5
 elif [ "$DATA_NUM" == 7 ]
 then
   printf "Calling show_residual_stds.py to evaluate noise residual distribution...\n"
-  python show_residual_stds.py --train_data="data/subj1/train" --train_data="data/subj3/train"
-# [8] Evaluating subj2 AND subj3
+  python show_residual_stds.py --train_data="data/subj5/train"
+# [8] Evaluating subj1, subj2, subj3, subj4 AND subj5
 elif [ "$DATA_NUM" == 8 ]
 then
   printf "Calling show_residual_stds.py to evaluate noise residual distribution...\n"
-  python show_residual_stds.py --train_data="data/subj2/train" --train_data="data/subj3/train"
-# [9] Evaluating subj1, subj2 AND subj3
-elif [ "$DATA_NUM" == 9 ]
-then
-  printf "Calling show_residual_stds.py to evaluate noise residual distribution...\n"
-  python show_residual_stds.py --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj3/train"
+  python show_residual_stds.py --train_data="data/subj1/train" --train_data="data/subj2/train" \
+  --train_data="data/subj3/train" --train_data="data/subj4/train" --train_data="data/subj5/train"
 fi

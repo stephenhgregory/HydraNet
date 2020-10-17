@@ -17,13 +17,17 @@ printf "Which model do you want to test?\n"
 printf "[1] Volume1-trained (all 3 models)\n"
 printf "[2] Volume2-trained (all 3 models)\n"
 printf "[3] subj1-trained (all 3 models)\n"
-printf "[4] sub2-trained (all 3 models)\n"
-printf "[5] sub3-trained (all 3 models)\n"
-printf "[6] Volume1-trained (1 all-noise model)\n"
-printf "[7] Volume2-trained (1 all-noise model)\n"
-printf "[8] subj1-trained (1 all-noise model)\n"
-printf "[9] subj2-trained (1 all-noise model)\n"
-printf "[10] subj3-trained (1 all-noise model)\n"
+printf "[4] subj2-trained (all 3 models)\n"
+printf "[5] subj3-trained (all 3 models)\n"
+printf "[6] subj4-trained (all 3 models)\n"
+printf "[7] subj5-trained (all 3 models)\n"
+printf "[8] Volume1-trained (1 all-noise model)\n"
+printf "[9] Volume2-trained (1 all-noise model)\n"
+printf "[10] subj1-trained (1 all-noise model)\n"
+printf "[11] subj2-trained (1 all-noise model)\n"
+printf "[12] subj3-trained (1 all-noise model)\n"
+printf "[13] subj4-trained (1 all-noise model)\n"
+printf "[14] subj5-trained (1 all-noise model)\n"
 printf "\n"
 printf "Select a number: "
 read -r MODEL_NUM
@@ -34,7 +38,9 @@ printf "[1] Volume1\n"
 printf "[2] Volume2\n"
 printf "[3] subj1\n"
 printf "[4] subj2\n"
-printf "[5] subj2\n"
+printf "[5] subj3\n"
+printf "[6] subj4\n"
+printf "[7] subj5\n"
 printf "\n"
 printf "Select a number: "
 read -r DATA_NUM
@@ -64,30 +70,50 @@ elif [ "$MODEL_NUM" == 5 ]
 then
   TRAINED_DIR="subj3"
   ALL_NOISE=0
-# [6] Volume1-trained (1 all-noise model)
+# [6] subj4-trained (all 3 models)
 elif [ "$MODEL_NUM" == 6 ]
+then
+  TRAINED_DIR="subj4"
+  ALL_NOISE=0
+# [7] subj5-trained (all 3 models)
+elif [ "$MODEL_NUM" == 7 ]
+then
+  TRAINED_DIR="subj5"
+  ALL_NOISE=0
+# [8] Volume1-trained (1 all-noise model)
+elif [ "$MODEL_NUM" == 8 ]
 then
   TRAINED_DIR="Volume1"
   ALL_NOISE=1
-# [7] Volume2-trained (1 all-noise model)
-elif [ "$MODEL_NUM" == 7 ]
+# [9] Volume2-trained (1 all-noise model)
+elif [ "$MODEL_NUM" == 9 ]
 then
   TRAINED_DIR="Volume2"
   ALL_NOISE=1
-# [8] subj1-trained (1 all-noise model)
-elif [ "$MODEL_NUM" == 8 ]
+# [10] subj1-trained (1 all-noise model)
+elif [ "$MODEL_NUM" == 10 ]
 then
   TRAINED_DIR="subj1"
   ALL_NOISE=1
-# [9] subj2-trained (1 all-noise model)
-elif [ "$MODEL_NUM" == 9 ]
+# [11] subj2-trained (1 all-noise model)
+elif [ "$MODEL_NUM" == 11 ]
 then
   TRAINED_DIR="subj2"
   ALL_NOISE=1
-# [10] subj3-trained (1 all-noise model)
-elif [ "$MODEL_NUM" == 10 ]
+# [12] subj3-trained (1 all-noise model)
+elif [ "$MODEL_NUM" == 12 ]
 then
   TRAINED_DIR="subj3"
+  ALL_NOISE=1
+# [13] subj4-trained (1 all-noise model)
+elif [ "$MODEL_NUM" == 13 ]
+then
+  TRAINED_DIR="subj4"
+  ALL_NOISE=1
+# [14] subj3-trained (1 all-noise model)
+elif [ "$MODEL_NUM" == 14 ]
+then
+  TRAINED_DIR="subj5"
   ALL_NOISE=1
 fi
 
@@ -111,6 +137,14 @@ then
 elif [ "$DATA_NUM" == 5 ]
 then
   SET_DIR="subj3"
+# [6] Using subj4 for test data
+elif [ "$DATA_NUM" == 6 ]
+then
+  SET_DIR="subj4"
+# [7] Using subj5 for test data
+elif [ "$DATA_NUM" == 7 ]
+then
+  SET_DIR="subj5"
 fi
 
 # Set the name of the result directory based upon the training directory and whether we are
