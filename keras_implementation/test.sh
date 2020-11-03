@@ -28,6 +28,7 @@ printf "[11] subj2-trained (1 all-noise model)\n"
 printf "[12] subj3-trained (1 all-noise model)\n"
 printf "[13] subj4-trained (1 all-noise model)\n"
 printf "[14] subj5-trained (1 all-noise model)\n"
+printf "[15] (subj1 through subj5)-trained (1 all-noise model)\n"
 printf "\n"
 printf "Select a number: "
 read -r MODEL_NUM
@@ -49,71 +50,91 @@ read -r DATA_NUM
 if [ "$MODEL_NUM" == 1 ]
 then
   TRAINED_DIR="Volume1"
+  TRAIN_DATA_DIR="Volume1"
   ALL_NOISE=0
 # [2] Volume2-trained (all 3 models)
 elif [ "$MODEL_NUM" == 2 ]
 then
   TRAINED_DIR="Volume2"
+  TRAIN_DATA_DIR="Volume2"
   ALL_NOISE=0
 # [3] subj1-trained (all 3 models)
 elif [ "$MODEL_NUM" == 3 ]
 then
   TRAINED_DIR="subj1"
+  TRAIN_DATA_DIR="subj1"
   ALL_NOISE=0
 # [4] subj2-trained (all 3 models)
 elif [ "$MODEL_NUM" == 4 ]
 then
   TRAINED_DIR="subj2"
+  TRAIN_DATA_DIR="subj2"
   ALL_NOISE=0
 # [5] subj3-trained (all 3 models)
 elif [ "$MODEL_NUM" == 5 ]
 then
   TRAINED_DIR="subj3"
+  TRAIN_DATA_DIR="subj3"
   ALL_NOISE=0
 # [6] subj4-trained (all 3 models)
 elif [ "$MODEL_NUM" == 6 ]
 then
   TRAINED_DIR="subj4"
+  TRAIN_DATA_DIR="subj4"
   ALL_NOISE=0
 # [7] subj5-trained (all 3 models)
 elif [ "$MODEL_NUM" == 7 ]
 then
   TRAINED_DIR="subj5"
+  TRAIN_DATA_DIR="subj5"
   ALL_NOISE=0
 # [8] Volume1-trained (1 all-noise model)
 elif [ "$MODEL_NUM" == 8 ]
 then
   TRAINED_DIR="Volume1"
+  TRAIN_DATA_DIR="Volume1"
   ALL_NOISE=1
 # [9] Volume2-trained (1 all-noise model)
 elif [ "$MODEL_NUM" == 9 ]
 then
   TRAINED_DIR="Volume2"
+  TRAIN_DATA_DIR="Volume2"
   ALL_NOISE=1
 # [10] subj1-trained (1 all-noise model)
 elif [ "$MODEL_NUM" == 10 ]
 then
   TRAINED_DIR="subj1"
+  TRAIN_DATA_DIR="subj1"
   ALL_NOISE=1
 # [11] subj2-trained (1 all-noise model)
 elif [ "$MODEL_NUM" == 11 ]
 then
   TRAINED_DIR="subj2"
+  TRAIN_DATA_DIR="subj2"
   ALL_NOISE=1
 # [12] subj3-trained (1 all-noise model)
 elif [ "$MODEL_NUM" == 12 ]
 then
   TRAINED_DIR="subj3"
+  TRAIN_DATA_DIR="subj3"
   ALL_NOISE=1
 # [13] subj4-trained (1 all-noise model)
 elif [ "$MODEL_NUM" == 13 ]
 then
   TRAINED_DIR="subj4"
+  TRAIN_DATA_DIR="subj4"
   ALL_NOISE=1
-# [14] subj3-trained (1 all-noise model)
+# [14] subj5-trained (1 all-noise model)
 elif [ "$MODEL_NUM" == 14 ]
 then
   TRAINED_DIR="subj5"
+  TRAIN_DATA_DIR="subj5"
+  ALL_NOISE=1
+# [15] (subj1 through subj5)-trained (1 all-noise model)
+elif [ "$MODEL_NUM" == 15 ]
+then
+  TRAINED_DIR="subj1subj2subj3subj4Andsubj5"
+  TRAIN_DATA_DIR="subj2"
   ALL_NOISE=1
 fi
 
@@ -160,7 +181,7 @@ printf "Calling test.py for model trained on %s...\n" "$TRAINED_DIR"
 python test.py \
     --single_denoiser="${ALL_NOISE}" \
     --set_dir="data/${SET_DIR}" \
-    --train_data="data/${TRAINED_DIR}/train" \
+    --train_data="data/${TRAIN_DATA_DIR}/train" \
     --result_dir="${RESULT_DIR}" \
     --model_dir_all_noise="models/${TRAINED_DIR}Trained/MyDnCNN_all_noise" \
     --model_dir_low_noise="models/${TRAINED_DIR}Trained/MyDnCNN_low_noise" \

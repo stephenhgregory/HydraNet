@@ -68,9 +68,9 @@ def MyDnCNN(depth, filters=64, image_channels=1, use_batchnorm=True):
     return model
 
 
-def MyDenoiser1(image_channels=1, num_blocks=4):
+def MyDenoiser(image_channels=1, num_blocks=4):
     """
-    Complete implementation of MyDenoiser1, a residual network using the Keras API.
+    Complete implementation of MyDenoiser, a residual network using the Keras API.
 
     :param image_channels: The number of dimensions of the input images, i.e.
                             image_channels=1 for grayscale images, or image_channels=3
@@ -79,7 +79,7 @@ def MyDenoiser1(image_channels=1, num_blocks=4):
     :param num_blocks: The number of Repeatable Denoising Inception-Residual Blocks in the network
     :type num_blocks: int
 
-    :return: A MyDenoiser1 model, defined using the Keras API
+    :return: A MyDenoiser model, defined using the Keras API
     """
 
     '''Initial Setup'''

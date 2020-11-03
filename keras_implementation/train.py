@@ -36,12 +36,12 @@ parser.add_argument('--batch_size', default=128, type=int, help='batch size')
 parser.add_argument('--train_data', action='append', default=[], type=str, help='path of train data')
 parser.add_argument('--val_data', default='data/Volume2/val', type=str, help='path of val data')
 parser.add_argument('--noise_level', default='all', type=str, help='Noise Level: Can be low, medium, high, or all')
-parser.add_argument('--epoch', default=30, type=int, help='number of train epoches')
-parser.add_argument('--lr', default=1e-3, type=float, help='initial learning rate for Adam')
+parser.add_argument('--epoch', default=60, type=int, help='number of train epoches')
+parser.add_argument('--lr', default=2e-3, type=float, help='initial learning rate for Adam')
 parser.add_argument('--save_every', default=1, type=int, help='save model every x # of epochs')
 args = parser.parse_args()
 
-# Set the noise level to decided which model to train
+# Set the noise level to decide which model to train
 if args.noise_level == 'low':
     noise_level = NoiseLevel.LOW
 elif args.noise_level == 'medium':
@@ -61,20 +61,18 @@ if not os.path.exists(save_dir):
     os.mkdir(save_dir)
 
 
-def findLastCheckpoint(save_dir):
+def findLastCheckpoint(save_dir: str):
     """
-    Finds the most recent Model checkpoint files
+    Finds the most epoch number from a directory of saved models
 
-    :param save_dir:
-    :return:
+    :param save_dir: The directory where the model_*.hdf5 files are located
+    :return: initial_epoch: The most recent epoch number
     """
     file_list = glob.glob(os.path.join(save_dir, 'model_*.hdf5'))  # get name list of all .hdf5 files
-    # file_list = os.listdir(save_dir)
     if file_list:
         epochs_exist = []
         for file_ in file_list:
             result = re.findall(".*model_(.*).hdf5.*", file_)
-            # print(result[0])
             epochs_exist.append(int(result[0]))
         initial_epoch = max(epochs_exist)
     else:
@@ -96,9 +94,9 @@ def lr_schedule(epoch):
     if epoch <= 30:
         lr = initial_lr
     elif epoch <= 60:
-        lr = initial_lr / 10
+        lr = initial_lr / 5
     elif epoch <= 80:
-        lr = initial_lr / 20
+        lr = initial_lr / 10
     else:
         lr = initial_lr / 20
     logger.log('current learning rate is %2.8f' % lr)
@@ -660,32 +658,7 @@ def sum_squared_error(y_true, y_pred):
     return K.sum(K.square(y_pred - y_true)) / 2
 
 
-def original_callbacks():
-    """
-    Creates a list of callbacks for the Model Training process.
-    This is a copy of the list of callbacks used for the original DnCNN paper
-
-    :return: List of callbacks
-    :rtype: list
-    """
-
-    # noinspection PyListCreation
-    callbacks = []
-
-    # Add checkpoints every <save_every> # of iterations
-    callbacks.append(ModelCheckpoint(os.path.join(save_dir, 'model_{epoch:03d}.hdf5'),
-                                     verbose=1, save_weights_only=False, save_freq=args.save_every))
-
-    # Add the ability to log training information to <save_dir>/log.csv
-    callbacks.append(CSVLogger(os.path.join(save_dir, 'log.csv'), append=True, separator=','))
-
-    # Add a Learning Rate Scheduler to dynamically change the learning rate over time
-    callbacks.append(LearningRateScheduler(lr_schedule))
-
-    return callbacks
-
-
-def new_callbacks():
+def get_callbacks():
     """
     Creates a list of callbacks for the Model Training process.
     This is the new list of callbacks used for MyDenoiser
@@ -726,10 +699,11 @@ def main():
     if args.model == 'MyDnCNN':
         # Create a MyDnCNN model
         model = model_functions.MyDnCNN(depth=17, filters=64, image_channels=1, use_batchnorm=True)
-    elif args.model == 'MyDenoiser1':
-        # Create a MyDenoiser1 model
-        model = model_functions.MyDenoiser1(image_channels=1, num_blocks=4)
+    elif args.model == 'MyDenoiser':
+        # Create a MyDenoiser model
+        model = model_functions.MyDenoiser(image_channels=1, num_blocks=4)
 
+    # Print a summary of the model
     model.summary()
 
     # Load the last model
@@ -748,7 +722,7 @@ def main():
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
-                            callbacks=new_callbacks())
+                            callbacks=get_callbacks())
     elif noise_level == NoiseLevel.LOW:
         # Train the model on the individual noise level
         history = model.fit(my_train_datagen(batch_size=args.batch_size,
@@ -759,7 +733,7 @@ def main():
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
-                            callbacks=new_callbacks())
+                            callbacks=get_callbacks())
     elif noise_level == NoiseLevel.MEDIUM:
         # Train the model on the individual noise level
         history = model.fit(my_train_datagen(batch_size=args.batch_size,
@@ -770,7 +744,7 @@ def main():
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
-                            callbacks=new_callbacks())
+                            callbacks=get_callbacks())
     elif noise_level == NoiseLevel.HIGH:
         # Train the model on the individual noise level
         history = model.fit(my_train_datagen(batch_size=args.batch_size,
@@ -781,7 +755,7 @@ def main():
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
-                            callbacks=new_callbacks())
+                            callbacks=get_callbacks())
 
 
 if __name__ == '__main__':

@@ -659,6 +659,8 @@ def reanalyze_data(args, save_results=True):
     :return: None
     """
 
+    print('Reanalyzing data...')
+
     # For each dataset that we wish to test on...
     for set_name in args.set_names:
 

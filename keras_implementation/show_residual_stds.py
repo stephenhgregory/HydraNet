@@ -15,9 +15,7 @@ parser.add_argument('--train_data', action='append', default=[], type=str, help=
 args = parser.parse_args()
 
 
-def show_noise_distribution(epoch_iter=2000,
-                            batch_size=128,
-                            data_dir=args.train_data):
+def show_noise_distribution(epoch_iter: int = 2000, batch_size: int = 128, data_dir: str = args.train_data):
     """
     Generator function that yields training data samples from a specified data directory
 
