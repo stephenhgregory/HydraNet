@@ -42,6 +42,8 @@ def main(root_dir=(join(Path(__file__).resolve().parents[1], 'data')), apply_mas
 
             # Populate the train, val, and test directories and their subdirectories
             populate_train_test_val_dirs_nonrandomly(join(root_dir, folder_name),
+                                                     val_ratio=0.00,
+                                                     test_ratio=0.00,
                                                      preliminary_clahe=True,
                                                      apply_masks=apply_masks)
 
@@ -251,11 +253,19 @@ def populate_train_test_val_dirs_nonrandomly(root_dir, val_ratio=0.15, test_rati
 
     all_file_names = [f for f in os.listdir(src) if isfile(join(src, f))]
 
-    # Select the number of images to skip between validation images
-    val_skip_number = len(all_file_names) / (val_ratio * len(all_file_names))
+    if val_ratio == 0.0:
+        # Select the number of images to skip between validation images
+        val_skip_number = len(all_file_names) + 1
+    else:
+        # Select the number of images to skip between validation images
+        val_skip_number = len(all_file_names) / (val_ratio * len(all_file_names))
 
-    # Select the number of images to skip between test images
-    test_skip_number = len(all_file_names) / (test_ratio * len(all_file_names))
+    if test_ratio == 0.0:
+        # Select the number of images to skip between test images
+        test_skip_number = len(all_file_names) + 1
+    else:
+        # Select the number of images to skip between test images
+        test_skip_number = len(all_file_names) / (test_ratio * len(all_file_names))
 
     # Get the list of validation file names, test file names, and train file names
     val_file_names = all_file_names[::int(val_skip_number)]

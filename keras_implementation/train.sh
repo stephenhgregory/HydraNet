@@ -136,7 +136,7 @@ then
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
     python train.py --noise_level="${noise_level}" \
     --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj3/train" \
-    --train_data="data/subj4/train" --train_data="data/subj5/train"
+    --train_data="data/subj4/train" --train_data="data/subj5/train" \
     --val_data="data/subj3/val"
   done
 # [9] Using subj1, subj2, subj4 AND subj5 for training data
@@ -146,8 +146,8 @@ then
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
     python train.py --noise_level="${noise_level}" \
-    --train_data="data/subj1/train" --train_data="data/subj2/train"
-    --train_data="data/subj4/train" --train_data="data/subj5/train"
-    --val_data="data/subj3/val"
+    --train_data="data/subj1/train" --train_data="data/subj2/train" \
+    --train_data="data/subj4/train" --train_data="data/subj5/train" \
+    --val_data="data/subj3/train"
   done
 fi
