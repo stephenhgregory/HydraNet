@@ -4,6 +4,8 @@ This file contains various image augmentation functions
 
 import cv2
 import numpy as np
+import SimpleITK
+import glob
 import os
 from skimage.restoration import denoise_nl_means, estimate_sigma
 from skimage.measure import compare_ssim
@@ -14,11 +16,27 @@ import seaborn as sns
 # import keras_implementation.utilities.logger as logger
 
 # This is for running normally, where the root directory is MyDenoiser/keras_implementation/utilities
-from . import logger as logger
-# import logger as logger
+# from . import logger as logger
+import logger as logger
 
 
-def CLAHE_image_folder(image_dir, clip_limit=2.0, tile_grid_size=(8,8)):
+def pngs_to_nii(png_folder_name: str, output_file_name: str) -> None:
+    """
+    Converts a folder of PNG files into a 3D NIfTI file and saves that NIfTI file to the same folder
+    :param png_folder_name: The path to the folder containing PNG files
+    :param output_file_name: The name of the output NIfTI (.nii) file
+
+    :return: None
+    """
+
+    file_names = sorted(glob.glob(os.path.join(png_folder_name, '*.png')))
+    reader = SimpleITK.ImageSeriesReader()
+    reader.SetFileNames(file_names)
+    vol = reader.Execute()
+    SimpleITK.WriteImage(vol, os.path.join(png_folder_name, output_file_name + '.nii.gz'))
+
+
+def CLAHE_image_folder(image_dir, clip_limit=2.0, tile_grid_size=(8, 8)):
     """
     Performs Contrast Limited Adaptive Histogram Equalization on a directory of images
 
@@ -52,7 +70,7 @@ def CLAHE_image_folder(image_dir, clip_limit=2.0, tile_grid_size=(8,8)):
             cv2.imwrite(filename=os.path.join(image_dir, file_name), img=equalized_image)
 
 
-def CLAHE_single_image(image, clip_limit=2.0, tile_grid_size=(8,8)):
+def CLAHE_single_image(image, clip_limit=2.0, tile_grid_size=(8, 8)):
     """
     Performs Contrast Limited Adaptive Histogram Equalization on an input image
 
@@ -346,3 +364,9 @@ def hist_match(source, template):
     interp_t_values = np.interp(s_quantiles, t_quantiles, t_values)
 
     return interp_t_values[bin_idx].reshape(oldshape)
+
+
+# if __name__ == "__main__":
+#     png_folder = ''
+#     output_file_name = 'denoised_subj6'
+#     pngs_to_nii(png_folder, output_file_name)
