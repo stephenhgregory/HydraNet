@@ -56,28 +56,15 @@ else:
 # Set the save directory of the trained model hdf5 file
 save_dir = os.path.join('models', args.model + '_' + args.noise_level + '_noise')
 
+# TODO: Delete this line, I am hard-coding the save directory here!!
+save_dir = os.path.join('models', 'subj1subj2subj3subj4Andsubj5Trained', '60Epochs',
+                        args.model + '_' + args.noise_level + '_noise')
+
+print('Are you sure you want to continue Stephen? You HARDCODED THE SAVE DIRECTORY FOR THE MODEL.')
+
 # Create the <save_dir> folder if it doesn't exist already
 if not os.path.exists(save_dir):
     os.mkdir(save_dir)
-
-
-def findLastCheckpoint(save_dir: str):
-    """
-    Finds the most epoch number from a directory of saved models
-
-    :param save_dir: The directory where the model_*.hdf5 files are located
-    :return: initial_epoch: The most recent epoch number
-    """
-    file_list = glob.glob(os.path.join(save_dir, 'model_*.hdf5'))  # get name list of all .hdf5 files
-    if file_list:
-        epochs_exist = []
-        for file_ in file_list:
-            result = re.findall(".*model_(.*).hdf5.*", file_)
-            epochs_exist.append(int(result[0]))
-        initial_epoch = max(epochs_exist)
-    else:
-        initial_epoch = 0
-    return initial_epoch
 
 
 def lr_schedule(epoch):
@@ -707,7 +694,7 @@ def main():
     model.summary()
 
     # Load the last model
-    initial_epoch = findLastCheckpoint(save_dir=save_dir)
+    initial_epoch = model_functions.findLastCheckpoint(save_dir=save_dir)
     if initial_epoch > 0:
         print('resuming by loading epoch %03d' % initial_epoch)
         model = load_model(os.path.join(save_dir, 'model_%03d.hdf5' % initial_epoch), compile=False)

@@ -14,10 +14,10 @@ import cv2
 import copy
 
 # # This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
-# from keras_implementation.utilities import image_utils, logger, data_generator
+# from keras_implementation.utilities import image_utils, logger, data_generator, model_functions
 
 # This is for running normally, where the root directory is MyDenoiser/keras_implementation
-from utilities import image_utils, logger, data_generator
+from utilities import image_utils, logger, data_generator, model_functions
 
 # Set Memory Growth to true to fix a small bug in Tensorflow
 physical_devices = tf.config.list_physical_devices('GPU')
@@ -39,7 +39,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--set_dir', default='data/subj1', type=str, help='parent directory of test dataset')
-    parser.add_argument('--set_names', default=['val'], type=list, help='name of test dataset')
+    parser.add_argument('--set_names', default=['train'], type=list, help='name of test dataset')
     parser.add_argument('--model_dir_original', default=os.path.join('models', 'Volume1Trained', 'MyDnCNN'), type=str,
                         help='directory of the original, single-network denoising model')
     parser.add_argument('--model_dir_all_noise',
@@ -58,16 +58,6 @@ def parse_args():
                         default=os.path.join('models', 'subj1Trained', 'MyDnCNN_high_noise'),
                         type=str,
                         help='directory of the high-noise-denoising model')
-    parser.add_argument('--model_name_original', default='model_023.hdf5', type=str,
-                        help='name of the original. single-network model')
-    parser.add_argument('--model_name_all_noise', default='model_025.hdf5', type=str,
-                        help='name of the all-noise model')
-    parser.add_argument('--model_name_low_noise', default='model_025.hdf5', type=str,
-                        help='name of the low-noise model')
-    parser.add_argument('--model_name_medium_noise', default='model_025.hdf5', type=str,
-                        help='name of the medium-noise model')
-    parser.add_argument('--model_name_high_noise', default='model_025.hdf5', type=str,
-                        help='name of the high-noise model')
     parser.add_argument('--result_dir', default='results/subj1Trained_results/', type=str,
                         help='directory of results')
     parser.add_argument('--reanalyze_data', default=False, type=bool, help='True if we want to simply reanalyze '
@@ -491,29 +481,39 @@ def main(args):
     # Compile the command line arguments
     args = parse_args()
 
+    # Get the latest epoch numbers
+    latest_epoch_original = model_functions.findLastCheckpoint(save_dir=args.model_dir_original)
+    latest_epoch_all_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_all_noise)
+    latest_epoch_low_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_low_noise)
+    latest_epoch_medium_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_medium_noise)
+    latest_epoch_high_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_high_noise)
+
     # If we are denoising with a single denoiser...
     if args.single_denoiser:
         # Load our single all-noise denoising model
-        model_all_noise = load_model(os.path.join(args.model_dir_all_noise, args.model_name_all_noise),
+        model_all_noise = load_model(os.path.join(args.model_dir_all_noise,
+                                                  'model_%03d.hdf5' % latest_epoch_all_noise),
                                      compile=False)
-        log(f'Loaded single all-noise model: {os.path.join(args.model_dir_all_noise, args.model_name_all_noise)}. ')
+        log(f'Loaded single all-noise model: '
+            f'{os.path.join(args.model_dir_all_noise, "model_%03d.hdf5" % latest_epoch_all_noise)}. ')
 
     # Otherwise...
     else:
         # Load our 3 denoising models
-        model_original = load_model(os.path.join(args.model_dir_original, args.model_name_original),
+        model_original = load_model(os.path.join(args.model_dir_original, 'model_%03d.hdf5' % latest_epoch_original),
                                     compile=False)
-        model_all_noise = load_model(os.path.join(args.model_dir_all_noise, args.model_name_all_noise),
+        model_all_noise = load_model(os.path.join(args.model_dir_all_noise, 'model_%03d.hdf5' % latest_epoch_all_noise),
                                      compile=False)
-        model_low_noise = load_model(os.path.join(args.model_dir_low_noise, args.model_name_low_noise),
+        model_low_noise = load_model(os.path.join(args.model_dir_low_noise, 'model_%03d.hdf5' % latest_epoch_low_noise),
                                      compile=False)
-        model_medium_noise = load_model(os.path.join(args.model_dir_medium_noise, args.model_name_medium_noise),
+        model_medium_noise = load_model(os.path.join(args.model_dir_medium_noise, 'model_%03d.hdf5' % latest_epoch_medium_noise),
                                         compile=False)
-        model_high_noise = load_model(os.path.join(args.model_dir_high_noise, args.model_name_high_noise),
+        model_high_noise = load_model(os.path.join(args.model_dir_high_noise, 'model_%03d.hdf5' % latest_epoch_high_noise),
                                       compile=False)
-        log(f'Loaded all 3 trained models: {os.path.join(args.model_dir_low_noise, args.model_name_low_noise)}, '
-            f'{os.path.join(args.model_dir_medium_noise, args.model_name_medium_noise)}, and '
-            f'{os.path.join(args.model_dir_high_noise, args.model_name_high_noise)}')
+        log(f'Loaded all 3 trained models: '
+            f'{os.path.join(args.model_dir_low_noise, "model_%03d.hdf5" % latest_epoch_low_noise)}, '
+            f'{os.path.join(args.model_dir_medium_noise, "model_%03d.hdf5" % latest_epoch_medium_noise)}, and '
+            f'{os.path.join(args.model_dir_high_noise, "model_%03d.hdf5" % latest_epoch_high_noise)}')
 
     # If the result directory doesn't exist already, just create it
     if not os.path.exists(args.result_dir):

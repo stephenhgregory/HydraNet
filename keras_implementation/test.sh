@@ -34,7 +34,7 @@ printf "Select a number: "
 read -r MODEL_NUM
 
 # Get the image directory that the user wishes to test on
-printf "Which test data directory do you want to retest on?\n"
+printf "Which data directory do you want to retest on?\n"
 printf "[1] Volume1\n"
 printf "[2] Volume2\n"
 printf "[3] subj1\n"
@@ -42,6 +42,7 @@ printf "[4] subj2\n"
 printf "[5] subj3\n"
 printf "[6] subj4\n"
 printf "[7] subj5\n"
+printf "[8] subj6\n"
 printf "\n"
 printf "Select a number: "
 read -r DATA_NUM
@@ -166,6 +167,10 @@ then
 elif [ "$DATA_NUM" == 7 ]
 then
   SET_DIR="subj5"
+# [8] Using subj6 for test data
+elif [ "$DATA_NUM" == 8 ]
+then
+  SET_DIR="subj6"
 fi
 
 # Set the name of the result directory based upon the training directory and whether we are

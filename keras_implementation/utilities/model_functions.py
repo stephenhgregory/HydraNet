@@ -4,6 +4,28 @@ from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, Activatio
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
 from tensorflow.keras.optimizers import Adam
+import glob
+import os
+import re
+
+
+def findLastCheckpoint(save_dir: str):
+    """
+    Finds the most epoch number from a directory of saved models
+
+    :param save_dir: The directory where the model_*.hdf5 files are located
+    :return: initial_epoch: The most recent epoch number
+    """
+    file_list = glob.glob(os.path.join(save_dir, 'model_*.hdf5'))  # get name list of all .hdf5 files
+    if file_list:
+        epochs_exist = []
+        for file_ in file_list:
+            result = re.findall(".*model_(.*).hdf5.*", file_)
+            epochs_exist.append(int(result[0]))
+        initial_epoch = max(epochs_exist)
+    else:
+        initial_epoch = 0
+    return initial_epoch
 
 
 def MyDnCNN(depth, filters=64, image_channels=1, use_batchnorm=True):
