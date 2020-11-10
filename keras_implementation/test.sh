@@ -29,6 +29,7 @@ printf "[12] subj3-trained (1 all-noise model)\n"
 printf "[13] subj4-trained (1 all-noise model)\n"
 printf "[14] subj5-trained (1 all-noise model)\n"
 printf "[15] (subj1 through subj5)-trained (1 all-noise model)\n"
+printf "[16] (subj1 through subj5)-trained (all 3 models)\n"
 printf "\n"
 printf "Select a number: "
 read -r MODEL_NUM
@@ -137,6 +138,12 @@ then
   TRAINED_DIR="subj1subj2subj3subj4Andsubj5"
   TRAIN_DATA_DIR="subj2"
   ALL_NOISE=1
+# [16] (subj1 through subj5)-trained (all 3 models)
+elif [ "$MODEL_NUM" == 16 ]
+then
+  TRAINED_DIR="subj1subj2subj3subj4Andsubj5"
+  TRAIN_DATA_DIR="subj1"
+  ALL_NOISE=0
 fi
 
 # [1] Using Volume1 for test data
