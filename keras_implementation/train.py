@@ -34,7 +34,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--model', default='MyDnCNN', type=str, help='choose a type of model')
 parser.add_argument('--batch_size', default=128, type=int, help='batch size')
 parser.add_argument('--train_data', action='append', default=[], type=str, help='path of train data')
-parser.add_argument('--val_data', default='data/Volume2/val', type=str, help='path of val data')
+parser.add_argument('--val_data', default='data/subj5/val', type=str, help='path of val data')
 parser.add_argument('--noise_level', default='all', type=str, help='Noise Level: Can be low, medium, high, or all')
 parser.add_argument('--epoch', default=80, type=int, help='number of train epoches')
 parser.add_argument('--lr', default=2e-3, type=float, help='initial learning rate for Adam')
@@ -55,12 +55,6 @@ else:
 
 # Set the save directory of the trained model hdf5 file
 save_dir = os.path.join('models', args.model + '_' + args.noise_level + '_noise')
-
-# TODO: Delete this line, I am hard-coding the save directory here!!
-save_dir = os.path.join('models', 'subj1subj2subj3subj4Andsubj5Trained', '60Epochs',
-                        args.model + '_' + args.noise_level + '_noise')
-
-print('Are you sure you want to continue Stephen? You HARDCODED THE SAVE DIRECTORY FOR THE MODEL.')
 
 # Create the <save_dir> folder if it doesn't exist already
 if not os.path.exists(save_dir):
