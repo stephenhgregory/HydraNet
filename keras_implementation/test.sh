@@ -161,13 +161,13 @@ then
   TRAIN_DATA_DIR="subj2"
   ALL_NOISE=0
 # [19] (subj1, subj2, subj3, subj5, subj6)-trained (1 all-noise model)
-elif [ "$MODEL_NUM" == 17 ]
+elif [ "$MODEL_NUM" == 19 ]
 then
   TRAINED_DIR="subj1subj2subj3subj5Andsubj6"
   TRAIN_DATA_DIR="subj2"
   ALL_NOISE=1
 # [20] (subj1, subj2, subj3, subj5, subj6)-trained (all 3 models)
-elif [ "$MODEL_NUM" == 18 ]
+elif [ "$MODEL_NUM" == 20 ]
 then
   TRAINED_DIR="subj1subj2subj3subj5Andsubj6"
   TRAIN_DATA_DIR="subj2"
