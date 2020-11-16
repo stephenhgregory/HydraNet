@@ -82,6 +82,18 @@ python3 train.py /
 | subj2/train     | subj1/val     | Yes                  | 28.63 dB      | 0.9485       |
 | subj3/train     | subj2/val     | Yes                  | 28.94 dB      | 0.9554       |
 
+## November 2020 HydraNet Cross-Validation Results
+| Trained on                        | Tested on  | Single Denoiser?              | # Epochs | Average PSNR | Average SSIM |
+|-----------------------------------|------------|-------------------------------|----------|--------------|--------------|
+| subj1, subj2, subj3, subj4, subj5 | subj4(val) | Yes                           | 25       | 28.15 dB     | 0.9408       |
+| subj1, subj2, subj3, subj4, subj5 | subj1(val) | Yes                           | 25       | 29.15 dB     | 0.9511       |
+| subj1, subj2, subj3, subj4, subj5 | subj2(val) | Yes                           | 25       | 29.80 dB     | 0.9610       |
+| subj1, subj2, subj3, subj4, subj5 | subj5(val) | Yes                           | 25       | 29.98 dB     | 0.9578       |
+| subj1, subj2, subj3, subj4, subj5 | subj6(all) | Yes                           | 80       | 28.29 dB     | 0.9416       |
+| subj1, subj2, subj3, subj4, subj5 | subj6(all) | No (only called Medium-noise) | 80       | 28.28 dB     | 0.9433       |
+| subj1, subj2, subj3, subj4, subj6 | subj5(all) | Yes                           | 80       | 28.58 dB     | 0.9569       |
+| subj1, subj2, subj3, subj5, subj6 | subj4(all) | Yes                           | 80       | 28.42 dB     | 0.9437       |
+
 
 | Image dataset | Noisy Image                           | Denoised Image                          |
 |:-------------:|:-------------------------------------:|:---------------------------------------:|
