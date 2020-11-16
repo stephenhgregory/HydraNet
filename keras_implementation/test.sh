@@ -30,6 +30,10 @@ printf "[13] subj4-trained (1 all-noise model)\n"
 printf "[14] subj5-trained (1 all-noise model)\n"
 printf "[15] (subj1 through subj5)-trained (1 all-noise model)\n"
 printf "[16] (subj1 through subj5)-trained (all 3 models)\n"
+printf "[17] (subj1, subj2, subj3, subj4, subj6)-trained (1 all-noise model)\n"
+printf "[18] (subj1, subj2, subj3, subj4, subj6)-trained (all 3 models)\n"
+printf "[19] (subj1, subj2, subj3, subj5, subj6)-trained (1 all-noise model)\n"
+printf "[20] (subj1, subj2, subj3, subj5, subj6)-trained (all 3 models)\n"
 printf "\n"
 printf "Select a number: "
 read -r MODEL_NUM
@@ -143,6 +147,30 @@ elif [ "$MODEL_NUM" == 16 ]
 then
   TRAINED_DIR="subj1subj2subj3subj4Andsubj5"
   TRAIN_DATA_DIR="subj1"
+  ALL_NOISE=0
+# [17] (subj1, subj2, subj3, subj4, subj6)-trained (1 all-noise model)
+elif [ "$MODEL_NUM" == 17 ]
+then
+  TRAINED_DIR="subj1subj2subj3subj4Andsubj6"
+  TRAIN_DATA_DIR="subj2"
+  ALL_NOISE=1
+# [18] (subj1, subj2, subj3, subj4, subj6)-trained (all 3 models)
+elif [ "$MODEL_NUM" == 18 ]
+then
+  TRAINED_DIR="subj1subj2subj3subj4Andsubj6"
+  TRAIN_DATA_DIR="subj2"
+  ALL_NOISE=0
+# [19] (subj1, subj2, subj3, subj5, subj6)-trained (1 all-noise model)
+elif [ "$MODEL_NUM" == 17 ]
+then
+  TRAINED_DIR="subj1subj2subj3subj5Andsubj6"
+  TRAIN_DATA_DIR="subj2"
+  ALL_NOISE=1
+# [20] (subj1, subj2, subj3, subj5, subj6)-trained (all 3 models)
+elif [ "$MODEL_NUM" == 18 ]
+then
+  TRAINED_DIR="subj1subj2subj3subj5Andsubj6"
+  TRAIN_DATA_DIR="subj2"
   ALL_NOISE=0
 fi
 
