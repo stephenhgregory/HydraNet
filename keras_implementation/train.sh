@@ -35,6 +35,7 @@ printf "[6] subj4\n"
 printf "[7] subj5\n"
 printf "[8] subj1, subj2, subj3, subj4, and subj5\n"
 printf "[9] subj1, subj2, subj3, subj4, and subj6\n"
+printf "[10] subj1, subj2, subj3, subj5, and subj6\n"
 printf "\n"
 printf "Select a number: "
 read -r DATA_NUM
@@ -149,5 +150,16 @@ then
     --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj3/train" \
     --train_data="data/subj4/train" --train_data="data/subj6/train" \
     --val_data="data/subj5/train"
+  done
+# [10] Using subj1, subj2, subj3, subj5 AND subj6 for training data
+elif [ "$DATA_NUM" == 10 ]
+then
+  for noise_level in "${NOISE_LEVELS[@]}"
+  do
+    printf "Calling train.py for %s-noise model...\n" "$noise_level"
+    python train.py --noise_level="${noise_level}" \
+    --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj3/train" \
+    --train_data="data/subj5/train" --train_data="data/subj6/train" \
+    --val_data="data/subj4/train"
   done
 fi
