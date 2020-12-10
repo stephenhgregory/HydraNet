@@ -112,8 +112,11 @@ def standardize(x):
     # Get the global mean and standard deviation from x
     original_mean, original_std = (x.mean(), x.std())
 
-    # GLobally standardize the pixels
-    standardized_x = (x - original_mean) / original_std
+    # Globally standardize the pixels
+    if original_std != 0.0:
+        standardized_x = (x - original_mean) / original_std
+    else:
+        standardized_x = (x - original_mean)
 
     # Return a tuple containing the image, mean, and standard deviation
     return standardized_x, original_mean, original_std

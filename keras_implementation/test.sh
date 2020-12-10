@@ -34,6 +34,12 @@ printf "[17] (subj1, subj2, subj3, subj4, subj6)-trained (1 all-noise model)\n"
 printf "[18] (subj1, subj2, subj3, subj4, subj6)-trained (all 3 models)\n"
 printf "[19] (subj1, subj2, subj3, subj5, subj6)-trained (1 all-noise model)\n"
 printf "[20] (subj1, subj2, subj3, subj5, subj6)-trained (all 3 models)\n"
+printf "[21] (subj1, subj2, subj4, subj5, subj6)-trained (1 all-noise model)\n"
+printf "[22] (subj1, subj2, subj4, subj5, subj6)-trained (all 3 models)\n"
+printf "[23] (subj1, subj3, subj4, subj5, subj6)-trained (1 all-noise model)\n"
+printf "[24] (subj1, subj3, subj4, subj5, subj6)-trained (all 3 models)\n"
+printf "[25] (subj2, subj3, subj4, subj5, subj6)-trained (1 all-noise model)\n"
+printf "[26] (subj2, subj3, subj4, subj5, subj6)-trained (all 3 models)\n"
 printf "\n"
 printf "Select a number: "
 read -r MODEL_NUM
@@ -170,6 +176,42 @@ then
 elif [ "$MODEL_NUM" == 20 ]
 then
   TRAINED_DIR="subj1subj2subj3subj5Andsubj6"
+  TRAIN_DATA_DIR="subj2"
+  ALL_NOISE=0
+# [21] (subj1, subj2, subj4, subj5, subj6)-trained (1 all-noise model)
+elif [ "$MODEL_NUM" == 21 ]
+then
+  TRAINED_DIR="subj1subj2subj4subj5Andsubj6"
+  TRAIN_DATA_DIR="subj2"
+  ALL_NOISE=1
+# [22] (subj1, subj2, subj4, subj5, subj6)-trained (all 3 models)
+elif [ "$MODEL_NUM" == 22 ]
+then
+  TRAINED_DIR="subj1subj2subj4subj5Andsubj6"
+  TRAIN_DATA_DIR="subj2"
+  ALL_NOISE=0
+# [23] (subj1, subj3, subj4, subj5, subj6)-trained (1 all-noise model)
+elif [ "$MODEL_NUM" == 23 ]
+then
+  TRAINED_DIR="subj1subj3subj4subj5Andsubj6"
+  TRAIN_DATA_DIR="subj1"
+  ALL_NOISE=1
+# [24] (subj1, subj3, subj4, subj5, subj6)-trained (all 3 models)
+elif [ "$MODEL_NUM" == 24 ]
+then
+  TRAINED_DIR="subj1subj3subj4subj5Andsubj6"
+  TRAIN_DATA_DIR="subj1"
+  ALL_NOISE=0
+# [25] (subj2, subj3, subj4, subj5, subj6)-trained (1 all-noise model)
+elif [ "$MODEL_NUM" == 25 ]
+then
+  TRAINED_DIR="subj2subj3subj4subj5Andsubj6"
+  TRAIN_DATA_DIR="subj2"
+  ALL_NOISE=1
+# [26] (subj2, subj3, subj4, subj5, subj6)-trained (all 3 models)
+elif [ "$MODEL_NUM" == 26 ]
+then
+  TRAINED_DIR="subj2subj3subj4subj5Andsubj6"
   TRAIN_DATA_DIR="subj2"
   ALL_NOISE=0
 fi
