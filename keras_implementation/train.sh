@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 # Used to train myDenoiser
 
-# Find and store the MyDenoiser repo path
-MYDENOISER_REPO=$(find ~ -type d -wholename "*/MyDenoiser/keras_implementation" )
-
-# Move into the MyDenoiser repo if it exists, otherwise exit with an error message
-if [ "$MYDENOISER_REPO" == "\n" ] || [ -z "$MYDENOISER_REPO" ]
-then
-  echo "Could not find MyDenoiser repository. Clone that repo and try again!" && exit 1
-else
-  cd "$MYDENOISER_REPO" && echo "MyDenoiser repo found at $MYDENOISER_REPO"
-fi
+# THIS BLOCK ALLOWS ONE TO EFFECTIVELY RUN THIS SCRIPT FROM ANYWHERE ON THE HOST MACHINE
+#########################################################################################
+## Find and store the MyDenoiser repo path
+#MYDENOISER_REPO=$(find ~ -type d -wholename "*/MyDenoiser/keras_implementation" )
+#
+## Move into the MyDenoiser repo if it exists, otherwise exit with an error message
+#if [ "$MYDENOISER_REPO" == "\n" ] || [ -z "$MYDENOISER_REPO" ]
+#then
+#  echo "Could not find MyDenoiser repository. Clone that repo and try again!" && exit 1
+#else
+#  cd "$MYDENOISER_REPO" && echo "MyDenoiser repo found at $MYDENOISER_REPO"
+#fi
+#########################################################################################
 
 # Get the model type that the user wishes to train
 printf "Which model do you want to retrain?\n"
@@ -82,7 +85,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python train.py --noise_level="${noise_level}" --train_data="data/Volume1/train" --val_data="data/Volume1/val"
+    python scripts/train.py --noise_level="${noise_level}" --train_data="data/Volume1/train" --val_data="data/Volume1/val"
   done
 # [2] Using Volume2 for training data
 elif [ "$DATA_NUM" == 2 ]
@@ -90,7 +93,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python train.py --noise_level="${noise_level}" --train_data="data/Volume2/train" --val_data="data/Volume2/val"
+    python scripts/train.py --noise_level="${noise_level}" --train_data="data/Volume2/train" --val_data="data/Volume2/val"
   done
 # [3] Using subj1 for training data
 elif [ "$DATA_NUM" == 3 ]
@@ -98,7 +101,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python train.py --noise_level="${noise_level}" --train_data="data/subj1/train" --val_data="data/subj1/val"
+    python scripts/train.py --noise_level="${noise_level}" --train_data="data/subj1/train" --val_data="data/subj1/val"
   done
 # [4] Using subj2 for training data
 elif [ "$DATA_NUM" == 4 ]
@@ -106,7 +109,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python train.py --noise_level="${noise_level}" --train_data="data/subj2/train" --val_data="data/subj2/val"
+    python scripts/train.py --noise_level="${noise_level}" --train_data="data/subj2/train" --val_data="data/subj2/val"
   done
 # [5] Using subj3 for training data
 elif [ "$DATA_NUM" == 5 ]
@@ -114,7 +117,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python train.py --noise_level="${noise_level}" --train_data="data/subj3/train" --val_data="data/subj3/val"
+    python scripts/train.py --noise_level="${noise_level}" --train_data="data/subj3/train" --val_data="data/subj3/val"
   done
 # [6] Using subj4 for training data
 elif [ "$DATA_NUM" == 6 ]
@@ -122,7 +125,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python train.py --noise_level="${noise_level}" --train_data="data/subj4/train" --val_data="data/subj4/val"
+    python scripts/train.py --noise_level="${noise_level}" --train_data="data/subj4/train" --val_data="data/subj4/val"
   done
 # [7] Using subj5 for training data
 elif [ "$DATA_NUM" == 7 ]
@@ -130,7 +133,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python train.py --noise_level="${noise_level}" --train_data="data/subj5/train" --val_data="data/subj5/val"
+    python scripts/train.py --noise_level="${noise_level}" --train_data="data/subj5/train" --val_data="data/subj5/val"
   done
 # [8] Using subj1, subj2, subj3, subj4 AND subj5 for training data
 elif [ "$DATA_NUM" == 8 ]
@@ -138,7 +141,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python train.py --noise_level="${noise_level}" \
+    python scripts/train.py --noise_level="${noise_level}" \
     --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj3/train" \
     --train_data="data/subj4/train" --train_data="data/subj5/train" \
     --val_data="data/subj3/val"
@@ -149,7 +152,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python train.py --noise_level="${noise_level}" \
+    python scripts/train.py --noise_level="${noise_level}" \
     --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj3/train" \
     --train_data="data/subj4/train" --train_data="data/subj6/train" \
     --val_data="data/subj5/train"
@@ -160,7 +163,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python train.py --noise_level="${noise_level}" \
+    python scripts/train.py --noise_level="${noise_level}" \
     --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj3/train" \
     --train_data="data/subj5/train" --train_data="data/subj6/train" \
     --val_data="data/subj4/train"
@@ -171,7 +174,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python train.py --noise_level="${noise_level}" \
+    python scripts/train.py --noise_level="${noise_level}" \
     --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj4/train" \
     --train_data="data/subj5/train" --train_data="data/subj6/train" \
     --val_data="data/subj4/train"
@@ -182,7 +185,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python train.py --noise_level="${noise_level}" \
+    python scripts/train.py --noise_level="${noise_level}" \
     --train_data="data/subj1/train" --train_data="data/subj3/train" --train_data="data/subj4/train" \
     --train_data="data/subj5/train" --train_data="data/subj6/train" \
     --val_data="data/subj4/train"
@@ -193,7 +196,7 @@ then
   for noise_level in "${NOISE_LEVELS[@]}"
   do
     printf "Calling train.py for %s-noise model...\n" "$noise_level"
-    python train.py --noise_level="${noise_level}" \
+    python scripts/train.py --noise_level="${noise_level}" \
     --train_data="data/subj2/train" --train_data="data/subj3/train" --train_data="data/subj4/train" \
     --train_data="data/subj5/train" --train_data="data/subj6/train" \
     --val_data="data/subj4/train"

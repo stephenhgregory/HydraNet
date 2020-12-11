@@ -1,5 +1,5 @@
 """
-This file is used to train MyDenoiser
+Main script used to train HydraNet
 """
 
 from deprecated import deprecated
@@ -8,22 +8,15 @@ import os
 import sys
 import numpy as np
 from tensorflow.keras.models import load_model
-from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler
+from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
 from tensorflow.keras.optimizers import Adam
 import tensorflow.keras.backend as K
 
-# # This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
-# from keras_implementation.utilities import data_generator, logger, model_functions, image_utils
-# from keras_implementation.utilities.data_generator import NoiseLevel
-
 # This is for running normally, where the root directory is MyDenoiser/keras_implementation
-from keras_implementation.scripts.utilities import data_generator, model_functions, image_utils
-from keras_implementation.scripts.utilities import logger
-from keras_implementation.scripts.utilities import NoiseLevel
+from utilities import data_generator, logger, model_functions, image_utils
+from utilities.data_generator import NoiseLevel
 
-# Allow memory growth in order to fix a Tensorflow bug
-# This makes sure that at runtime, the initialization of the CUDA device physical_devices[0] (The only GPU in
-# the system) will not allocate ALL of the memory on that device.
+# Allow memory growth for CUDA in order to fix a Tensorflow bug
 import tensorflow as tf
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(physical_devices[0], True)

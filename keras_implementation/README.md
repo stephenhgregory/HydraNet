@@ -128,7 +128,7 @@ python3 train.py /
 ## Creating TIFF from Results - *Dependencies: ImageMagick*
 
 To convert the newly denoised PNG images after using MyDenoiser for inference, you can use the 
-[utilities/png_folder_to_tiff.py](utilities/png_folder_to_tiff.py) script by running the following
+[utilities/png_folder_to_tiff.py](scripts/utilities/png_folder_to_tiff.py) script by running the following
 from a command line located at *.../MyDenoiser/keras_implementation/*
 
 ```

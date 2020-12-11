@@ -7,7 +7,8 @@ import os, time, datetime
 # import PIL.Image as Image
 import numpy as np
 from keras.models import load_model, model_from_json
-from keras_implementation.utilities import image_utils, logger
+from keras_implementation.scripts.utilities import image_utils
+from keras_implementation.scripts.utilities import logger
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 from skimage.io import imread, imsave
 import tensorflow as tf

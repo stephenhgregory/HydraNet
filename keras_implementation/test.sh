@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 # Used to test myDenoiser
 
-# Find and store the MyDenoiser repo path
-MYDENOISER_REPO=$(find ~ -type d -wholename "*/MyDenoiser/keras_implementation" )
-
-# Move into the MyDenoiser repo if it exists, otherwise exit with an error message
-if [ "$MYDENOISER_REPO" == "\n" ] || [ -z "$MYDENOISER_REPO" ]
-then
-  echo "Could not find MyDenoiser repository. Clone that repo and try again!" && exit 1
-else
-  cd "$MYDENOISER_REPO" && echo "MyDenoiser repo found at $MYDENOISER_REPO"
-fi
+# THIS BLOCK ALLOWS ONE TO EFFECTIVELY RUN THIS SCRIPT FROM ANYWHERE ON THE HOST MACHINE
+#########################################################################################
+## Find and store the MyDenoiser repo path
+#MYDENOISER_REPO=$(find ~ -type d -wholename "*/MyDenoiser/keras_implementation" )
+#
+## Move into the MyDenoiser repo if it exists, otherwise exit with an error message
+#if [ "$MYDENOISER_REPO" == "\n" ] || [ -z "$MYDENOISER_REPO" ]
+#then
+#  echo "Could not find MyDenoiser repository. Clone that repo and try again!" && exit 1
+#else
+#  cd "$MYDENOISER_REPO" && echo "MyDenoiser repo found at $MYDENOISER_REPO"
+#fi
+#########################################################################################
 
 # Get the model type that the user wishes to test
 printf "Which model do you want to test?\n"
@@ -260,7 +263,7 @@ else
 fi
 
 printf "Calling test.py for model trained on %s...\n" "$TRAINED_DIR"
-python test.py \
+python scripts/test.py \
     --single_denoiser="${ALL_NOISE}" \
     --set_dir="data/${SET_DIR}" \
     --train_data="data/${TRAIN_DATA_DIR}/train" \
