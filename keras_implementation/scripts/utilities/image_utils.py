@@ -12,12 +12,8 @@ from skimage.metrics import structural_similarity
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
-# import keras_implementation.utilities.logger as logger
-
 # This is for running normally, where the root directory is MyDenoiser/keras_implementation/utilities
-from . import logger as logger
-# import logger as logger
+import logger as logger
 
 
 def pngs_to_nii(png_folder_name: str, output_file_name: str) -> None:

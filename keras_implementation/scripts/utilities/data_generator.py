@@ -5,13 +5,7 @@ from enum import Enum
 import os
 from os.path import join
 from typing import List, Tuple, Dict
-
-# This is for running in Pycharm, where the root directory is MyDenoiser, and not MyDenoiser/keras_implementation
-# import keras_implementation.utilities.logger as logger
-# import keras_implementation.utilities.image_utils as image_utils
-
-# This is for running normally, where the root directory is MyDenoiser/keras_implementation/utilities
-from . import image_utils as image_utils
+import image_utils
 
 # Global variable definitions
 patch_size, stride = 40, 10
@@ -461,7 +455,7 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
     return clear_data, blurry_data
 
 
-def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0, high_noise_threshold: float = 3) -> Dict:
+def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.02, high_noise_threshold: float = 0.16) -> Dict:
     """
     Gets and returns the image patches used during training time, split into 3 noise levels.
     Used to cross-reference patches at inference time.

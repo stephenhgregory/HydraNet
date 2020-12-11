@@ -4,7 +4,8 @@ Contains various testing functions to ensure all modules are working nominally
 import cv2
 import numpy as np
 import time
-import image_utils, data_generator
+import image_utils
+import data_generator
 
 
 def test_image_standardization():
@@ -82,4 +83,13 @@ def test_inference_time_train_data_generation(train_data_dir: str) -> None:
     # Get our training data to use for determining which denoising network to send each patch through
     training_patches = data_generator.retrieve_train_data(train_data_dir)
 
+    low_noise_x = training_patches["low_noise"]["x"]
+    medium_noise_x = training_patches["medium_noise"]["x"]
+    high_noise_x = training_patches["high_noise"]["x"]
+
     print(f"Done getting training patches! Total time = {time.time() - start_time}")
+
+
+if __name__ == "__main__":
+
+    test_inference_time_train_data_generation(train_data_dir="../../data/subj6/train")
