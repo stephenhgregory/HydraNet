@@ -19,7 +19,7 @@ import tensorflow.keras.backend as K
 # This is for running normally, where the root directory is MyDenoiser/keras_implementation
 from keras_implementation.scripts.utilities import data_generator, model_functions, image_utils
 from keras_implementation.scripts.utilities import logger
-from keras_implementation.scripts.utilities import NoiseLevel
+from keras_implementation.scripts.utilities.data_generator import NoiseLevel
 
 # Allow memory growth in order to fix a Tensorflow bug
 # This makes sure that at runtime, the initialization of the CUDA device physical_devices[0] (The only GPU in

@@ -263,7 +263,7 @@ else
 fi
 
 printf "Calling test.py for model trained on %s...\n" "$TRAINED_DIR"
-python scripts/test.py \
+python scripts/inference.py \
     --single_denoiser="${ALL_NOISE}" \
     --set_dir="data/${SET_DIR}" \
     --train_data="data/${TRAIN_DATA_DIR}/train" \

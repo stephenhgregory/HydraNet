@@ -8,7 +8,7 @@ import SimpleITK
 import glob
 import os
 from skimage.restoration import denoise_nl_means, estimate_sigma
-from skimage.measure import compare_ssim
+from skimage.metrics import structural_similarity
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -320,7 +320,7 @@ def get_residual(clear_image, blurry_image):
     clear_image = clear_image.reshape(clear_image.shape[0], clear_image.shape[1])
 
     # Throw away the SSIM score and keep the residual between the two images
-    (_, residual) = compare_ssim(blurry_image, clear_image, full=True)
+    (_, residual) = structural_similarity(blurry_image, clear_image, full=True)
 
     return residual
 
