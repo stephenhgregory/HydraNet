@@ -5,7 +5,7 @@ from enum import Enum
 import os
 from os.path import join
 from typing import List, Tuple, Dict
-import image_utils
+from utilities import image_utils
 
 # Global variable definitions
 patch_size, stride = 40, 10
