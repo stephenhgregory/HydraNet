@@ -37,8 +37,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--set_dir', default='data/subj1', type=str, help='parent directory of test dataset')
     parser.add_argument('--set_names', default=['train'], type=list, help='name of test dataset')
-    parser.add_argument('--model_dir_original', default=os.path.join('models', 'Volume1Trained', 'MyDnCNN'), type=str,
-                        help='directory of the original, single-network denoising model')
+    # parser.add_argument('--model_dir_original', default=os.path.join('models', 'Volume1Trained', 'MyDnCNN'), type=str,
+    #                     help='directory of the original, single-network denoising model')
     parser.add_argument('--model_dir_all_noise',
                         default=os.path.join('models', 'subj1Trained', 'MyDnCNN_all_noise'),
                         type=str,
@@ -419,7 +419,7 @@ def main(args):
     """The main function of the program"""
 
     # Get the latest epoch numbers
-    latest_epoch_original = model_functions.findLastCheckpoint(save_dir=args.model_dir_original)
+    # latest_epoch_original = model_functions.findLastCheckpoint(save_dir=args.model_dir_original)
     latest_epoch_all_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_all_noise)
     latest_epoch_low_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_low_noise)
     latest_epoch_medium_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_medium_noise)
@@ -441,9 +441,9 @@ def main(args):
     # Otherwise...
     else:
         # Load our 3 denoising models
-        model_dict["original"] = load_model(
-            os.path.join(args.model_dir_original, 'model_%03d.hdf5' % latest_epoch_original),
-            compile=False)
+        # model_dict["original"] = load_model(
+        #     os.path.join(args.model_dir_original, 'model_%03d.hdf5' % latest_epoch_original),
+        #     compile=False)
         model_dict["all"] = load_model(
             os.path.join(args.model_dir_all_noise, 'model_%03d.hdf5' % latest_epoch_all_noise),
             compile=False)

@@ -455,7 +455,8 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
     return clear_data, blurry_data
 
 
-def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.02, high_noise_threshold: float = 0.16) -> Dict:
+def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.04, high_noise_threshold: float = 0.15,
+                        skip_every: int = 3) -> Dict:
     """
     Gets and returns the image patches used during training time, split into 3 noise levels.
     Used to cross-reference patches at inference time.
@@ -468,6 +469,7 @@ def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.02, 
     :param high_noise_threshold: The upper residual image standard deviation threshold used to determine which data
                                 should go to which network
     :type high_noise_threshold: float
+    :param skip_every: If 1, we skip every 'skip_every' number of patches, and so return a smaller subset of patches
 
     :return: A dictionary of the following:
                 1. x_low_noise: the clear patches at a low noise level
@@ -526,15 +528,15 @@ def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.02, 
             continue
 
     # Convert image patches and stds into numpy arrays
-    x_low_noise = np.array(x_low_noise, dtype='uint8')
-    y_low_noise = np.array(y_low_noise, dtype='uint8')
-    stds_low_noise = np.array(stds_low_noise, dtype='float64')
-    x_medium_noise = np.array(x_medium_noise, dtype='uint8')
-    y_medium_noise = np.array(y_medium_noise, dtype='uint8')
-    stds_medium_noise = np.array(stds_medium_noise, dtype='float64')
-    x_high_noise = np.array(x_high_noise, dtype='uint8')
-    y_high_noise = np.array(y_high_noise, dtype='uint8')
-    stds_high_noise = np.array(stds_high_noise, dtype='float64')
+    x_low_noise = np.array(x_low_noise[::skip_every], dtype='uint8')
+    y_low_noise = np.array(y_low_noise[::skip_every], dtype='uint8')
+    stds_low_noise = np.array(stds_low_noise[::skip_every], dtype='float64')
+    x_medium_noise = np.array(x_medium_noise[::skip_every], dtype='uint8')
+    y_medium_noise = np.array(y_medium_noise[::skip_every], dtype='uint8')
+    stds_medium_noise = np.array(stds_medium_noise[::skip_every], dtype='float64')
+    x_high_noise = np.array(x_high_noise[::skip_every], dtype='uint8')
+    y_high_noise = np.array(y_high_noise[::skip_every], dtype='uint8')
+    stds_high_noise = np.array(stds_high_noise[::skip_every], dtype='float64')
 
     training_patches = {
         "low_noise": {

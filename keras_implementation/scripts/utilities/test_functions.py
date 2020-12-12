@@ -81,7 +81,7 @@ def test_inference_time_train_data_generation(train_data_dir: str) -> None:
     start_time = time.time()
 
     # Get our training data to use for determining which denoising network to send each patch through
-    training_patches = data_generator.retrieve_train_data(train_data_dir)
+    training_patches = data_generator.retrieve_train_data(train_data_dir, skip_every=3)
 
     low_noise_x = training_patches["low_noise"]["x"]
     medium_noise_x = training_patches["medium_noise"]["x"]
