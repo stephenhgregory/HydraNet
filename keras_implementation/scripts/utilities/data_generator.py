@@ -8,9 +8,7 @@ from typing import List, Tuple, Dict
 from utilities import image_utils
 
 # Global variable definitions
-patch_size, stride = 40, 10
 aug_times = 1
-scales = [1, 0.9, 0.8, 0.7]
 batch_size = 128
 
 
@@ -121,11 +119,20 @@ def data_aug(image, mode=0):
         return np.flipud(np.rot90(image, k=3))
 
 
-def generate_patches_from_file_name(file_name):
+def generate_patches_from_file_name(file_name: str, patch_size: int = 40, stride: int = 10,
+                                    scales: List[float] = [1, 0.9, 0.8, 0.7]):
     """
     Generates and returns a list of image patches from an input file_name
 
     :param file_name: The name of the image to generate patches from
+    :param patch_size: The size of the image patches to produce -> (patch_size, patch_size)
+    :type patch_size: int
+    :param stride: The stride with which to slide the patch-taking window
+    :type stride: int
+    :param scales: A list of scales at which we want to create image patches.
+        If None, this function simply performs no rescaling of the image to create patches
+    :type scales: List
+
     :return: patches: A list of image patches
     """
 
@@ -136,43 +143,44 @@ def generate_patches_from_file_name(file_name):
     return generate_patch_pairs(image)
 
 
-def generate_patches_old(image, image_type):
-    """
-    Generates and returns a list of image patches from an input image
+# def generate_patches_old(image, image_type):
+#     """
+#     Generates and returns a list of image patches from an input image
+#
+#     :param image: The image to generate patches from
+#     :type image: numpy array
+#     :param image_type: The type of the image, CLEARIMAGE or BLURRYIMAGE
+#     :type image_type: ImageType
+#
+#     :return: patches: A list of image patches
+#     """
+#
+#     # Get the height and width of the image
+#     height, width = image.shape
+#
+#     # Store the patches in a list
+#     patches = []
+#
+#     # For each scale
+#     for scale in scales:
+#
+#         # Get the scaled height and width
+#         height_scaled, width_scaled = int(height * scale), int(width * scale)
+#
+#         # Rescale the image
+#         image_scaled = cv2.resize(image, (height_scaled, width_scaled), interpolation=cv2.INTER_CUBIC)
+#
+#         # Extract patches
+#         for i in range(0, height_scaled - patch_size + 1, stride):
+#             for j in range(0, width_scaled - patch_size + 1, stride):
+#                 patch = image_scaled[i:i + patch_size, j:j + patch_size]
+#                 patches.append(patch)
+#
+#     return patches
 
-    :param image: The image to generate patches from
-    :type image: numpy array
-    :param image_type: The type of the image, CLEARIMAGE or BLURRYIMAGE
-    :type image_type: ImageType
 
-    :return: patches: A list of image patches
-    """
-
-    # Get the height and width of the image
-    height, width = image.shape
-
-    # Store the patches in a list
-    patches = []
-
-    # For each scale
-    for scale in scales:
-
-        # Get the scaled height and width
-        height_scaled, width_scaled = int(height * scale), int(width * scale)
-
-        # Rescale the image
-        image_scaled = cv2.resize(image, (height_scaled, width_scaled), interpolation=cv2.INTER_CUBIC)
-
-        # Extract patches
-        for i in range(0, height_scaled - patch_size + 1, stride):
-            for j in range(0, width_scaled - patch_size + 1, stride):
-                patch = image_scaled[i:i + patch_size, j:j + patch_size]
-                patches.append(patch)
-
-    return patches
-
-
-def generate_patch_pairs(clear_image, blurry_image):
+def generate_patch_pairs(clear_image: np.ndarray, blurry_image: np.ndarray, patch_size: int = 40, stride: int = 10,
+                         scales: List[float] = [1, 0.9, 0.8, 0.7]):
     """
     Generates and returns a list of image patches from an input image
 
@@ -180,6 +188,13 @@ def generate_patch_pairs(clear_image, blurry_image):
     :type clear_image: numpy array
     :param blurry_image: The blurry image to generate patches from
     :type blurry_image: numpy array
+    :param patch_size: The size of the image patches to produce -> (patch_size, patch_size)
+    :type patch_size: int
+    :param stride: The stride with which to slide the patch-taking window
+    :type stride: int
+    :param scales: A list of scales at which we want to create image patches.
+        If None, this function simply performs no rescaling of the image to create patches
+    :type scales: List
 
     :return: (clear_patches, blurry_patches): A tuple of a list of ImagePatches.
                 Each ImagePatch in the list of ImagePatches contains an image patch and the standard deviation
@@ -197,36 +212,60 @@ def generate_patch_pairs(clear_image, blurry_image):
     clear_patches = []
     blurry_patches = []
 
-    # For each scale
-    for scale in scales:
-
-        # Get the scaled height and width
-        height_scaled, width_scaled = int(height * scale), int(width * scale)
-
-        # Rescale the images
-        clear_image_scaled = cv2.resize(clear_image, (height_scaled, width_scaled), interpolation=cv2.INTER_CUBIC)
-        blurry_image_scaled = cv2.resize(blurry_image, (height_scaled, width_scaled), interpolation=cv2.INTER_CUBIC)
-
+    if scales is None:
         # Extract patches
-        for i in range(0, height_scaled - patch_size + 1, stride):
-            for j in range(0, width_scaled - patch_size + 1, stride):
+        for i in range(0, height - patch_size + 1, stride):
+            for j in range(0, width - patch_size + 1, stride):
                 # Get the clear and blurry patches
-                clear_patch = clear_image_scaled[i:i + patch_size, j:j + patch_size]
-                blurry_patch = blurry_image_scaled[i:i + patch_size, j:j + patch_size]
+                clear_patch = clear_image[i:i + patch_size, j:j + patch_size]
+                blurry_patch = blurry_image[i:i + patch_size, j:j + patch_size]
 
                 # Add the clear_patch and blurry_patch to clear_patches and blurry_patches, respectively
                 clear_patches.append(clear_patch)
                 blurry_patches.append(blurry_patch)
 
-    return clear_patches, blurry_patches
+        return clear_patches, blurry_patches
+
+    else:
+        # For each scale
+        for scale in scales:
+
+            # Get the scaled height and width
+            height_scaled, width_scaled = int(height * scale), int(width * scale)
+
+            # Rescale the images
+            clear_image_scaled = cv2.resize(clear_image, (height_scaled, width_scaled), interpolation=cv2.INTER_CUBIC)
+            blurry_image_scaled = cv2.resize(blurry_image, (height_scaled, width_scaled), interpolation=cv2.INTER_CUBIC)
+
+            # Extract patches
+            for i in range(0, height_scaled - patch_size + 1, stride):
+                for j in range(0, width_scaled - patch_size + 1, stride):
+                    # Get the clear and blurry patches
+                    clear_patch = clear_image_scaled[i:i + patch_size, j:j + patch_size]
+                    blurry_patch = blurry_image_scaled[i:i + patch_size, j:j + patch_size]
+
+                    # Add the clear_patch and blurry_patch to clear_patches and blurry_patches, respectively
+                    clear_patches.append(clear_patch)
+                    blurry_patches.append(blurry_patch)
+
+        return clear_patches, blurry_patches
 
 
-def generate_augmented_patches(image):
+def generate_augmented_patches(image: np.ndarray, patch_size: int = 40, stride: int = 10,
+                               scales: List[float] = [1, 0.9, 0.8, 0.7]):
     """
     Generates and returns a list of image patches from an input file_name,
     adding a random augmentation to each patch (flip, rotate, etc.)
 
     :param image: The image to generate patches from
+    :param patch_size: The size of each patches in pixels -> (patch_size, patch_size)
+    :type patch_size: int
+    :param stride: The stride with which to slide the patch-taking window
+    :type stride: int
+    :param scales: A list of scales at which we want to create image patches.
+        If None, this function simply performs no rescaling of the image to create patches
+    :type scales: List
+
     :return: patches: A list of image patches
     """
 
@@ -308,7 +347,7 @@ def separate_images_and_stds(patches_and_stds):
     return patches, stds
 
 
-def gen_patches(file_name):
+def gen_patches(file_name, scales=[1, 0.9, 0.8, 0.7], patch_size=40, stride=10):
     # read image
     img = cv2.imread(file_name, 0)  # gray scale
     h, w = img.shape
@@ -370,8 +409,8 @@ def datagenerator(data_dir=join('data', 'Volume1', 'train'), image_type=ImageTyp
     return data
 
 
-def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
-                        image_format=ImageFormat.PNG):
+def pair_data_generator(root_dir=join('data', 'Volume1', 'train'), image_format=ImageFormat.PNG,
+                        patch_size: int = 40, stride: int = 10, scales: List = [1, 0.9, 0.8, 0.7]):
     """
     Provides a numpy array of training examples, given a path to a training directory
 
@@ -379,6 +418,13 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
     :type image_format: ImageFormat
     :param root_dir: The path of the training data directory
     :type root_dir: str
+    :param patch_size: The size of each patches in pixels -> (patch_size, patch_size)
+    :type patch_size: int
+    :param stride: The stride with which to slide the patch-taking window
+    :type stride: int
+    :param scales: A list of scales at which we want to create image patches.
+        If None, this function simply performs no rescaling of the image to create patches
+    :type scales: List
 
     :return: training data
     :rtype: numpy.array
@@ -419,7 +465,10 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
 
             # Generate clear and blurry patches from the clear and blurry images, respectively...
             clear_patches, blurry_patches = generate_patch_pairs(clear_image=clear_image,
-                                                                 blurry_image=blurry_image)
+                                                                 blurry_image=blurry_image,
+                                                                 patch_size=patch_size,
+                                                                 stride=stride,
+                                                                 scales=scales)
 
             # Append the patches to clear_data and blurry_data
             clear_data.append(clear_patches)
@@ -455,8 +504,8 @@ def pair_data_generator(root_dir=join('data', 'Volume1', 'train'),
     return clear_data, blurry_data
 
 
-def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.04, high_noise_threshold: float = 0.15,
-                        skip_every: int = 3) -> Dict:
+def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.03, high_noise_threshold: float = 0.15,
+                        skip_every: int = 3, patch_size: int = 40, stride: int = 10, scales: List = [1]) -> Dict:
     """
     Gets and returns the image patches used during training time, split into 3 noise levels.
     Used to cross-reference patches at inference time.
@@ -470,6 +519,13 @@ def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.04, 
                                 should go to which network
     :type high_noise_threshold: float
     :param skip_every: If 1, we skip every 'skip_every' number of patches, and so return a smaller subset of patches
+    :param patch_size: The size of each patches in pixels -> (patch_size, patch_size)
+    :type patch_size: int
+    :param stride: The stride with which to slide the patch-taking window
+    :type stride: int
+    :param scales: A list of scales at which we want to create image patches.
+        If None, this function simply performs no rescaling of the image to create patches
+    :type scales: List
 
     :return: A dictionary of the following:
                 1. x_low_noise: the clear patches at a low noise level
@@ -486,7 +542,7 @@ def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.04, 
     print(f'Accessing training data in: {train_data_dir}')
 
     # Get training examples from data_dir using data_generator
-    x, y = pair_data_generator(train_data_dir)
+    x, y = pair_data_generator(train_data_dir, patch_size=patch_size, stride=stride, scales=scales)
 
     # Create lists to store all of the patches and stds for each noise level category
     x_low_noise = []

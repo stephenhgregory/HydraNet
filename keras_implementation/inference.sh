@@ -149,72 +149,84 @@ then
 elif [ "$MODEL_NUM" == 15 ]
 then
   TRAINED_DIR="subj1subj2subj3subj4Andsubj5"
+  RESULT_PREFIX="AllButsubj6"
   TRAIN_DATA_DIR="subj2"
   ALL_NOISE=1
 # [16] (subj1 through subj5)-trained (all 3 models)
 elif [ "$MODEL_NUM" == 16 ]
 then
   TRAINED_DIR="subj1subj2subj3subj4Andsubj5"
+  RESULT_PREFIX="AllButsubj6"
   TRAIN_DATA_DIR="subj1"
   ALL_NOISE=0
 # [17] (subj1, subj2, subj3, subj4, subj6)-trained (1 all-noise model)
 elif [ "$MODEL_NUM" == 17 ]
 then
   TRAINED_DIR="subj1subj2subj3subj4Andsubj6"
+  RESULT_PREFIX="AllButsubj5"
   TRAIN_DATA_DIR="subj2"
   ALL_NOISE=1
 # [18] (subj1, subj2, subj3, subj4, subj6)-trained (all 3 models)
 elif [ "$MODEL_NUM" == 18 ]
 then
   TRAINED_DIR="subj1subj2subj3subj4Andsubj6"
+  RESULT_PREFIX="AllButsubj5"
   TRAIN_DATA_DIR="subj2"
   ALL_NOISE=0
 # [19] (subj1, subj2, subj3, subj5, subj6)-trained (1 all-noise model)
 elif [ "$MODEL_NUM" == 19 ]
 then
   TRAINED_DIR="subj1subj2subj3subj5Andsubj6"
+  RESULT_PREFIX="AllButsubj4"
   TRAIN_DATA_DIR="subj2"
   ALL_NOISE=1
 # [20] (subj1, subj2, subj3, subj5, subj6)-trained (all 3 models)
 elif [ "$MODEL_NUM" == 20 ]
 then
   TRAINED_DIR="subj1subj2subj3subj5Andsubj6"
+  RESULT_PREFIX="AllButsubj4"
   TRAIN_DATA_DIR="subj2"
   ALL_NOISE=0
 # [21] (subj1, subj2, subj4, subj5, subj6)-trained (1 all-noise model)
 elif [ "$MODEL_NUM" == 21 ]
 then
   TRAINED_DIR="subj1subj2subj4subj5Andsubj6"
+  RESULT_PREFIX="AllButsubj3"
   TRAIN_DATA_DIR="subj2"
   ALL_NOISE=1
 # [22] (subj1, subj2, subj4, subj5, subj6)-trained (all 3 models)
 elif [ "$MODEL_NUM" == 22 ]
 then
   TRAINED_DIR="subj1subj2subj4subj5Andsubj6"
+  RESULT_PREFIX="AllButsubj3"
   TRAIN_DATA_DIR="subj2"
   ALL_NOISE=0
 # [23] (subj1, subj3, subj4, subj5, subj6)-trained (1 all-noise model)
 elif [ "$MODEL_NUM" == 23 ]
 then
   TRAINED_DIR="subj1subj3subj4subj5Andsubj6"
+  RESULT_PREFIX="AllButsubj2"
   TRAIN_DATA_DIR="subj1"
   ALL_NOISE=1
 # [24] (subj1, subj3, subj4, subj5, subj6)-trained (all 3 models)
 elif [ "$MODEL_NUM" == 24 ]
 then
   TRAINED_DIR="subj1subj3subj4subj5Andsubj6"
+  RESULT_PREFIX="AllButsubj2"
   TRAIN_DATA_DIR="subj1"
   ALL_NOISE=0
 # [25] (subj2, subj3, subj4, subj5, subj6)-trained (1 all-noise model)
 elif [ "$MODEL_NUM" == 25 ]
 then
   TRAINED_DIR="subj2subj3subj4subj5Andsubj6"
+  RESULT_PREFIX="AllButsubj1"
   TRAIN_DATA_DIR="subj2"
   ALL_NOISE=1
 # [26] (subj2, subj3, subj4, subj5, subj6)-trained (all 3 models)
 elif [ "$MODEL_NUM" == 26 ]
 then
   TRAINED_DIR="subj2subj3subj4subj5Andsubj6"
+  RESULT_PREFIX="AllButsubj1"
   TRAIN_DATA_DIR="subj2"
   ALL_NOISE=0
 fi
@@ -257,9 +269,9 @@ fi
 # training a single, all-noise denoiser
 if [ "$ALL_NOISE" == 1 ]
 then
-  RESULT_DIR="results/${TRAINED_DIR}Trained${SET_DIR}Tested_results_single_denoiser"
+  RESULT_DIR="results/${RESULT_PREFIX}Trained${SET_DIR}Tested_results_single_denoiser"
 else
-  RESULT_DIR="results/${TRAINED_DIR}Trained${SET_DIR}Tested_results"
+  RESULT_DIR="results/${RESULT_PREFIX}Trained${SET_DIR}Tested_results"
 fi
 
 printf "Calling test.py for model trained on %s...\n" "$TRAINED_DIR"

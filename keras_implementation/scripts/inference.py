@@ -28,6 +28,13 @@ except (ValueError, RuntimeError) as err:
     print(err)
     pass
 
+# Initialize global variable to keep track of # of patches per noise level
+total_patches_per_category = {
+    'low': 0,
+    'medium': 0,
+    'high': 0
+}
+
 
 def parse_args():
     """
@@ -67,134 +74,27 @@ def parse_args():
     return parser.parse_args()
 
 
-def retrieve_train_data(train_data_dir, low_noise_threshold=0, high_noise_threshold=3):
-    """
-    Gets and returns the image patches used during training time
-
-    :param train_data_dir: The root directory of the training data
-    :type train_data_dir: str
-    :param low_noise_threshold: The lower residual image standard deviation threshold used to determine which data
-                                should go to which network
-    :type low_noise_threshold: float
-    :param high_noise_threshold: The upper residual image standard deviation threshold used to determine which data
-                                should go to which network
-    :type high_noise_threshold: float
-
-    :return: A dictionary of the following:
-                1. x_low_noise: the clear patches at a low noise level
-                2. y_low_noise: the blurry patches at a low noise level
-                3. stds_low_noise: the standard deviation of the residuals at a low noise level
-                4. x_medium_noise: the clear patches at a medium noise level
-                5. y_medium_noise: the blurry patches at a medium noise level
-                6. stds_medium_noise: the standard deviation of the residuals at a medium noise level
-                7. x_high_noise: the clear patches at a high noise level
-                8. y_high_noise: the blurry patches at a high noise level
-                9. stds_high_noise: the standard deviation of the residuals at a high noise level
-    """
-
-    print(f'Accessing training data in: {train_data_dir}')
-
-    # Get training examples from data_dir using data_generator
-    x, y = data_generator.pair_data_generator(train_data_dir)
-
-    # Create lists to store all of the patches and stds for each noise level category
-    x_low_noise = []
-    y_low_noise = []
-    stds_low_noise = []
-    x_medium_noise = []
-    y_medium_noise = []
-    stds_medium_noise = []
-    x_high_noise = []
-    y_high_noise = []
-    stds_high_noise = []
-
-    # Iterate over all of the image patches
-    for x_patch, y_patch in zip(x, y):
-
-        # If the patch is black (i.e. the max px value < 10), just skip this training example
-        if np.max(x_patch) < 10:
-            continue
-
-        # Get the residual std
-        std = data_generator.get_residual_std(clear_patch=x_patch,
-                                              blurry_patch=y_patch)
-
-        # Add the patches and their residual stds to their corresponding lists based on noise level
-        if std < low_noise_threshold:
-            x_low_noise.append(x_patch)
-            y_low_noise.append(y_patch)
-            stds_low_noise.append(std)
-            continue
-        elif low_noise_threshold < std < high_noise_threshold:
-            x_medium_noise.append(x_patch)
-            y_medium_noise.append(y_patch)
-            stds_medium_noise.append(std)
-            continue
-        elif std > high_noise_threshold:
-            x_high_noise.append(x_patch)
-            y_high_noise.append(y_patch)
-            stds_high_noise.append(std)
-            continue
-
-    # Convert image patches and stds into numpy arrays
-    x_low_noise = np.array(x_low_noise, dtype='uint8')
-    y_low_noise = np.array(y_low_noise, dtype='uint8')
-    stds_low_noise = np.array(stds_low_noise, dtype='float64')
-    x_medium_noise = np.array(x_medium_noise, dtype='uint8')
-    y_medium_noise = np.array(y_medium_noise, dtype='uint8')
-    stds_medium_noise = np.array(stds_medium_noise, dtype='float64')
-    x_high_noise = np.array(x_high_noise, dtype='uint8')
-    y_high_noise = np.array(y_high_noise, dtype='uint8')
-    stds_high_noise = np.array(stds_high_noise, dtype='float64')
-
-    training_patches = {
-        "low_noise": {
-            "x": x_low_noise,
-            "y": y_low_noise,
-            "stds": stds_low_noise
-        },
-        "medium_noise": {
-            "x": x_medium_noise,
-            "y": y_medium_noise,
-            "stds": stds_medium_noise
-        },
-        "high_noise": {
-            "x": x_high_noise,
-            "y": y_high_noise,
-            "stds": stds_high_noise
-        }
-    }
-
-    # Return all of the patches and stds for the 3 categories
-    return training_patches
-
-
 def to_tensor(image):
     """ Converts an input image (numpy array) into a tensor """
 
     if image.ndim == 2:
-        print('The number image dimensions is 2!')
         return image[np.newaxis, ..., np.newaxis]
     elif image.ndim == 3:
-        print('The number of image dimensions is 3!')
         return np.moveaxis(image, 2, 0)[..., np.newaxis]
 
 
 def from_tensor(img):
     """ Converts an image tensor into an image (numpy array) """
-
     return np.squeeze(np.moveaxis(img[..., 0], 0, -1))
 
 
 def log(*args, **kwargs):
     """ Generic logger function to print current date and time """
-
     print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:"), *args, **kwargs)
 
 
 def save_result(result, path):
     """ Saves an image or file to a specific path """
-
     path = path if path.find('.') != -1 else path + '.png'
     ext = os.path.splitext(path)[-1]
     if ext in ('.txt', '.dlm'):
@@ -205,7 +105,6 @@ def save_result(result, path):
 
 def show(x, title=None, cbar=False, figsize=None):
     """ Creates a matplotlib plot of an input image x """
-
     import matplotlib.pyplot as plt
     plt.figure(figsize=figsize)
     plt.imshow(x, interpolation='nearest', cmap='gray')
@@ -218,7 +117,7 @@ def show(x, title=None, cbar=False, figsize=None):
 
 def save_image(x, save_dir_name, save_file_name):
     """
-    Save an image x
+    Saves an image x
 
     :param x: The image to save
     :type x: numpy array
@@ -233,7 +132,6 @@ def save_image(x, save_dir_name, save_file_name):
     # If the result directory doesn't exist already, just create it
     if not os.path.exists(save_dir_name):
         os.mkdir(save_dir_name)
-
     # Save the image
     cv2.imwrite(filename=os.path.join(save_dir_name, save_file_name), img=x)
 
@@ -281,13 +179,9 @@ def denoise_image_by_patches(y, file_name, set_name, original_mean, original_std
             if i + 40 > len(y[0]) or j + 40 > len(y[1]):
                 continue
 
-            # Get the (40, 40) patch
+            # Get the (40, 40) patch, convert to a tensor, and reshape it to be a (40, 40, 1) patch
             y_patch = y[i:i + 40, j:j + 40]
-
-            # Convert y_patch to a tensor
             y_patch_tensor = to_tensor(y_patch)
-
-            # Reshape y to be a (40, 40, 1) patch
             y_patch = y_patch.reshape(y_patch.shape[0], y_patch.shape[1], 1)
 
             '''Iterate over all of the training patches to get the training patch with the highest 
@@ -345,7 +239,7 @@ def denoise_image_by_patches(y, file_name, set_name, original_mean, original_std
                     max_ssim = ssim
                     max_ssim_category = 'low'
 
-                    # Iterate over every medium_noise patch
+            # Iterate over every medium_noise patch
             for y_medium_noise_patch in training_patches["medium_noise"]["y"]:
 
                 # First, reshape y_medium_noise_patch and y_patch to get the ssim
@@ -389,7 +283,10 @@ def denoise_image_by_patches(y, file_name, set_name, original_mean, original_std
                     max_ssim = ssim
                     max_ssim_category = 'high'
 
-            print(f'Calling model {max_ssim_category}!')
+            # Keep track of total patches called per each category
+            total_patches_per_category[max_ssim_category] += 1
+            print(f'Calling {max_ssim_category}-noise model!')
+
             # Inference with model_low_noise (Denoise y_patch_tensor to get x_patch_pred)
             x_patch_pred_tensor = model_dict[max_ssim_category].predict(y_patch_tensor)
 
@@ -463,7 +360,7 @@ def main(args):
 
     if not args.single_denoiser:
         # Get our training data to use for determining which denoising network to send each patch through
-        training_patches = retrieve_train_data(args.train_data)
+        training_patches = data_generator.retrieve_train_data(args.train_data, skip_every=3, patch_size=40, stride=20, scales=None)
 
     # If the result directory doesn't exist already, just create it
     if not os.path.exists(args.result_dir):
@@ -512,7 +409,7 @@ def main(args):
                 # Record the inference time
                 print('%10s : %10s : %2.4f second' % (set_name, image_name, time.time() - start_time))
 
-                ''' Just logging 
+                ''' Just logging
                 # Reverse the standardization
                 x_pred_reversed = image_utils.reverse_standardize(x_pred,
                                                                   original_mean=x_orig_mean,
@@ -663,6 +560,13 @@ def reanalyze_denoised_images(set_dir: str, set_names: List[str], result_dir: st
                                                                                              ssim_avg))
 
 
+def print_statistics():
+    """Prints final statistics from inference run"""
+    print(f'total low-noise patches: {total_patches_per_category["low"]}')
+    print(f'total medium-noise patches: {total_patches_per_category["medium"]}')
+    print(f'total high-noise patches: {total_patches_per_category["high"]}')
+
+
 if __name__ == '__main__':
 
     # Get command-line arguments
@@ -678,3 +582,5 @@ if __name__ == '__main__':
 
     else:
         reanalyze_denoised_images(args.set_dir, args.set_names, args.result_dir, save_results=True)
+
+    print_statistics()
