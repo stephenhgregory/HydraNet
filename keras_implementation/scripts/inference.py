@@ -13,7 +13,7 @@ from skimage.io import imread, imsave
 import tensorflow as tf
 import cv2
 import copy
-from typing import List,Tuple
+from typing import List, Tuple
 
 # This is for running normally, where the root directory is MyDenoiser/keras_implementation
 from utilities import image_utils, logger, data_generator, model_functions
@@ -179,7 +179,7 @@ def denoise_image_by_patches(y, file_name, set_name, original_mean, original_std
             if i + 40 > len(y[0]) or j + 40 > len(y[1]):
                 continue
 
-            # Get the (40, 40) patch, convert to a tensor, and reshape it to be a (40, 40, 1) patch
+            # Get the (40, 40) patch, make a copy as a tensor, and then reshapethe original to be a (40, 40, 1) patch
             y_patch = y[i:i + 40, j:j + 40]
             y_patch_tensor = to_tensor(y_patch)
             y_patch = y_patch.reshape(y_patch.shape[0], y_patch.shape[1], 1)
@@ -217,71 +217,19 @@ def denoise_image_by_patches(y, file_name, set_name, original_mean, original_std
                 # Finally, skip to the next loop
                 continue
 
-            # Iterate over every low_noise patch
-            for y_low_noise_patch in training_patches["low_noise"]["y"]:
+            # Get the Max SSIM value between y_patch and every category
+            low_max_ssim = compare_to_closest_training_patch(y_patch, training_patches["low_noise"]["y"])
+            medium_max_ssim = compare_to_closest_training_patch(y_patch, training_patches["medium_noise"]["y"])
+            high_max_ssim = compare_to_closest_training_patch(y_patch, training_patches["high_noise"]["y"])
 
-                # First, reshape y_low_noise_patch and y_patch to get the ssim
-                y_low_noise_patch = y_low_noise_patch.reshape(y_low_noise_patch.shape[0],
-                                                              y_low_noise_patch.shape[1])
-                y_patch = y_patch.reshape(y_patch.shape[0],
-                                          y_patch.shape[1])
-
-                # Get the SSIM between y_patch and y_low_noise_patch
-                ssim = structural_similarity(y_low_noise_patch, y_patch)
-
-                # Then, reshape y_patch back
-                y_patch = y_patch.reshape(y_patch.shape[0],
-                                          y_patch.shape[1],
-                                          1)
-
-                # If it's greater than the max, update the max
-                if ssim > max_ssim:
-                    max_ssim = ssim
-                    max_ssim_category = 'low'
-
-            # Iterate over every medium_noise patch
-            for y_medium_noise_patch in training_patches["medium_noise"]["y"]:
-
-                # First, reshape y_medium_noise_patch and y_patch to get the ssim
-                y_medium_noise_patch = y_medium_noise_patch.reshape(y_medium_noise_patch.shape[0],
-                                                                    y_medium_noise_patch.shape[1])
-                y_patch = y_patch.reshape(y_patch.shape[0],
-                                          y_patch.shape[1])
-
-                # Get the SSIM between y_patch and y_medium_noise_patch
-                ssim = structural_similarity(y_medium_noise_patch, y_patch)
-
-                # Then, reshape y_patch back to where it was
-                y_patch = y_patch.reshape(y_patch.shape[0],
-                                          y_patch.shape[1],
-                                          1)
-
-                # If it's greater than the max, update the max
-                if ssim > max_ssim:
-                    max_ssim = ssim
-                    max_ssim_category = 'medium'
-
-            # Iterate over every high_noise patch
-            for y_high_noise_patch in training_patches["high_noise"]["y"]:
-
-                # First, reshape y_high_noise_patch and y_patch to get the ssim
-                y_high_noise_patch = y_high_noise_patch.reshape(y_high_noise_patch.shape[0],
-                                                                y_high_noise_patch.shape[1])
-                y_patch = y_patch.reshape(y_patch.shape[0],
-                                          y_patch.shape[1])
-
-                # Get the SSIM between y_patch and y_high_noise_patch
-                ssim = structural_similarity(y_high_noise_patch, y_patch)
-
-                # Then, reshape y_patch back to what it was
-                y_patch = y_patch.reshape(y_patch.shape[0],
-                                          y_patch.shape[1],
-                                          1)
-
-                # If it's greater than the max, update the max
-                if ssim > max_ssim:
-                    max_ssim = ssim
-                    max_ssim_category = 'high'
+            # Get the overal max_ssim from those above categorical maxes
+            max_ssim = max([low_max_ssim, medium_max_ssim, high_max_ssim])
+            if max_ssim == high_max_ssim:
+                max_ssim_category = 'high'
+            elif max_ssim == medium_max_ssim:
+                max_ssim_category = 'medium'
+            elif max_ssim == low_max_ssim:
+                max_ssim_category = 'low'
 
             # Keep track of total patches called per each category
             total_patches_per_category[max_ssim_category] += 1
@@ -310,6 +258,31 @@ def denoise_image_by_patches(y, file_name, set_name, original_mean, original_std
     '''
 
     return x_pred
+
+
+def compare_to_closest_training_patch(patch: np.ndarray, training_patches: np.ndarray) -> float:
+    """
+    Takes an image patch and compares it with all patches in a given set of training patches to find
+    the one with max similarity. Returns the similarity between the given image patch and that chosen
+    training patch.
+
+    :param patch: The patch to find a closest match to
+    :param training_patches: The set of training patches to compare the input patch with
+    :return: The SSIM between the input patch and the closest match in training_patches
+    """
+    max_ssim = 0
+    for training_patch in training_patches:
+        # First, reshape training_patch and patch to get the ssim
+        training_patch = training_patch.reshape(training_patch.shape[0], training_patch.shape[1])
+        patch = patch.reshape(patch.shape[0], patch.shape[1])
+        # Get the SSIM between y_patch and y_low_noise_patch
+        ssim = structural_similarity(training_patch, patch)
+        # Then, reshape the input patch back
+        patch = patch.reshape(patch.shape[0], patch.shape[1], 1)
+        # If it's greater than the max, update the max
+        if ssim > max_ssim:
+            max_ssim = ssim
+    return max_ssim
 
 
 def main(args):
@@ -360,7 +333,9 @@ def main(args):
 
     if not args.single_denoiser:
         # Get our training data to use for determining which denoising network to send each patch through
-        training_patches = data_generator.retrieve_train_data(args.train_data, skip_every=3, patch_size=40, stride=20, scales=None)
+        training_patches = data_generator.retrieve_train_data(args.train_data, low_noise_threshold=0.01,
+                                                              high_noise_threshold=0.02, skip_every=3, patch_size=40,
+                                                              stride=20, scales=None)
 
     # If the result directory doesn't exist already, just create it
     if not os.path.exists(args.result_dir):
@@ -518,7 +493,8 @@ def reanalyze_denoised_images(set_dir: str, set_names: List[str], result_dir: st
                 if analyze_denoised_data:
                     comparison_image = imread(os.path.join(result_dir, set_name, image_name), 0)
                 else:
-                    comparison_image = imread(os.path.join(set_dir, set_name, 'CoregisteredBlurryImages', image_name), 0)
+                    comparison_image = imread(os.path.join(set_dir, set_name, 'CoregisteredBlurryImages', image_name),
+                                              0)
 
                 ''' Just logging
                 logger.show_images([("mask_image",mask_image),
