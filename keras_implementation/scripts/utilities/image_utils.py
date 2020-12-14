@@ -11,6 +11,7 @@ from skimage.restoration import denoise_nl_means, estimate_sigma
 from skimage.metrics import structural_similarity
 import matplotlib.pyplot as plt
 import seaborn as sns
+from typing import List
 
 
 def pngs_to_nii(png_folder_name: str, output_file_name: str) -> None:
@@ -294,6 +295,29 @@ def plot_standard_deviations(stds):
     plt.show()
 
 
+def plot_psnrs(psnrs: List, data_dir_name: str):
+    """
+    Takes a numpy array of psnrs, performs any flattening if needed, and plots them.
+
+    :param psnrs: Collection of PSNRs
+
+    :return: None
+    """
+
+    # Flatten the array so that it is 1-dimensional
+    psnrs = psnrs.flatten()
+
+    # seaborn histogram
+    sns.distplot(psnrs, hist=True, kde=False,
+                 bins=int(20), color='blue',
+                 hist_kws={'edgecolor': 'black'})
+    # Add labels
+    plt.title(f'PSNR of {data_dir_name}')
+    plt.xlabel('Peak Signal to Noise Ratio')
+    plt.ylabel('Patches')
+    plt.show()
+
+
 def get_residual(clear_image, blurry_image):
     """
     Calculate the residual (difference) between a blurry image and a
@@ -316,6 +340,8 @@ def get_residual(clear_image, blurry_image):
     (_, residual) = structural_similarity(blurry_image, clear_image, full=True)
 
     return residual
+
+
 
 
 def hist_match(source, template):

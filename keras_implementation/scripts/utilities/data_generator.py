@@ -6,6 +6,7 @@ import os
 from os.path import join
 from typing import List, Tuple, Dict
 from utilities import image_utils
+from skimage.metrics import peak_signal_noise_ratio
 
 # Global variable definitions
 aug_times = 1
@@ -407,6 +408,40 @@ def datagenerator(data_dir=join('data', 'Volume1', 'train'), image_type=ImageTyp
 
     print('^_^-training data finished-^_^')
     return data
+
+
+def get_lower_and_upper_percentile_psnr(data_dir: str, lower_percentile: float, upper_percentile: float,
+                                        patch_size: int = 40, stride: int = 20, scales: List[float] = None):
+    """
+    Gets the lower and upper percentile values of PSNR of the images in a given data directory
+
+    :param data_dir: The directory housing input images
+    :param lower_percentile: The percentile at which to find the corresponding lower percentile PSNR value
+    :param upper_percentile: The percentile at which to find the corresponding hight percentile PSNR value
+    :param patch_size: The patch size (in pixels) of each image patch taken
+    :param stride: The stride with which to slide the patch-taking window
+    :param scales: A list of scales at which we want to create image patches.
+        If None, this function simply performs no rescaling of the image to create patches
+
+    :return: (lower_percentile_value, upper_percentile_value)
+    """
+    # Get training examples from data_dir using data_generator
+    x_original, y_original = pair_data_generator(data_dir, patch_size=patch_size, stride=stride, scales=scales)
+
+    # Iterate over y_original and get psnrs
+    psnrs = []
+    for x_patch, y_patch in zip(x_original, y_original):
+        if np.max(x_patch) < 10:
+            continue
+        x_patch = x_patch.reshape(x_patch.shape[0], x_patch.shape[1])
+        y_patch = y_patch.reshape(y_patch.shape[0], y_patch.shape[1])
+        psnr = peak_signal_noise_ratio(x_patch, y_patch)
+        psnrs.append(psnr)
+
+    psnrs = np.array(psnrs, dtype='float64')
+    # psnrs = psnrs.reshape(psnrs.shape[0], 1)
+
+    return np.percentile(psnrs, lower_percentile), np.percentile(psnrs, upper_percentile)
 
 
 def pair_data_generator(root_dir=join('data', 'Volume1', 'train'), image_format=ImageFormat.PNG,

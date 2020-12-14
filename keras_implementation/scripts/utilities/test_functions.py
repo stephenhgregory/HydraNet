@@ -74,6 +74,41 @@ def test_and_plot_residual_stds(data_dir):
     image_utils.plot_standard_deviations(stds)
 
 
+def test_and_plot_psnrs(data_dir: str, data_dir_name: str):
+    """
+    Given a data directory, calculates and plots the residual standard deviations
+
+    :param data_dir: The directory of the training data
+    :type data_dir: str
+
+    :return: None
+    """
+
+    # Get training examples from data_dir using data_generator
+    x_original, y_original = data_generator.pair_data_generator(data_dir, patch_size=40, stride=20, scales=None)
+
+    # Iterate over y_original and get psnrs
+    psnrs = []
+    concatenated_patches = []
+    for x_patch, y_patch in zip(x_original, y_original):
+        if np.max(x_patch) < 10:
+            continue
+        x_patch = x_patch.reshape(x_patch.shape[0], x_patch.shape[1])
+        y_patch = y_patch.reshape(y_patch.shape[0], y_patch.shape[1])
+        psnr = peak_signal_noise_ratio(x_patch, y_patch)
+        psnrs.append(psnr)
+        concatenated_patches.append((x_patch, y_patch, psnr))
+
+    # Sort the patches by PSNR
+    concatenated_patches = sorted(concatenated_patches, key=lambda x: x[2])
+
+    psnrs = np.array(psnrs, dtype='float64')
+    psnrs = psnrs.reshape(psnrs.shape[0], 1)
+
+    # Plot the standard deviations
+    image_utils.plot_psnrs(psnrs, data_dir_name=data_dir_name)
+
+
 def test_inference_time_train_data_generation(train_data_dir: str) -> None:
     """
     Tests the generation and splitting of train data into 3 noise levels at inference time
@@ -210,7 +245,7 @@ def test_inference_time_denoiser_assignment(train_data_dir: str) -> None:
                             max_ssim_category = 'high'
 
 
-
 if __name__ == "__main__":
     # test_inference_time_train_data_generation(train_data_dir="../../data/subj6/train")
-    test_inference_time_denoiser_assignment(train_data_dir="../../data/subj6/train")
+    # test_inference_time_denoiser_assignment(train_data_dir="../../data/subj6/train")
+    test_and_plot_psnrs(data_dir="../../data/subj3/train", data_dir_name="subj3/train")

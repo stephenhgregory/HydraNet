@@ -157,7 +157,7 @@ elif [ "$MODEL_NUM" == 16 ]
 then
   TRAINED_DIR="subj1subj2subj3subj4Andsubj5"
   RESULT_PREFIX="AllButsubj6"
-  TRAIN_DATA_DIR="subj1"
+  TRAIN_DATA_DIR="subj2"
   ALL_NOISE=0
 # [17] (subj1, subj2, subj3, subj4, subj6)-trained (1 all-noise model)
 elif [ "$MODEL_NUM" == 17 ]
