@@ -139,19 +139,19 @@ def test_inference_time_denoiser_assignment(train_data_dir: str) -> None:
                                                           high_noise_threshold=0.15, skip_every=3, patch_size=40,
                                                           stride=20, scales=None)
 
-    for image_name in os.listdir('data/subj6/train/CoregisteredBlurryImages'):
+    for image_name in os.listdir('../../data/subj6/train/CoregisteredBlurryImages'):
         if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
             # Get the image name minus the file extension
             image_name_no_extension, _ = os.path.splitext(image_name)
 
             # 1. Load the Clear Image x (as grayscale), and standardize the pixel values, and..
             # 2. Save the original mean and standard deviation of x
-            x, x_orig_mean, x_orig_std = image_utils.standardize(imread(os.path.join('data/subj6/train/ClearImages',
+            x, x_orig_mean, x_orig_std = image_utils.standardize(imread(os.path.join('../../data/subj6/train/ClearImages',
                                                                                          str(image_name)), 0))
 
             # Load the Coregistered Blurry Image y (as grayscale), and standardize the pixel values, and...
             # 2. Save the original mean and standard deviation of y
-            y, y_orig_mean, y_orig_std = image_utils.standardize(imread(os.path.join('data/subj6/train/CoregisteredBlurryImages',
+            y, y_orig_mean, y_orig_std = image_utils.standardize(imread(os.path.join('../../data/subj6/train/CoregisteredBlurryImages',
                                                                                          str(image_name)), 0))
 
             # First, create a denoised x_pred to INITIALLY be a deep copy of y. Then we will modify x_pred in place
@@ -247,5 +247,5 @@ def test_inference_time_denoiser_assignment(train_data_dir: str) -> None:
 
 if __name__ == "__main__":
     # test_inference_time_train_data_generation(train_data_dir="../../data/subj6/train")
-    # test_inference_time_denoiser_assignment(train_data_dir="../../data/subj6/train")
-    test_and_plot_psnrs(data_dir="../../data/subj3/train", data_dir_name="subj3/train")
+    test_inference_time_denoiser_assignment(train_data_dir="../../data/subj6/train")
+    # test_and_plot_psnrs(data_dir="../../data/subj3/train", data_dir_name="subj3/train")

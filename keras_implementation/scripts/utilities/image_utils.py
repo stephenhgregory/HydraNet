@@ -14,6 +14,27 @@ import seaborn as sns
 from typing import List
 
 
+def save_image(x, save_dir_name, save_file_name):
+    """
+    Saves an image x
+
+    :param x: The image to save
+    :type x: numpy array
+    :param save_dir_name: The save directory of the image patch
+    :type save_dir_name: str
+    :param save_file_name: The name of the image patch
+    :type save_file_name: str
+
+    :return: None
+    """
+
+    # If the result directory doesn't exist already, just create it
+    if not os.path.exists(save_dir_name):
+        os.mkdir(save_dir_name)
+    # Save the image
+    cv2.imwrite(filename=os.path.join(save_dir_name, save_file_name), img=x)
+
+
 def pngs_to_nii(png_folder_name: str, output_file_name: str) -> None:
     """
     Converts a folder of PNG files into a 3D NIfTI file and saves that NIfTI file to the same folder
@@ -342,8 +363,6 @@ def get_residual(clear_image, blurry_image):
     return residual
 
 
-
-
 def hist_match(source, template):
     """
     Adjust the pixel values of a grayscale image such that its histogram
@@ -386,6 +405,21 @@ def hist_match(source, template):
     interp_t_values = np.interp(s_quantiles, t_quantiles, t_values)
 
     return interp_t_values[bin_idx].reshape(oldshape)
+
+
+def to_tensor(image):
+    """ Converts an input image (numpy array) into a tensor """
+
+    if image.ndim == 2:
+        return image[np.newaxis, ..., np.newaxis]
+    elif image.ndim == 3:
+        return np.moveaxis(image, 2, 0)[..., np.newaxis]
+
+
+def from_tensor(img):
+    """ Converts an image tensor into an image (numpy array) """
+    return np.squeeze(np.moveaxis(img[..., 0], 0, -1))
+
 
 
 # if __name__ == "__main__":

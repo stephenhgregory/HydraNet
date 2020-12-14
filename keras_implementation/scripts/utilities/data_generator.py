@@ -410,10 +410,10 @@ def datagenerator(data_dir=join('data', 'Volume1', 'train'), image_type=ImageTyp
     return data
 
 
-def get_lower_and_upper_percentile_psnr(data_dir: str, lower_percentile: float, upper_percentile: float,
-                                        patch_size: int = 40, stride: int = 20, scales: List[float] = None):
+def get_lower_and_upper_percentile_stds(data_dir: str, lower_percentile: float, upper_percentile: float,
+                                       patch_size: int = 40, stride: int = 20, scales: List[float] = None):
     """
-    Gets the lower and upper percentile values of PSNR of the images in a given data directory
+    Gets the lower and upper percentile values of std of the images in a given data directory
 
     :param data_dir: The directory housing input images
     :param lower_percentile: The percentile at which to find the corresponding lower percentile PSNR value
@@ -426,42 +426,36 @@ def get_lower_and_upper_percentile_psnr(data_dir: str, lower_percentile: float, 
     :return: (lower_percentile_value, upper_percentile_value)
     """
     # Get training examples from data_dir using data_generator
-    x_original, y_original = pair_data_generator(data_dir, patch_size=patch_size, stride=stride, scales=scales)
+    _, y_original = pair_data_generator(data_dir, patch_size=patch_size, stride=stride, scales=scales)
 
-    # Iterate over y_original and get psnrs
-    psnrs = []
-    for x_patch, y_patch in zip(x_original, y_original):
-        if np.max(x_patch) < 10:
+    # Iterate over y_original and get stds
+    stds = []
+    for y_patch in y_original:
+        if np.max(y_patch) < 10:
             continue
-        x_patch = x_patch.reshape(x_patch.shape[0], x_patch.shape[1])
         y_patch = y_patch.reshape(y_patch.shape[0], y_patch.shape[1])
-        psnr = peak_signal_noise_ratio(x_patch, y_patch)
-        psnrs.append(psnr)
+        std = np.std(y_patch)
+        stds.append(std)
 
-    psnrs = np.array(psnrs, dtype='float64')
-    # psnrs = psnrs.reshape(psnrs.shape[0], 1)
+    stds = np.array(stds, dtype='float64')
 
-    return np.percentile(psnrs, lower_percentile), np.percentile(psnrs, upper_percentile)
+    return np.percentile(stds, lower_percentile), np.percentile(stds, upper_percentile)
 
 
-def pair_data_generator(root_dir=join('data', 'Volume1', 'train'), image_format=ImageFormat.PNG,
-                        patch_size: int = 40, stride: int = 10, scales: List = [1, 0.9, 0.8, 0.7]):
+def pair_data_generator(root_dir: str = join('data', 'Volume1', 'train'), image_format: ImageFormat = ImageFormat.PNG,
+                        patch_size: int = 40, stride: int = 10,
+                        scales: List[float] = [1, 0.9, 0.8, 0.7]) -> Tuple[np.ndarray, np.ndarray]:
     """
     Provides a numpy array of training examples, given a path to a training directory
 
     :param image_format: The format of image that our training data is (JPG or PNG)
-    :type image_format: ImageFormat
     :param root_dir: The path of the training data directory
-    :type root_dir: str
     :param patch_size: The size of each patches in pixels -> (patch_size, patch_size)
-    :type patch_size: int
     :param stride: The stride with which to slide the patch-taking window
-    :type stride: int
     :param scales: A list of scales at which we want to create image patches.
         If None, this function simply performs no rescaling of the image to create patches
-    :type scales: List
 
-    :return: training data
+    :return: (clear_data, blurry_data)
     :rtype: numpy.array
     """
 
