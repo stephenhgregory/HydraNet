@@ -71,11 +71,6 @@ def parse_args():
     parser.add_argument('--save_result', default=1, type=int, help='save the denoised image, 1 for yes or 0 for no')
     parser.add_argument('--single_denoiser', default=1, type=int, help='Use a single denoiser for all noise ranges, '
                                                                        '1 for yes or 0 for no')
-    parser.add_argument('--low_std_percentile', default=0.01, type=int, help='Lower percentile for std value used to '
-                                                                             'send image patches to low-noise model')
-    parser.add_argument('--upper_std_percentile', default=0.99, type=int, help='Upper percentile for std value used '
-                                                                               'to send image patches to high-noise '
-                                                                               'model')
     return parser.parse_args()
 
 
@@ -119,108 +114,6 @@ def show(x, title=None, cbar=False, figsize=None):
     if cbar:
         plt.colorbar()
     plt.show()
-
-
-# TODO: Delete this function
-# def save_image(x, save_dir_name, save_file_name):
-#     """
-#     Saves an image x
-#
-#     :param x: The image to save
-#     :type x: numpy array
-#     :param save_dir_name: The save directory of the image patch
-#     :type save_dir_name: str
-#     :param save_file_name: The name of the image patch
-#     :type save_file_name: str
-#
-#     :return: None
-#     """
-#
-#     # If the result directory doesn't exist already, just create it
-#     if not os.path.exists(save_dir_name):
-#         os.mkdir(save_dir_name)
-#     # Save the image
-#     cv2.imwrite(filename=os.path.join(save_dir_name, save_file_name), img=x)
-
-
-def denoise_image_by_patches_no_cross_reference(y: np.ndarray, file_name: str, set_name: str, original_mean: float,
-                                                original_std: float, low_std_thresh: float, upper_std_thresh: float,
-                                                save_patches: bool = True, single_denoiser: bool = False,
-                                                model_dict: Dict = None) -> np.ndarray:
-    """
-      Takes an input image and denoises it using a patch-based approach
-
-      :param y: The input image to denoise
-      :param file_name: The name of the file
-      :param set_name: The name of the set containing our test data
-      :param original_mean: The original mean px value of the image that the patch x is part of, which was used to
-                              standardize the image
-      :param original_std: The original standard deviation px valueof the image that the patch x is part of, which was
-                              used to standardize the image
-      :param low_std_thresh: The lower std threshold used to decide which denoiser to send each patch to
-      :param upper_std_thresh: The upper std threshold used to decide which denoiser to send each patch to
-      :param save_patches: True if we wish to save the individual patches
-      :param single_denoiser: True if we wish to denoise patches using only a single denoiser
-      :param model_dict: A dictionary of all the TF models used to denoise image patches
-
-      :return: x_pred: A denoised image as a numpy array
-      :rtype: numpy array
-      """
-
-    # Set the save directory name
-    save_dir_name = os.path.join(args.result_dir, set_name, file_name + '_patches')
-
-    # First, create a denoised x_pred to INITIALLY be a deep copy of y. Then we will modify x_pred in place
-    x_pred = copy.deepcopy(y)
-
-    # Loop over the indices of y to get 40x40 patches from y
-    for i in range(0, len(y[0]), 40):
-        for j in range(0, len(y[1]), 40):
-
-            # If the patch does not 'fit' within the dimensions of y, skip this and do not denoise
-            if i + 40 > len(y[0]) or j + 40 > len(y[1]):
-                continue
-
-            # Get the (40, 40) patch, make a copy as a tensor, and then reshape the original to be a (40, 40, 1) patch
-            y_patch = y[i:i + 40, j:j + 40]
-            y_patch_tensor = image_utils.to_tensor(y_patch)
-            y_patch = y_patch.reshape(y_patch.shape[0], y_patch.shape[1], 1)
-
-            # Get the standard deviation of px values of y_patch
-            y_patch_std = np.std(y_patch)
-
-            # Make the denoiser assignment
-            max_ssim_category = ''
-            if y_patch_std < low_std_thresh:
-                max_ssim_category = 'low'
-            elif low_std_thresh < y_patch_std < upper_std_thresh:
-                max_ssim_category = 'medium'
-            elif y_patch_std > upper_std_thresh:
-                max_ssim_category = 'high'
-
-            # Inference with model_low_noise (Denoise y_patch_tensor to get x_patch_pred)
-            x_patch_pred_tensor = model_dict[max_ssim_category].predict(y_patch_tensor)
-
-            # Convert the denoised patch from a tensor to an image (numpy array)
-            x_patch_pred = image_utils.from_tensor(x_patch_pred_tensor)
-
-            # Replace the patch in x with the new denoised patch
-            x_pred[i:i + 40, j:j + 40] = x_patch_pred
-
-            if save_patches:
-                # Reverse the standardization of x
-                x_patch_pred = image_utils.reverse_standardize(x_patch_pred, original_mean, original_std)
-
-                # Save the denoised patch
-                image_utils.save_image(x=x_patch_pred,
-                                       save_dir_name=save_dir_name,
-                                       save_file_name=file_name + '_i-' + str(i) + '_j-' + str(j) + '.png')
-
-    '''Just logging
-    logger.show_images([("y", y), ("x_pred", x_pred)])
-    '''
-
-    return x_pred
 
 
 def denoise_image_by_patches(y: np.ndarray, file_name: str, set_name: str, original_mean: float, original_std: float,
@@ -425,8 +318,8 @@ def main(args):
 
     if not args.single_denoiser:
         # Get our training data to use for determining which denoising network to send each patch through
-        training_patches = data_generator.retrieve_train_data(args.train_data, low_noise_threshold=0.03,
-                                                              high_noise_threshold=0.10, skip_every=3, patch_size=40,
+        training_patches = data_generator.retrieve_train_data(args.train_data, low_noise_threshold=0.02,
+                                                              high_noise_threshold=0.15, skip_every=3, patch_size=40,
                                                               stride=20, scales=None)
 
     # If the result directory doesn't exist already, just create it
@@ -544,7 +437,7 @@ def main(args):
 
 
 def reanalyze_denoised_images(set_dir: str, set_names: List[str], result_dir: str, analyze_denoised_data: bool = True,
-                              save_results: bool = True) -> None:
+                              save_results: bool = True) -> Tuple[float, float]:
     """
     Analyzes the denoised data to get SSIM and PSNR values compared to the clean data.
     Also applies masking to remove artifacts from patch denoising
@@ -556,11 +449,16 @@ def reanalyze_denoised_images(set_dir: str, set_names: List[str], result_dir: st
         False if we wish to analyze blurry images instead
     :param save_results: True if we wish to save our results after masking and reanalyzing
 
-    :return: None
+    :return: Average PSNR and Average SSIM
+        (TODO: Make this a generator because multiple set names will break this function!)
     """
 
     # Set up whether we are comparing clear data with denoised or blurry data
     comparison_image_type = "denoised_image" if analyze_denoised_data else "blurry_image"
+
+    # TODO: Make this a generator because multiple set names will break this function!
+    psnr_avg = 0.0
+    ssim_avg = 0.0
 
     # For each dataset that we wish to test on...
     for set_name in set_names:
@@ -628,12 +526,19 @@ def reanalyze_denoised_images(set_dir: str, set_names: List[str], result_dir: st
         log('Dataset: {0:10s} \n  Average PSNR = {1:2.2f}dB, Average SSIM = {2:1.4f}'.format(set_name, psnr_avg,
                                                                                              ssim_avg))
 
+    return psnr_avg, ssim_avg
 
-def print_statistics():
-    """Prints final statistics from inference run"""
+
+def log_statistics(log_file_path: str, psnr_avg: float, ssim_avg: float):
+    """Prints and logs final statistics from inference run"""
     print(f'total low-noise patches: {total_patches_per_category["low"]}')
     print(f'total medium-noise patches: {total_patches_per_category["medium"]}')
     print(f'total high-noise patches: {total_patches_per_category["high"]}')
+    with open(log_file_path, 'w') as file:
+        file.write(f'Average PSNR = {psnr_avg:2.2f}dB, Average SSIM = {ssim_avg:1.4f}\n')
+        file.write(f'total low-noise patches: {total_patches_per_category["low"]}\n')
+        file.write(f'total medium-noise patches: {total_patches_per_category["medium"]}\n')
+        file.write(f'total high-noise patches: {total_patches_per_category["high"]}\n')
 
 
 if __name__ == '__main__':
@@ -647,10 +552,9 @@ if __name__ == '__main__':
 
     if not args.reanalyze_data:
         main(args)
-        # modified_main(args)
-        reanalyze_denoised_images(args.set_dir, args.set_names, args.result_dir, save_results=True)
+        psnr_avg, ssim_avg = reanalyze_denoised_images(args.set_dir, args.set_names, args.result_dir, save_results=True)
 
     else:
-        reanalyze_denoised_images(args.set_dir, args.set_names, args.result_dir, save_results=True)
+        psnr_avg, ssim_avg = reanalyze_denoised_images(args.set_dir, args.set_names, args.result_dir, save_results=True)
 
-    print_statistics()
+    log_statistics(log_file_path=os.path.join(args.result_dir, 'log.txt'), psnr_avg=psnr_avg, ssim_avg=ssim_avg)

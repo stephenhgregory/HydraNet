@@ -131,3 +131,83 @@ def modified_main(args):
         # Log the average PSNR and SSIM to the Terminal
         log('Dataset: {0:10s} \n  Average PSNR = {1:2.2f}dB, Average SSIM = {2:1.4f}'.format(set_name, np.mean(psnrs),
                                                                                              np.mean(ssims)))
+
+
+def denoise_image_by_patches_no_cross_reference(y: np.ndarray, file_name: str, set_name: str, original_mean: float,
+                                                original_std: float, low_std_thresh: float, upper_std_thresh: float,
+                                                save_patches: bool = True, single_denoiser: bool = False,
+                                                model_dict: Dict = None) -> np.ndarray:
+    """
+      Takes an input image and denoises it using a patch-based approach
+
+      :param y: The input image to denoise
+      :param file_name: The name of the file
+      :param set_name: The name of the set containing our test data
+      :param original_mean: The original mean px value of the image that the patch x is part of, which was used to
+                              standardize the image
+      :param original_std: The original standard deviation px valueof the image that the patch x is part of, which was
+                              used to standardize the image
+      :param low_std_thresh: The lower std threshold used to decide which denoiser to send each patch to
+      :param upper_std_thresh: The upper std threshold used to decide which denoiser to send each patch to
+      :param save_patches: True if we wish to save the individual patches
+      :param single_denoiser: True if we wish to denoise patches using only a single denoiser
+      :param model_dict: A dictionary of all the TF models used to denoise image patches
+
+      :return: x_pred: A denoised image as a numpy array
+      :rtype: numpy array
+      """
+
+    # Set the save directory name
+    save_dir_name = os.path.join(args.result_dir, set_name, file_name + '_patches')
+
+    # First, create a denoised x_pred to INITIALLY be a deep copy of y. Then we will modify x_pred in place
+    x_pred = copy.deepcopy(y)
+
+    # Loop over the indices of y to get 40x40 patches from y
+    for i in range(0, len(y[0]), 40):
+        for j in range(0, len(y[1]), 40):
+
+            # If the patch does not 'fit' within the dimensions of y, skip this and do not denoise
+            if i + 40 > len(y[0]) or j + 40 > len(y[1]):
+                continue
+
+            # Get the (40, 40) patch, make a copy as a tensor, and then reshape the original to be a (40, 40, 1) patch
+            y_patch = y[i:i + 40, j:j + 40]
+            y_patch_tensor = image_utils.to_tensor(y_patch)
+            y_patch = y_patch.reshape(y_patch.shape[0], y_patch.shape[1], 1)
+
+            # Get the standard deviation of px values of y_patch
+            y_patch_std = np.std(y_patch)
+
+            # Make the denoiser assignment
+            max_ssim_category = ''
+            if y_patch_std < low_std_thresh:
+                max_ssim_category = 'low'
+            elif low_std_thresh < y_patch_std < upper_std_thresh:
+                max_ssim_category = 'medium'
+            elif y_patch_std > upper_std_thresh:
+                max_ssim_category = 'high'
+
+            # Inference with model_low_noise (Denoise y_patch_tensor to get x_patch_pred)
+            x_patch_pred_tensor = model_dict[max_ssim_category].predict(y_patch_tensor)
+
+            # Convert the denoised patch from a tensor to an image (numpy array)
+            x_patch_pred = image_utils.from_tensor(x_patch_pred_tensor)
+
+            # Replace the patch in x with the new denoised patch
+            x_pred[i:i + 40, j:j + 40] = x_patch_pred
+
+            if save_patches:
+                # Reverse the standardization of x
+                x_patch_pred = image_utils.reverse_standardize(x_patch_pred, original_mean, original_std)
+
+                # Save the denoised patch
+                image_utils.save_image(x=x_patch_pred,
+                                       save_dir_name=save_dir_name,
+                                       save_file_name=file_name + '_i-' + str(i) + '_j-' + str(j) + '.png')
+
+    '''Just logging
+    logger.show_images([("y", y), ("x_pred", x_pred)])
+    '''
+
+    return x_pred
