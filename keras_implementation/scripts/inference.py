@@ -319,7 +319,7 @@ def main(args):
     if not args.single_denoiser:
         # Get our training data to use for determining which denoising network to send each patch through
         training_patches = data_generator.retrieve_train_data(args.train_data, low_noise_threshold=0.02,
-                                                              high_noise_threshold=0.15, skip_every=3, patch_size=40,
+                                                              high_noise_threshold=0.19, skip_every=3, patch_size=40,
                                                               stride=20, scales=None)
 
     # If the result directory doesn't exist already, just create it
@@ -474,9 +474,15 @@ def reanalyze_denoised_images(set_dir: str, set_names: List[str], result_dir: st
                 assert (os.path.exists(os.path.join(set_dir, set_name, 'ClearImages', image_name)))
                 assert (os.path.exists(os.path.join(set_dir, set_name, 'Masks', image_name)))
                 if analyze_denoised_data:
-                    assert (os.path.exists(os.path.join(result_dir, set_name, image_name)))
+                    # assert (os.path.exists(os.path.join(result_dir, set_name, image_name))) # TODO: UNCOMMENT THIS!!!
+                    pass
                 else:
                     assert (os.path.exists(os.path.join(set_dir, set_name, 'CoregisteredBlurryImages', image_name)))
+
+                # TODO: DELETE THIS!!!!!!
+                if not os.path.exists(os.path.join(result_dir, set_name, image_name)):
+                    continue
+                #########################
 
                 # Load the images
                 mask_image = imread(os.path.join(set_dir, set_name, 'Masks', image_name), 0)
@@ -552,9 +558,11 @@ if __name__ == '__main__':
 
     if not args.reanalyze_data:
         main(args)
-        psnr_avg, ssim_avg = reanalyze_denoised_images(args.set_dir, args.set_names, args.result_dir, save_results=True)
+        psnr_avg, ssim_avg = reanalyze_denoised_images(args.set_dir, args.set_names, args.result_dir,
+                                                       save_results=args.save_result)
 
     else:
-        psnr_avg, ssim_avg = reanalyze_denoised_images(args.set_dir, args.set_names, args.result_dir, save_results=True)
+        psnr_avg, ssim_avg = reanalyze_denoised_images(args.set_dir, args.set_names, args.result_dir,
+                                                       save_results=args.save_result)
 
     log_statistics(log_file_path=os.path.join(args.result_dir, 'log.txt'), psnr_avg=psnr_avg, ssim_avg=ssim_avg)
