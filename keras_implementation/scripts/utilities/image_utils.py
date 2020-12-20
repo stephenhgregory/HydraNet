@@ -292,6 +292,29 @@ def hist_match_image_folder(root_dir, blurry_dir_name, clear_dir_name, match_to_
                 cv2.imwrite(filename=os.path.join(root_dir, clear_dir_name, file_name), img=clear_image)
 
 
+def plot_psnrs(psnrs: np.ndarray) -> None:
+    """
+    Takes a numpy array of PSNRs, performs any flattening if needed, and plots them.
+
+    :param psnrs: Collection of psnrs
+
+    :return: None
+    """
+
+    # Flatten the array so that it is 1-dimensional
+    psnrs = psnrs.flatten()
+
+    # seaborn histogram
+    sns.distplot(psnrs, hist=True, kde=False,
+                 bins=int(20), color='blue',
+                 hist_kws={'edgecolor': 'black'})
+    # Add labels
+    plt.title('PSNR of patch pairs')
+    plt.xlabel('Peak Signal to Noise Ratio (PSNR)')
+    plt.ylabel('Patches')
+    plt.show()
+
+
 def plot_standard_deviations(stds):
     """
     Takes a numpy array of standard deviations, performs any flattening if needed, and plots them.
