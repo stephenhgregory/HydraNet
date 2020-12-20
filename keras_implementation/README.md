@@ -99,6 +99,8 @@ python3 train.py /
 |:-------------:|:-------------------------------------:|:---------------------------------------:|
 | train         | ![](resources/BlurryMRItrain.gif)     | ![](resources/DenoisedMRItrain.gif)     |
 
+
+
 # Residual Patch Distributions
 
 ## Volume 1 Residual Patches Distribution
@@ -124,6 +126,33 @@ python3 train.py /
 ## subj1 + subj2 + subj3 + subj4 + subj5 Residual Patches Distribution
 
 ![](resources/subj1subj2subj3subj4Andsubj5ResidualStdPlot.png)
+
+
+# PSNR Distributions
+
+## subj1 Patches PSNR distribution 
+
+![](resources/subj1psnrs.png)
+
+## subj2 Patches PSNR distribution 
+
+![](resources/subj2psnrs.png)
+
+## subj3 Patches PSNR distribution 
+
+![](resources/subj3psnrs.png)
+
+## subj4 Patches PSNR distribution 
+
+![](resources/subj4psnrs.png)
+
+## subj5 Patches PSNR distribution 
+
+![](resources/subj5psnrs.png)
+
+## subj6 Patches PSNR distribution 
+
+![](resources/subj6psnrs.png)
 
 ## Creating TIFF from Results - *Dependencies: ImageMagick*
 
