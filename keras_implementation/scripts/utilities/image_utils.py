@@ -292,11 +292,13 @@ def hist_match_image_folder(root_dir, blurry_dir_name, clear_dir_name, match_to_
                 cv2.imwrite(filename=os.path.join(root_dir, clear_dir_name, file_name), img=clear_image)
 
 
-def plot_psnrs(psnrs: np.ndarray) -> None:
+def plot_psnrs(psnrs: np.ndarray, data_dir_name: str, save_dir: str) -> None:
     """
     Takes a numpy array of PSNRs, performs any flattening if needed, and plots them.
 
     :param psnrs: Collection of psnrs
+    :param data_dir_name: The name of the directory from which the PSNRs were obtained
+    :param save_dir: The directory in which to save the matplotlib plot
 
     :return: None
     """
@@ -309,10 +311,14 @@ def plot_psnrs(psnrs: np.ndarray) -> None:
                  bins=int(20), color='blue',
                  hist_kws={'edgecolor': 'black'})
     # Add labels
-    plt.title('PSNR of patch pairs')
+    plt.title(f'PSNR of {data_dir_name}')
     plt.xlabel('Peak Signal to Noise Ratio (PSNR)')
     plt.ylabel('Patches')
     plt.show()
+
+    # Optionally save the plot
+    if save_dir is not None:
+        plt.savefig(os.path.join(save_dir, data_dir_name + '_psnrs.png'))
 
 
 def plot_standard_deviations(stds):
@@ -335,29 +341,6 @@ def plot_standard_deviations(stds):
     # Add labels
     plt.title('Standard deviation of residual images')
     plt.xlabel('Residual Standard Deviation')
-    plt.ylabel('Patches')
-    plt.show()
-
-
-def plot_psnrs(psnrs: List, data_dir_name: str):
-    """
-    Takes a numpy array of psnrs, performs any flattening if needed, and plots them.
-
-    :param psnrs: Collection of PSNRs
-
-    :return: None
-    """
-
-    # Flatten the array so that it is 1-dimensional
-    psnrs = psnrs.flatten()
-
-    # seaborn histogram
-    sns.distplot(psnrs, hist=True, kde=False,
-                 bins=int(20), color='blue',
-                 hist_kws={'edgecolor': 'black'})
-    # Add labels
-    plt.title(f'PSNR of {data_dir_name}')
-    plt.xlabel('Peak Signal to Noise Ratio')
     plt.ylabel('Patches')
     plt.show()
 

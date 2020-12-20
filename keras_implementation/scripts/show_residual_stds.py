@@ -1,5 +1,6 @@
 import argparse
 import sys
+import os
 import numpy as np
 from skimage.metrics import peak_signal_noise_ratio
 
@@ -12,6 +13,7 @@ from utilities import data_generator, logger, image_utils
 # Command-line parameters
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_data', action='append', default=[], type=str, help='path of train data')
+parser.add_argument('--save_dir', default=None, type=str, help='directory in which to save pyplot')
 args = parser.parse_args()
 
 
@@ -63,11 +65,12 @@ def show_residual_std_distribution(data_dir: str = args.train_data):
     image_utils.plot_standard_deviations(stds)
 
 
-def show_psnr_distribution(data_dir: str = args.train_data):
+def show_psnr_distribution(data_dir: str, save_dir: str):
     """
     Function which aggregates a histogram of PSNRs and shows it with Matplotlib
 
     :param data_dir: The directory in which training examples are stored
+    :param save_dir: The directory in which to save the matplotlib plot
 
     :return: None
     """
@@ -103,13 +106,13 @@ def show_psnr_distribution(data_dir: str = args.train_data):
     psnrs = np.array(psnrs, dtype='float64')
 
     # Plot the residual standard deviation
-    image_utils.plot_psnrs(psnrs)
+    image_utils.plot_psnrs(psnrs, '-'.join([dir_name.split(os.sep)[-2] for dir_name in data_dir]), save_dir)
 
 
 if __name__ == "__main__":
 
-    # Show the residual std distribution
-    show_residual_std_distribution(data_dir=args.train_data)
+    # # Show the residual std distribution
+    # show_residual_std_distribution(data_dir=args.train_data)
 
     # Show the PSNR distribution
-    show_psnr_distribution(data_dir=args.train_data)
+    show_psnr_distribution(data_dir=args.train_data, save_dir=args.save_dir)
