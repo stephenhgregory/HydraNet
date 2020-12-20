@@ -132,27 +132,27 @@ python3 train.py /
 
 ## subj1 Patches PSNR distribution 
 
-![](resources/subj1psnrs.png)
+![](resources/subj1_psnrs.png)
 
 ## subj2 Patches PSNR distribution 
 
-![](resources/subj2psnrs.png)
+![](resources/subj2_psnrs.png)
 
 ## subj3 Patches PSNR distribution 
 
-![](resources/subj3psnrs.png)
+![](resources/subj3_psnrs.png)
 
 ## subj4 Patches PSNR distribution 
 
-![](resources/subj4psnrs.png)
+![](resources/subj4_psnrs.png)
 
 ## subj5 Patches PSNR distribution 
 
-![](resources/subj5psnrs.png)
+![](resources/subj5_psnrs.png)
 
 ## subj6 Patches PSNR distribution 
 
-![](resources/subj6psnrs.png)
+![](resources/subj6_psnrs.png)
 
 ## Creating TIFF from Results - *Dependencies: ImageMagick*
 
