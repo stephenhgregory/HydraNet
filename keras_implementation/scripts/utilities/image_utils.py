@@ -314,11 +314,13 @@ def plot_psnrs(psnrs: np.ndarray, data_dir_name: str, save_dir: str) -> None:
     plt.title(f'PSNR of {data_dir_name}')
     plt.xlabel('Peak Signal to Noise Ratio (PSNR)')
     plt.ylabel('Patches')
-    plt.show()
 
     # Optionally save the plot
     if save_dir is not None:
         plt.savefig(os.path.join(save_dir, data_dir_name + '_psnrs.png'))
+
+    # Show the plot
+    plt.show()
 
 
 def plot_standard_deviations(stds):
