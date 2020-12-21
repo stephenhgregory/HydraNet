@@ -7,6 +7,7 @@ import argparse
 import os
 import sys
 import numpy as np
+from skimage.metrics import peak_signal_noise_ratio
 from tensorflow.keras.models import load_model
 from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
 from tensorflow.keras.optimizers import Adam
@@ -615,6 +616,102 @@ def my_train_datagen(epoch_iter=2000,
                 yield batch_y, batch_x
 
 
+def my_train_datagen_estimated_with_psnr(num_epochs=5,
+                                         batch_size=128,
+                                         data_dir=args.train_data,
+                                         low_psnr_threshold: float = 0.28,
+                                         high_psnr_threshold: float = 0.07):
+    """
+    Generator function that yields training data samples from a specified data directory
+
+    :param num_epochs: The total number of epochs
+    :param batch_size: The number of training examples for each training iteration
+    :param data_dir: The directory in which training examples are stored
+    :param low_psnr_threshold: The lower PSNR threshold to keep an image patch pair
+    :param high_psnr_threshold: The upper PSNR threshold to keep an image patch pair
+
+    :return: Yields a training example x and noisy image y
+    """
+    # Loop the following indefinitely...
+    while True:
+        counter = 0
+
+        # If this is the first iteration...
+        if counter == 0:
+            print(f'Accessing training data in: {data_dir}')
+
+            # Get our train data
+            if len(data_dir) == 1:
+                x_original, y_original = data_generator.pair_data_generator(data_dir[0])
+            elif len(data_dir) > 1:
+                x_original, y_original = data_generator.pair_data_generator_multiple_data_dirs(data_dir)
+            else:
+                sys.exit('ERROR: You didn\'t provide any data directories to train on!')
+
+            x_filtered = []
+            y_filtered = []
+
+            # Iterate over all of the image patches
+            for x_patch, y_patch in zip(x_original, y_original):
+                if np.max(x_patch) < 10:
+                    continue
+                x_patch = x_patch.reshape(x_patch.shape[0], x_patch.shape[1])
+                y_patch = y_patch.reshape(y_patch.shape[0], y_patch.shape[1])
+                psnr = peak_signal_noise_ratio(x_patch, y_patch)
+
+                if low_psnr_threshold < psnr < high_psnr_threshold:
+                    x_filtered.append(x_patch)
+                    y_filtered.append(y_patch)
+
+            # Convert image patches and stds into numpy arrays
+            x_filtered = np.array(x_filtered, dtype='uint8')
+            y_filtered = np.array(y_filtered, dtype='uint8')
+
+            # Remove elements from x_filtered and y_filtered so that they has the right number of patches
+            discard_n = len(x_filtered) - len(x_filtered) // batch_size * batch_size;
+            print(f'discard_n ={discard_n}')
+            x_filtered = np.delete(x_filtered, range(discard_n), axis=0)
+            y_filtered = np.delete(y_filtered, range(discard_n), axis=0)
+
+            print(f'The length of x_filtered: {len(x_filtered)}')
+            print(f'The length of y_filtered: {len(y_filtered)}')
+
+            # Assert that the last iteration has a full batch size
+            assert len(x_filtered) % args.batch_size == 0, \
+                logger.log(
+                    'make sure the last iteration has a full batchsize, '
+                    'this is important if you use batch normalization!')
+            assert len(y_filtered) % args.batch_size == 0, \
+                logger.log(
+                    'make sure the last iteration has a full batchsize, '
+                    'this is important if you use batch normalization!')
+            assert len(x_filtered) == len(y_filtered), logger.log('Make sure x and y are paired up properly!')
+
+            # Standardize x and y to have a mean of 0 and standard deviation of 1
+            x, x_orig_mean, x_orig_std = image_utils.standardize(x_filtered)
+            y, y_orig_mean, y_orig_std = image_utils.standardize(y_filtered)
+
+            # Get a list of indices, from 0 to the total number of training examples
+            indices = list(range(x.shape[0]))
+
+            counter += 1
+
+        # Iterate over the number of epochs
+        for _ in range(num_epochs):
+
+            # Shuffle the indices of the training examples
+            np.random.shuffle(indices)
+
+            # Iterate over the entire training set, skipping "batch_size" at a time
+            for i in range(0, len(indices), batch_size):
+                # Get the batch_x (clear) and batch_y (blurry)
+                batch_x = x[indices[i:i + batch_size]]
+                batch_y = y[indices[i:i + batch_size]]
+
+                # Finally, yield x and y, as this function is a generator
+                yield batch_y, batch_x
+
+
 def sum_squared_error(y_true, y_pred):
     """
     Returns sum-squared error between y_true and y_pred.
@@ -698,33 +795,30 @@ def main():
                             callbacks=get_callbacks())
     elif noise_level == NoiseLevel.LOW:
         # Train the model on the individual noise level
-        history = model.fit(my_train_datagen(batch_size=args.batch_size,
-                                             data_dir=args.train_data,
-                                             noise_level=noise_level,
-                                             low_noise_threshold=0.15,
-                                             high_noise_threshold=0.15),
+        history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
+                                                                 data_dir=args.train_data,
+                                                                 low_psnr_threshold=0.0,
+                                                                 high_psnr_threshold=0.3),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
                             callbacks=get_callbacks())
     elif noise_level == NoiseLevel.MEDIUM:
         # Train the model on the individual noise level
-        history = model.fit(my_train_datagen(batch_size=args.batch_size,
-                                             data_dir=args.train_data,
-                                             noise_level=noise_level,
-                                             low_noise_threshold=0.01,
-                                             high_noise_threshold=0.20),
+        history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
+                                                                 data_dir=args.train_data,
+                                                                 low_psnr_threshold=0.15,
+                                                                 high_psnr_threshold=0.4),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
                             callbacks=get_callbacks())
     elif noise_level == NoiseLevel.HIGH:
         # Train the model on the individual noise level
-        history = model.fit(my_train_datagen(batch_size=args.batch_size,
-                                             data_dir=args.train_data,
-                                             noise_level=noise_level,
-                                             low_noise_threshold=0.03,
-                                             high_noise_threshold=0.06),
+        history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
+                                                                 data_dir=args.train_data,
+                                                                 low_psnr_threshold=0.2,
+                                                                 high_psnr_threshold=1.0),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,

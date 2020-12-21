@@ -411,7 +411,7 @@ def datagenerator(data_dir=join('data', 'Volume1', 'train'), image_type=ImageTyp
 
 
 def get_lower_and_upper_percentile_stds(data_dir: str, lower_percentile: float, upper_percentile: float,
-                                       patch_size: int = 40, stride: int = 20, scales: List[float] = None):
+                                        patch_size: int = 40, stride: int = 20, scales: List[float] = None):
     """
     Gets the lower and upper percentile values of std of the images in a given data directory
 
