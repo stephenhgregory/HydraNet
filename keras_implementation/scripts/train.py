@@ -47,7 +47,7 @@ else:
     sys.exit("noise_level must be 'low', 'medium', 'high', or 'all'. Try again!")
 
 # Set the save directory of the trained model hdf5 file
-save_dir = os.path.join('psnr_estimated_models', args.model + '_' + args.noise_level + '_noise')
+save_dir = os.path.join('psnr_noise_estimated_models', args.model + '_' + args.noise_level + '_noise')
 
 # Create the <save_dir> folder if it doesn't exist already
 if not os.path.exists(save_dir):
@@ -631,8 +631,8 @@ def main():
         # Train the model on the individual noise level
         history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
                                                                  data_dir=args.train_data,
-                                                                 low_psnr_threshold=0.0,
-                                                                 high_psnr_threshold=0.3),
+                                                                 low_psnr_threshold=30.0,
+                                                                 high_psnr_threshold=100.0),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
@@ -641,8 +641,8 @@ def main():
         # Train the model on the individual noise level
         history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
                                                                  data_dir=args.train_data,
-                                                                 low_psnr_threshold=0.15,
-                                                                 high_psnr_threshold=0.4),
+                                                                 low_psnr_threshold=15.0,
+                                                                 high_psnr_threshold=40.0),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,
@@ -651,8 +651,8 @@ def main():
         # Train the model on the individual noise level
         history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
                                                                  data_dir=args.train_data,
-                                                                 low_psnr_threshold=0.2,
-                                                                 high_psnr_threshold=1.0),
+                                                                 low_psnr_threshold=0.0,
+                                                                 high_psnr_threshold=30.0),
                             steps_per_epoch=2000,
                             epochs=args.epoch,
                             initial_epoch=initial_epoch,

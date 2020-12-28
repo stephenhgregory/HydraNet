@@ -559,13 +559,13 @@ def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.03, 
     :return: A dictionary of the following:
                 1. x_low_noise: the clear patches at a low noise level
                 2. y_low_noise: the blurry patches at a low noise level
-                3. stds_low_noise: the standard deviation of the residuals at a low noise level
+                3. comparison_metrics_low_noise: the standard deviation of the residuals at a low noise level
                 4. x_medium_noise: the clear patches at a medium noise level
                 5. y_medium_noise: the blurry patches at a medium noise level
-                6. stds_medium_noise: the standard deviation of the residuals at a medium noise level
+                6. comparison_metrics_medium_noise: the standard deviation of the residuals at a medium noise level
                 7. x_high_noise: the clear patches at a high noise level
                 8. y_high_noise: the blurry patches at a high noise level
-                9. stds_high_noise: the standard deviation of the residuals at a high noise level
+                9. comparison_metrics_high_noise: the standard deviation of the residuals at a high noise level
     """
 
     print(f'Accessing training data in: {train_data_dir}')
@@ -573,16 +573,16 @@ def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.03, 
     # Get training examples from data_dir using data_generator
     x, y = pair_data_generator(train_data_dir, patch_size=patch_size, stride=stride, scales=scales)
 
-    # Create lists to store all of the patches and stds for each noise level category
+    # Create lists to store all of the patches and comparison metrics for each noise level category
     x_low_noise = []
     y_low_noise = []
-    stds_low_noise = []
+    comparison_metrics_low_noise = []
     x_medium_noise = []
     y_medium_noise = []
-    stds_medium_noise = []
+    comparison_metrics_medium_noise = []
     x_high_noise = []
     y_high_noise = []
-    stds_high_noise = []
+    comparison_metrics_high_noise = []
 
     # Iterate over all of the image patches
     for x_patch, y_patch in zip(x, y):
@@ -591,53 +591,60 @@ def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.03, 
         if np.max(x_patch) < 10:
             continue
 
+        ''' Using Residual standard deviation as similarity metric
         # Get the residual std
-        std = get_residual_std(clear_patch=x_patch,
-                               blurry_patch=y_patch)
+        comparison_metric = get_residual_std(clear_patch=x_patch,
+                                             blurry_patch=y_patch)
+        '''
+        
+        ''' Using PSNR as similarity matric '''
+        # Get the PSNR
+        comparison_metric = peak_signal_noise_ratio(image_true=x_patch,
+                                                    image_test=y_patch)
 
         # Add the patches and their residual stds to their corresponding lists based on noise level
-        if std < low_noise_threshold:
+        if comparison_metric < low_noise_threshold:
             x_low_noise.append(x_patch)
             y_low_noise.append(y_patch)
-            stds_low_noise.append(std)
+            comparison_metrics_low_noise.append(comparison_metric)
             continue
-        elif low_noise_threshold < std < high_noise_threshold:
+        elif low_noise_threshold < comparison_metric < high_noise_threshold:
             x_medium_noise.append(x_patch)
             y_medium_noise.append(y_patch)
-            stds_medium_noise.append(std)
+            comparison_metrics_medium_noise.append(comparison_metric)
             continue
-        elif std > high_noise_threshold:
+        elif comparison_metric > high_noise_threshold:
             x_high_noise.append(x_patch)
             y_high_noise.append(y_patch)
-            stds_high_noise.append(std)
+            comparison_metrics_high_noise.append(comparison_metric)
             continue
 
     # Convert image patches and stds into numpy arrays
     x_low_noise = np.array(x_low_noise[::skip_every], dtype='uint8')
     y_low_noise = np.array(y_low_noise[::skip_every], dtype='uint8')
-    stds_low_noise = np.array(stds_low_noise[::skip_every], dtype='float64')
+    comparison_metrics_low_noise = np.array(comparison_metrics_low_noise[::skip_every], dtype='float64')
     x_medium_noise = np.array(x_medium_noise[::skip_every], dtype='uint8')
     y_medium_noise = np.array(y_medium_noise[::skip_every], dtype='uint8')
-    stds_medium_noise = np.array(stds_medium_noise[::skip_every], dtype='float64')
+    comparison_metrics_medium_noise = np.array(comparison_metrics_medium_noise[::skip_every], dtype='float64')
     x_high_noise = np.array(x_high_noise[::skip_every], dtype='uint8')
     y_high_noise = np.array(y_high_noise[::skip_every], dtype='uint8')
-    stds_high_noise = np.array(stds_high_noise[::skip_every], dtype='float64')
+    comparison_metrics_high_noise = np.array(comparison_metrics_high_noise[::skip_every], dtype='float64')
 
     training_patches = {
         "low_noise": {
             "x": x_low_noise,
             "y": y_low_noise,
-            "stds": stds_low_noise
+            "stds": comparison_metrics_low_noise
         },
         "medium_noise": {
             "x": x_medium_noise,
             "y": y_medium_noise,
-            "stds": stds_medium_noise
+            "stds": comparison_metrics_medium_noise
         },
         "high_noise": {
             "x": x_high_noise,
             "y": y_high_noise,
-            "stds": stds_high_noise
+            "stds": comparison_metrics_high_noise
         }
     }
 

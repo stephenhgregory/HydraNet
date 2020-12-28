@@ -119,7 +119,7 @@ def show(x, title=None, cbar=False, figsize=None):
 def denoise_image_by_patches(y: np.ndarray, file_name: str, set_name: str, original_mean: float, original_std: float,
                              y_original_mean: float, y_original_std: float, save_patches: bool = True,
                              single_denoiser: bool = False, model_dict: Dict = None,
-                             training_patches: bool = None) -> np.ndarray:
+                             training_patches: Dict = None) -> np.ndarray:
     """
     Takes an input image and denoises it using a patch-based approach
 
@@ -194,11 +194,11 @@ def denoise_image_by_patches(y: np.ndarray, file_name: str, set_name: str, origi
             # Get the Max SSIM value between y_patch and the most similar x in every category
             reversed_y_patch = image_utils.reverse_standardize(y_patch, y_original_mean, y_original_std)
             low_max_ssim = compare_to_closest_training_patch(reversed_y_patch, training_patches["low_noise"]["y"],
-                                                             comparison_metric='ssim')
+                                                             comparison_metric='psnr')
             medium_max_ssim = compare_to_closest_training_patch(reversed_y_patch, training_patches["medium_noise"]["y"],
-                                                                comparison_metric='ssim')
+                                                                comparison_metric='psnr')
             high_max_ssim = compare_to_closest_training_patch(reversed_y_patch, training_patches["high_noise"]["y"],
-                                                              comparison_metric='ssim')
+                                                              comparison_metric='psnr')
 
             # Get the overall max_ssim from those above categorical maxes
             max_ssim_category = ''
@@ -299,9 +299,11 @@ def main(args):
         # model_dict["original"] = load_model(
         #     os.path.join(args.model_dir_original, 'model_%03d.hdf5' % latest_epoch_original),
         #     compile=False)
+        ''' TODO: Uncomment this
         model_dict["all"] = load_model(
             os.path.join(args.model_dir_all_noise, 'model_%03d.hdf5' % latest_epoch_all_noise),
             compile=False)
+        '''
         model_dict["low"] = load_model(
             os.path.join(args.model_dir_low_noise, 'model_%03d.hdf5' % latest_epoch_low_noise),
             compile=False)
@@ -318,9 +320,9 @@ def main(args):
 
     if not args.single_denoiser:
         # Get our training data to use for determining which denoising network to send each patch through
-        training_patches = data_generator.retrieve_train_data(args.train_data, low_noise_threshold=0.02,
-                                                              high_noise_threshold=0.19, skip_every=3, patch_size=40,
-                                                              stride=20, scales=None)
+        training_patches = data_generator.retrieve_train_data(args.train_data, low_noise_threshold=0.23,
+                                                              high_noise_threshold=0.40, skip_every=3, patch_size=40,
+                                                              stride=20, scales=[1])
 
     # If the result directory doesn't exist already, just create it
     if not os.path.exists(args.result_dir):
@@ -556,13 +558,12 @@ if __name__ == '__main__':
     if not os.path.exists(args.result_dir):
         os.makedirs(args.result_dir)
 
+    # Run denoising
     if not args.reanalyze_data:
         main(args)
-        psnr_avg, ssim_avg = reanalyze_denoised_images(args.set_dir, args.set_names, args.result_dir,
-                                                       save_results=args.save_result)
 
-    else:
-        psnr_avg, ssim_avg = reanalyze_denoised_images(args.set_dir, args.set_names, args.result_dir,
-                                                       save_results=args.save_result)
+    # Run post-processing (masking) and analysis of results
+    psnr_avg, ssim_avg = reanalyze_denoised_images(args.set_dir, args.set_names, args.result_dir,
+                                                   save_results=args.save_result)
 
     log_statistics(log_file_path=os.path.join(args.result_dir, 'log.txt'), psnr_avg=psnr_avg, ssim_avg=ssim_avg)
