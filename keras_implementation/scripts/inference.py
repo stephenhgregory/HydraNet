@@ -194,11 +194,11 @@ def denoise_image_by_patches(y: np.ndarray, file_name: str, set_name: str, origi
             # Get the Max SSIM value between y_patch and the most similar x in every category
             reversed_y_patch = image_utils.reverse_standardize(y_patch, y_original_mean, y_original_std)
             low_max_ssim = compare_to_closest_training_patch(reversed_y_patch, training_patches["low_noise"]["y"],
-                                                             comparison_metric='psnr')
+                                                             comparison_metric='ssim')
             medium_max_ssim = compare_to_closest_training_patch(reversed_y_patch, training_patches["medium_noise"]["y"],
-                                                                comparison_metric='psnr')
+                                                                comparison_metric='ssim')
             high_max_ssim = compare_to_closest_training_patch(reversed_y_patch, training_patches["high_noise"]["y"],
-                                                              comparison_metric='psnr')
+                                                              comparison_metric='ssim')
 
             # Get the overall max_ssim from those above categorical maxes
             max_ssim_category = ''
@@ -320,8 +320,8 @@ def main(args):
 
     if not args.single_denoiser:
         # Get our training data to use for determining which denoising network to send each patch through
-        training_patches = data_generator.retrieve_train_data(args.train_data, low_noise_threshold=0.23,
-                                                              high_noise_threshold=0.40, skip_every=3, patch_size=40,
+        training_patches = data_generator.retrieve_train_data(args.train_data, low_noise_threshold=20.0,
+                                                              high_noise_threshold=40.0, skip_every=3, patch_size=40,
                                                               stride=20, scales=[1])
 
     # If the result directory doesn't exist already, just create it

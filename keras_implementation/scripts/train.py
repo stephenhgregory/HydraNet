@@ -502,7 +502,7 @@ def my_train_datagen_estimated_with_psnr(num_epochs=5,
             y_filtered = np.array(y_filtered, dtype='uint8')
 
             # Remove elements from x_filtered and y_filtered so that they has the right number of patches
-            discard_n = len(x_filtered) - len(x_filtered) // batch_size * batch_size;
+            discard_n = len(x_filtered) - len(x_filtered) // batch_size * batch_size
             print(f'discard_n ={discard_n}')
             x_filtered = np.delete(x_filtered, range(discard_n), axis=0)
             y_filtered = np.delete(y_filtered, range(discard_n), axis=0)

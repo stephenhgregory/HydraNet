@@ -6,7 +6,7 @@ import os
 from os.path import join
 from typing import List, Tuple, Dict
 from utilities import image_utils
-from skimage.metrics import peak_signal_noise_ratio
+from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
 # Global variable definitions
 aug_times = 1
@@ -534,27 +534,23 @@ def pair_data_generator(root_dir: str = join('data', 'Volume1', 'train'), image_
 
 
 def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.03, high_noise_threshold: float = 0.15,
-                        skip_every: int = 3, patch_size: int = 40, stride: int = 10, scales: List = [1]) -> Dict:
+                        skip_every: int = 3, patch_size: int = 40, stride: int = 10, scales: List = [1],
+                        similarity_metric: str = 'psnr') -> Dict:
     """
     Gets and returns the image patches used during training time, split into 3 noise levels.
     Used to cross-reference patches at inference time.
 
     :param train_data_dir: The root directory of the training data
-    :type train_data_dir: str
     :param low_noise_threshold: The lower residual image standard deviation threshold used to determine which data
                                 should go to which network
-    :type low_noise_threshold: float
     :param high_noise_threshold: The upper residual image standard deviation threshold used to determine which data
                                 should go to which network
-    :type high_noise_threshold: float
     :param skip_every: If 1, we skip every 'skip_every' number of patches, and so return a smaller subset of patches
     :param patch_size: The size of each patches in pixels -> (patch_size, patch_size)
-    :type patch_size: int
     :param stride: The stride with which to slide the patch-taking window
-    :type stride: int
     :param scales: A list of scales at which we want to create image patches.
         If None, this function simply performs no rescaling of the image to create patches
-    :type scales: List
+    :param similarity_metric: The similarity metric used to bin training data into noise categories
 
     :return: A dictionary of the following:
                 1. x_low_noise: the clear patches at a low noise level
@@ -591,33 +587,65 @@ def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.03, 
         if np.max(x_patch) < 10:
             continue
 
-        ''' Using Residual standard deviation as similarity metric
-        # Get the residual std
-        comparison_metric = get_residual_std(clear_patch=x_patch,
-                                             blurry_patch=y_patch)
-        '''
-        
-        ''' Using PSNR as similarity matric '''
-        # Get the PSNR
-        comparison_metric = peak_signal_noise_ratio(image_true=x_patch,
-                                                    image_test=y_patch)
+        if similarity_metric == 'std':
+            # Get the residual std
+            comparison_metric = get_residual_std(clear_patch=x_patch, blurry_patch=y_patch)
+            # Add the patches and their residual stds to their corresponding lists based on noise level
+            if comparison_metric < low_noise_threshold:
+                x_low_noise.append(x_patch)
+                y_low_noise.append(y_patch)
+                comparison_metrics_low_noise.append(comparison_metric)
+                continue
+            elif low_noise_threshold < comparison_metric < high_noise_threshold:
+                x_medium_noise.append(x_patch)
+                y_medium_noise.append(y_patch)
+                comparison_metrics_medium_noise.append(comparison_metric)
+                continue
+            elif comparison_metric > high_noise_threshold:
+                x_high_noise.append(x_patch)
+                y_high_noise.append(y_patch)
+                comparison_metrics_high_noise.append(comparison_metric)
+                continue
 
-        # Add the patches and their residual stds to their corresponding lists based on noise level
-        if comparison_metric < low_noise_threshold:
-            x_low_noise.append(x_patch)
-            y_low_noise.append(y_patch)
-            comparison_metrics_low_noise.append(comparison_metric)
-            continue
-        elif low_noise_threshold < comparison_metric < high_noise_threshold:
-            x_medium_noise.append(x_patch)
-            y_medium_noise.append(y_patch)
-            comparison_metrics_medium_noise.append(comparison_metric)
-            continue
-        elif comparison_metric > high_noise_threshold:
-            x_high_noise.append(x_patch)
-            y_high_noise.append(y_patch)
-            comparison_metrics_high_noise.append(comparison_metric)
-            continue
+        elif similarity_metric == 'psnr':
+            # Get the PSNR
+            comparison_metric = peak_signal_noise_ratio(image_true=x_patch, image_test=y_patch)
+            # Add the patches and their PSNRs to their corresponding lists based on noise level
+            if comparison_metric < low_noise_threshold:
+                x_high_noise.append(x_patch)
+                y_high_noise.append(y_patch)
+                comparison_metrics_high_noise.append(comparison_metric)
+                continue
+            elif low_noise_threshold < comparison_metric < high_noise_threshold:
+                x_medium_noise.append(x_patch)
+                y_medium_noise.append(y_patch)
+                comparison_metrics_medium_noise.append(comparison_metric)
+                continue
+            elif comparison_metric > high_noise_threshold:
+                x_low_noise.append(x_patch)
+                y_low_noise.append(y_patch)
+                comparison_metrics_low_noise.append(comparison_metric)
+                continue
+
+        elif similarity_metric == 'ssim':
+            # Get the PSNR
+            comparison_metric, _ = structural_similarity(x_patch, y_patch, full=True)
+            # Add the patches and their PSNRs to their corresponding lists based on noise level
+            if comparison_metric < low_noise_threshold:
+                x_high_noise.append(x_patch)
+                y_high_noise.append(y_patch)
+                comparison_metrics_high_noise.append(comparison_metric)
+                continue
+            elif low_noise_threshold < comparison_metric < high_noise_threshold:
+                x_medium_noise.append(x_patch)
+                y_medium_noise.append(y_patch)
+                comparison_metrics_medium_noise.append(comparison_metric)
+                continue
+            elif comparison_metric > high_noise_threshold:
+                x_low_noise.append(x_patch)
+                y_low_noise.append(y_patch)
+                comparison_metrics_low_noise.append(comparison_metric)
+                continue
 
     # Convert image patches and stds into numpy arrays
     x_low_noise = np.array(x_low_noise[::skip_every], dtype='uint8')
