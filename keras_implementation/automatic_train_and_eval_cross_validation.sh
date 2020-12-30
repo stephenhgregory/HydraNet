@@ -22,7 +22,7 @@ python scripts/inference.py \
     --single_denoiser=0 \
     --set_dir="data/subj1" \
     --train_data="data/subj2/train" \
-    --result_dir="results/AllButsubj1Trainedsubj1Tested_results" \
+    --result_dir="psnr_results/subj1_results" \
     --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj1Trained/MyDnCNN_all_noise" \
     --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj1Trained/MyDnCNN_low_noise" \
     --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj1Trained/MyDnCNN_medium_noise" \
@@ -49,7 +49,7 @@ python scripts/inference.py \
     --single_denoiser=0 \
     --set_dir="data/subj2" \
     --train_data="data/subj3/train" \
-    --result_dir="results/AllButsubj2Trainedsubj2Tested_results" \
+    --result_dir="psnr_results/subj2_results" \
     --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj2Trained/MyDnCNN_all_noise" \
     --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj2Trained/MyDnCNN_low_noise" \
     --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj2Trained/MyDnCNN_medium_noise" \
@@ -76,7 +76,7 @@ python scripts/inference.py \
 #    --single_denoiser=0 \
 #    --set_dir="data/subj3" \
 #    --train_data="data/subj4/train" \
-#    --result_dir="results/AllButsubj3Trainedsubj3Tested_results_no_high_noise_model2" \
+#    --result_dir="psnr_results/subj3_results" \
 #    --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj3Trained/MyDnCNN_all_noise" \
 #    --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj3Trained/MyDnCNN_low_noise" \
 #    --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj3Trained/MyDnCNN_medium_noise" \
@@ -103,7 +103,7 @@ python scripts/inference.py \
     --single_denoiser=0 \
     --set_dir="data/subj4" \
     --train_data="data/subj5/train" \
-    --result_dir="results/AllButsubj4Trainedsubj4Tested_results" \
+    --result_dir="psnr_results/subj4_results" \
     --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj4Trained/MyDnCNN_all_noise" \
     --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj4Trained/MyDnCNN_low_noise" \
     --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj4Trained/MyDnCNN_medium_noise" \
@@ -130,7 +130,7 @@ python scripts/inference.py \
     --single_denoiser=0 \
     --set_dir="data/subj5" \
     --train_data="data/subj6/train" \
-    --result_dir="results/AllButsubj5Trainedsubj5Tested_results" \
+    --result_dir="psnr_results/subj5_results" \
     --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj5Trained/MyDnCNN_all_noise" \
     --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj5Trained/MyDnCNN_low_noise" \
     --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj5Trained/MyDnCNN_medium_noise" \
@@ -158,7 +158,7 @@ python scripts/inference.py \
     --single_denoiser=0 \
     --set_dir="data/subj6" \
     --train_data="data/subj4/train" \
-    --result_dir="results/AllButsubj6Trainedsubj6Tested_results" \
+    --result_dir="psnr_results/subj6_results" \
     --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj6Trained/MyDnCNN_all_noise" \
     --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj6Trained/MyDnCNN_low_noise" \
     --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj6Trained/MyDnCNN_medium_noise" \
