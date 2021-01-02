@@ -32,6 +32,7 @@ parser.add_argument('--noise_level', default='all', type=str, help='Noise Level:
 parser.add_argument('--epoch', default=80, type=int, help='number of train epoches')
 parser.add_argument('--lr', default=2e-3, type=float, help='initial learning rate for Adam')
 parser.add_argument('--save_every', default=1, type=int, help='save model every x # of epochs')
+parser.add_argument('--result_dir', default='', type=str, help='save directory for resultant model .hdf5 files')
 args = parser.parse_args()
 
 # Set the noise level to decide which model to train
@@ -47,7 +48,7 @@ else:
     sys.exit("noise_level must be 'low', 'medium', 'high', or 'all'. Try again!")
 
 # Set the save directory of the trained model hdf5 file
-save_dir = os.path.join('psnr_noise_estimated_models', args.model + '_' + args.noise_level + '_noise')
+save_dir = os.path.join(args.result_dir, args.model + '_' + args.noise_level + '_noise')
 
 # Create the <save_dir> folder if it doesn't exist already
 if not os.path.exists(save_dir):

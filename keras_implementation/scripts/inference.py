@@ -342,6 +342,10 @@ def main(args):
         for image_name in os.listdir(os.path.join(args.set_dir, set_name, 'CoregisteredBlurryImages')):
             if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
 
+                # Skip this example if the result already exists
+                if os.path.exists(os.path.join(args.result_dir, set_name, image_name)):
+                    continue
+
                 # Get the image name minus the file extension
                 image_name_no_extension, _ = os.path.splitext(image_name)
 
