@@ -28,6 +28,24 @@ def findLastCheckpoint(save_dir: str):
     return initial_epoch
 
 
+def My3dDenoiser(depth, filters=64, use_batchnorm=True):
+    """
+    Complete implementation of My3dDenoiser, a 3D residual CNN using TensorFlow.
+
+    Parameters
+    ----------
+    depth: The total number of layers for the network
+    filters: The total number of convolutional kernels in each convolutional layer
+        of the network
+    use_batchnorm: Whether or not the layers of the network should use batch normalization
+
+    :param depth:
+    :param filters:
+    :param use_batchnorm:
+    :return:
+    """
+
+
 def MyDnCNN(depth, filters=64, image_channels=1, use_batchnorm=True):
     """
     Complete implementation of MyDnCNN, a residual network using the Keras API.
