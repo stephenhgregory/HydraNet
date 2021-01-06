@@ -534,31 +534,15 @@ def pair_3d_data_generator(root_dirs: str = join('data', 'Volume1', 'train'),
                                                                               scales=scales)
 
         # Append the patches to clear_data and blurry_data
-        all_clear_volume_patches.append(clear_volume_patches)
-        all_blurry_volume_patches.append(blurry_volume_patches)
+        all_clear_volume_patches.extend(clear_volume_patches)
+        all_blurry_volume_patches.extend(blurry_volume_patches)
 
     # Convert clear_patches and blurry_patches to numpy arrays of ints
     all_clear_volume_patches = np.array(all_clear_volume_patches, dtype='uint8')
     all_blurry_volume_patches = np.array(all_blurry_volume_patches, dtype='uint8')
 
-    # Reshape clear_data and blurry_data
-    all_clear_volume_patches = all_clear_volume_patches.reshape(
-        (all_clear_volume_patches.shape[0] * all_clear_volume_patches.shape[1],
-         all_clear_volume_patches.shape[2],
-         all_clear_volume_patches.shape[3],
-         all_clear_volume_patches.shape[4],
-         1
-         ))
-    all_blurry_volume_patches = all_blurry_volume_patches.reshape(
-        (all_blurry_volume_patches.shape[0] * all_blurry_volume_patches.shape[1],
-         all_blurry_volume_patches.shape[2],
-         all_blurry_volume_patches.shape[3],
-         all_blurry_volume_patches.shape[4],
-         1
-         ))
-
     # Make sure that clear_data and blurry_data have the same shape
-    assert (len(clear_volume_patches) == len(blurry_volume_patches))
+    assert (all_clear_volume_patches.shape == blurry_volume_patches.shape)
 
     return all_clear_volume_patches, all_blurry_volume_patches
 
@@ -881,5 +865,6 @@ if __name__ == '__main__':
     # data = pair_data_generator_multiple_data_dirs(root_dirs=['../data/subj1/train', '../data/subj2/train'])
     # data = pair_data_generator(root_dir='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train')
     # data = pair_3d_data_generator(root_dir='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train')
-    data = pair_3d_data_generator_multiple_dirs(
-        root_dirs=['/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train'])
+    data = pair_3d_data_generator(
+        root_dirs=['/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train',
+                   '/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj2/train'])
