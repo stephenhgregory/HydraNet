@@ -32,6 +32,7 @@ parser.add_argument('--epoch', default=80, type=int, help='number of train epoch
 parser.add_argument('--lr', default=2e-3, type=float, help='initial learning rate for Adam')
 parser.add_argument('--save_every', default=1, type=int, help='save model every x # of epochs')
 parser.add_argument('--result_dir', default='', type=str, help='save directory for resultant model .hdf5 files')
+parser.add_argument('--is_3d', default=False, type=bool, help='True if we wish to retrain a 3d denoiser')
 args = parser.parse_args()
 
 # Set the noise level to decide which model to train
@@ -697,5 +698,7 @@ def train_3d():
 
 if __name__ == '__main__':
     # Run the main function
-    # train()
-    train_3d()
+    if args.is_3d:
+        train_3d()
+    else:
+        train()
