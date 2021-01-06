@@ -675,9 +675,7 @@ def train_3d():
     None
     """
     '''Load and initialize model'''
-    # Select the model type
-    if args.model == 'My3dDenoiser':
-        model = model_functions.My3dDenoiser(depth=17, num_filters=64, use_batchnorm=True)
+    model = model_functions.My3dDenoiser(depth=17, num_filters=64, use_batchnorm=True)
     # Print a summary of the model to the console
     model.summary()
     # Load the last model
