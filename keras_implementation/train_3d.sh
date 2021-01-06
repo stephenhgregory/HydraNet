@@ -10,6 +10,13 @@ python scripts/train.py \
     --val_data="data/subj2/train" --result_dir="3d_models/AllButsubj1Trained" --is_3d=True
 #############
 
+#### TODO: DELETE THIS ###
+#python scripts/train.py --noise_level="all" \
+#    --train_data="data/subj2/train" --train_data="data/subj3/train" --train_data="data/subj4/train" \
+#    --train_data="data/subj5/train" --train_data="data/subj6/train" \
+#    --val_data="data/subj2/train" --result_dir="3d_models/AllButsubj1Trained"
+##########################
+
 ### SUBJ2 ###
 #printf "Training AllButsubj2Trained model...\n"
 #python scripts/train.py \

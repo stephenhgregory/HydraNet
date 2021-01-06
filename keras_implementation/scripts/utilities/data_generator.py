@@ -499,14 +499,14 @@ def get_lower_and_upper_percentile_stds(data_dir: str, lower_percentile: float, 
 
 
 def pair_3d_data_generator(root_dirs: str = join('data', 'Volume1', 'train'),
-                                         patch_size: Tuple[int, int, int] = (20, 20, 20), stride: int = 10,
-                                         scales: List[float] = [1, 0.9, 0.8, 0.7]) -> Tuple[np.ndarray, np.ndarray]:
+                           patch_size: Tuple[int, int, int] = (20, 20, 20), stride: int = 10,
+                           scales: List[float] = [1, 0.9, 0.8, 0.7]) -> Tuple[np.ndarray, np.ndarray]:
     """
     Provides a numpy array of training examples, given paths to (one or many) training directory
 
     Parameters
     ----------
-    root_dir: The path of the training data directory
+    root_dirs: A list of paths to training data directories
     patch_size: The size of each patches in pixels -> (patch_size, patch_size)
     stride: The stride with which to slide the patch-taking window
     scales: A list of scales at which we want to create image patches.
@@ -881,4 +881,5 @@ if __name__ == '__main__':
     # data = pair_data_generator_multiple_data_dirs(root_dirs=['../data/subj1/train', '../data/subj2/train'])
     # data = pair_data_generator(root_dir='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train')
     # data = pair_3d_data_generator(root_dir='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train')
-    data = pair_3d_data_generator_multiple_dirs(root_dirs=['/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train'])
+    data = pair_3d_data_generator_multiple_dirs(
+        root_dirs=['/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train'])
