@@ -136,7 +136,7 @@ def MyDnCNN(depth, filters=64, image_channels=1, use_batchnorm=True):
     return model
 
 
-def MyDenoiser(image_channels=1, num_blocks=4):
+def MyDenoiser(image_channels=1, num_blocks=15):
     """
     Complete implementation of MyDenoiser, a residual network using the Keras API.
 
@@ -153,7 +153,6 @@ def MyDenoiser(image_channels=1, num_blocks=4):
     '''Initial Setup'''
     # Initialize counter to keep track of current layer
     layer_index = 0
-
     # Set the number of filters (The number of output filters in the convolution)
     filters = 64
 
@@ -162,40 +161,31 @@ def MyDenoiser(image_channels=1, num_blocks=4):
     input_layer = Input(shape=(None, None, image_channels), name='Input' + str(layer_index))
     layer_index += 1
 
-    # Define Layer 1 -- Convolutional Layer (64 7x7 kernels) + ReLU activation function, and increment layer_index
+    # Define Layer 1 -- Convolutional Layer (64 7x7 kernels) + ReLU activation function
     x = Conv2D(filters=filters, kernel_size=(7, 7), strides=(1, 1), kernel_initializer='Orthogonal', padding='same',
                name='Conv' + str(layer_index))(input_layer)
-    layer_index += 1
     x = Activation('relu', name='ReLU' + str(layer_index))(x)
+    layer_index += 1
 
-    # Define Layer 2 -- Convolutional Layer (64 3x3 kernels) + ReLU activation function, and increment layer_index
+    # Define Layer 2 -- Convolutional Layer (64 3x3 kernels) + ReLU activation function
     x = Conv2D(filters=filters, kernel_size=(3, 3), strides=(1, 1), kernel_initializer='Orthogonal', padding='same',
                name='Conv' + str(layer_index))(x)
-    layer_index += 1
     x = Activation('relu', name='ReLU' + str(layer_index))(x)
+    layer_index += 1
 
     # Iterate through the rest of the (num_blocks) layers -- Repeatable Denoising Inception-Residual Block
     for i in range(num_blocks):
-
-        # Define Convolutional Layer
-        layer_index += 1
+        # Define Convolutional, BatchNormalization, and ReLU Activation Layers
         x = Conv2D(filters=filters, kernel_size=(3, 3), strides=(1, 1), kernel_initializer='Orthogonal', padding='same',
                    use_bias=False, name='Conv' + str(layer_index))(x)
-
-        # Define BatchNormalization layer
-        layer_index += 1
         x = BatchNormalization(axis=3, momentum=0.0, epsilon=0.0001, name='BatchNorm' + str(layer_index))(x)
-
-        # Define ReLU Activation Layer
-        layer_index += 1
         x = Activation('relu', name='ReLU' + str(layer_index))(x)
+        layer_index += 1
 
     # Define last layer -- Convolutional Layer and Subtraction Layer (input - noise)
-    layer_index += 1
     x = Conv2D(filters=image_channels, kernel_size=(3, 3), strides=(1, 1), kernel_initializer='Orthogonal',
                padding='same',
                use_bias=False, name='Conv' + str(layer_index))(x)
-    layer_index += 1
     x = Subtract(name='Subtract' + str(layer_index))([input_layer, x])
 
     # Finally, define the model

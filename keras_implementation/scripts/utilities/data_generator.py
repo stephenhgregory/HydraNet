@@ -201,7 +201,8 @@ def generate_3d_patch_pairs(clear_volume: np.ndarray, blurry_volume: np.ndarray,
     -------
     A tuple of a list of image patch volumes, (clear_patches, blurry_patches). TODO: Maybe add more documentation here
     """
-    # Make sure
+
+    # Make sure Clear Volume and Blurry Volume have the same shape
     assert (clear_volume.shape == blurry_volume.shape)
 
     # Get the volume, height, and width of the image TODO: Make sure we're sticking with (depth, height, width)

@@ -19,6 +19,7 @@ from utilities.data_generator import NoiseLevel
 
 # Allow memory growth for CUDA in order to fix a Tensorflow bug
 import tensorflow as tf
+
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
@@ -103,129 +104,6 @@ def new_lr_schedule(epoch):
     return lr
 
 
-def my_train_datagen_single_model(epoch_iter=2000,
-                                  num_epochs=5,
-                                  batch_size=128,
-                                  data_dir=args.train_data):
-    """
-    Generator function that yields training data samples from a specified data directory.
-    This is used to generate all patches at once regardless of the noise level.
-
-    :param epoch_iter: The number of iterations per epoch
-    :param num_epochs: The total number of epochs
-    :param batch_size: The number of training examples for each training iteration
-    :param data_dir: The directory in which training examples are stored
-
-    :return: Yields a training example x and noisy image y
-    """
-
-    # Loop the following indefinitely...
-    while True:
-        # Set a counter variable
-        counter = 0
-
-        # If this is the first iteration...
-        if counter == 0:
-            print(f'Accessing training data in: {data_dir}')
-
-            # If we are getting train data from one directory...
-            if len(data_dir) == 1:
-                # Get training examples from data_dir[0] using pair_data_generator
-                x, y = data_generator.pair_3d_data_generator(data_dir[0])
-
-            # Else, if we're getting data from multiple directories...
-            elif len(data_dir) > 1:
-                # Get training examples from data_dir using pair_data_generator_multiple_data_dirs
-                x, y = data_generator.pair_3d_data_generator_multiple_data_dirs(data_dir)
-
-            # Else, something is wrong - we don't have train data! Exit.
-            else:
-                sys.exit('ERROR: You didn\'t provide any data directories to train on!')
-
-            # Create lists to store all of the clear patches (x) and blurry patches (y)
-            x_filtered = []
-            y_filtered = []
-
-            # Iterate over all of the image patches
-            for x_patch, y_patch in zip(x, y):
-
-                # If the patch is black (i.e. the max px value < 10), just skip this training example
-                if np.max(x_patch) < 10:
-                    continue
-
-                # Add x_patch and y_patch to the list
-                x_filtered.append(x_patch)
-                y_filtered.append(y_patch)
-
-            # Convert image patches and stds into numpy arrays
-            x_filtered = np.array(x_filtered, dtype='uint8')
-            y_filtered = np.array(y_filtered, dtype='uint8')
-
-            # Remove elements from x_filtered and y_filtered so thatthey has the right number of patches
-            discard_n = len(x_filtered) - len(y_filtered) // batch_size * batch_size;
-            x_filtered = np.delete(x_filtered, range(discard_n), axis=0)
-            y_filtered = np.delete(y_filtered, range(discard_n), axis=0)
-
-            # Assert that the last iteration has a full batch size
-            assert len(x_filtered) % args.batch_size == 0, \
-                logger.log(
-                    'make sure the last iteration has a full batchsize, '
-                    'this is important if you use batch normalization!')
-            assert len(y_filtered) % args.batch_size == 0, \
-                logger.log(
-                    'make sure the last iteration has a full batchsize, '
-                    'this is important if you use batch normalization!')
-
-            # Standardize x and y to have a mean of 0 and standard deviation of 1
-            # NOTE: x and y px values are centered at 0, meaning there are negative px values. Most libraries have
-            # trouble visualizing px that aren't either from [0, 255] or [0, 1], so watch out for that
-            x_filtered, x_orig_mean, x_orig_std = image_utils.standardize(x_filtered)
-            y_filtered, y_orig_mean, y_orig_std = image_utils.standardize(y_filtered)
-
-            '''Just for logging
-            # Save the reversed standardization of x and y into variables
-            x_reversed = image_utils.reverse_standardize(x, x_orig_mean, x_orig_std)
-            y_reversed = image_utils.reverse_standardize(y, y_orig_mean, y_orig_std)
-            '''
-
-            # Get a list of indices, from 0 to the total number of training examples
-            indices = list(range(x_filtered.shape[0]))
-
-            # Make sure that x and y have the same number of training examples
-            assert indices == list(range(y_filtered.shape[0])), logger.log(
-                'Make sure x and y are paired up properly! That is, x'
-                'is a ClearImage, and y is a CoregisteredBlurryImage'
-                'but that the two frames match eachother. ')
-
-            # Increment the counter
-            counter = 1
-
-        # Iterate over the number of epochs
-        for _ in range(num_epochs):
-
-            # Shuffle the indices of the training examples
-            np.random.shuffle(indices)
-
-            # Iterate over the entire training set, skipping "batch_size" at a time
-            for i in range(0, len(indices), batch_size):
-                # Get the batch_x (clear) and batch_y (blurry)
-                batch_x = x_filtered[indices[i:i + batch_size]]
-                batch_y = y_filtered[indices[i:i + batch_size]]
-
-                '''Just logging 
-                # Get equivalently indexed batches from x_original, x_reversed, y_original, and y_reversed
-                batch_x_reversed = x_reversed[indices[i:i + batch_size]]
-                batch_y_reversed = y_reversed[indices[i:i + batch_size]]
-                
-                # Show some images from this batch
-                logger.show_images(images=[("batch_x[0]", batch_x[0]),
-                                         ("batch_x_reversed[0]", batch_x_reversed[0]),
-                                         ("batch_y[0]", batch_y[0]),
-                                         ("batch_y_reversed[0]", batch_y_reversed[0])])
-                '''
-
-                # Finally, yield x and y, as this function is a generator
-                yield batch_y, batch_x
 
 
 def my_train_datagen(epoch_iter=2000,
@@ -620,44 +498,52 @@ def main():
     # Compile the model
     model.compile(optimizer=Adam(0.001), loss=sum_squared_error)
 
-    if noise_level == NoiseLevel.ALL:
-        # Train the model on all noise levels
-        history = model.fit(my_train_datagen_single_model(batch_size=args.batch_size,
-                                                          data_dir=args.train_data),
-                            steps_per_epoch=2000,
-                            epochs=args.epoch,
-                            initial_epoch=initial_epoch,
-                            callbacks=get_callbacks())
-    elif noise_level == NoiseLevel.LOW:
-        # Train the model on the individual noise level
-        history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
-                                                                 data_dir=args.train_data,
-                                                                 low_psnr_threshold=30.0,
-                                                                 high_psnr_threshold=100.0),
-                            steps_per_epoch=2000,
-                            epochs=args.epoch,
-                            initial_epoch=initial_epoch,
-                            callbacks=get_callbacks())
-    elif noise_level == NoiseLevel.MEDIUM:
-        # Train the model on the individual noise level
-        history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
-                                                                 data_dir=args.train_data,
-                                                                 low_psnr_threshold=15.0,
-                                                                 high_psnr_threshold=40.0),
-                            steps_per_epoch=2000,
-                            epochs=args.epoch,
-                            initial_epoch=initial_epoch,
-                            callbacks=get_callbacks())
-    elif noise_level == NoiseLevel.HIGH:
-        # Train the model on the individual noise level
-        history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
-                                                                 data_dir=args.train_data,
-                                                                 low_psnr_threshold=0.0,
-                                                                 high_psnr_threshold=30.0),
-                            steps_per_epoch=2000,
-                            epochs=args.epoch,
-                            initial_epoch=initial_epoch,
-                            callbacks=get_callbacks())
+    # Train the model
+    history = model.fit(my_3d_train_datagen_single_model(batch_size=args.batch_size, data_dir=args.train_data),
+                        steps_per_epoch=2000,
+                        epochs = args.epoch,
+                        initial_epoch=initial_epoch,
+                        callbacks=get_callbacks())
+
+    #
+    # if noise_level == NoiseLevel.ALL:
+    #     # Train the model on all noise levels
+    #     history = model.fit(my_train_datagen_single_model(batch_size=args.batch_size,
+    #                                                       data_dir=args.train_data),
+    #                         steps_per_epoch=2000,
+    #                         epochs=args.epoch,
+    #                         initial_epoch=initial_epoch,
+    #                         callbacks=get_callbacks())
+    # elif noise_level == NoiseLevel.LOW:
+    #     # Train the model on the individual noise level
+    #     history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
+    #                                                              data_dir=args.train_data,
+    #                                                              low_psnr_threshold=30.0,
+    #                                                              high_psnr_threshold=100.0),
+    #                         steps_per_epoch=2000,
+    #                         epochs=args.epoch,
+    #                         initial_epoch=initial_epoch,
+    #                         callbacks=get_callbacks())
+    # elif noise_level == NoiseLevel.MEDIUM:
+    #     # Train the model on the individual noise level
+    #     history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
+    #                                                              data_dir=args.train_data,
+    #                                                              low_psnr_threshold=15.0,
+    #                                                              high_psnr_threshold=40.0),
+    #                         steps_per_epoch=2000,
+    #                         epochs=args.epoch,
+    #                         initial_epoch=initial_epoch,
+    #                         callbacks=get_callbacks())
+    # elif noise_level == NoiseLevel.HIGH:
+    #     # Train the model on the individual noise level
+    #     history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
+    #                                                              data_dir=args.train_data,
+    #                                                              low_psnr_threshold=0.0,
+    #                                                              high_psnr_threshold=30.0),
+    #                         steps_per_epoch=2000,
+    #                         epochs=args.epoch,
+    #                         initial_epoch=initial_epoch,
+    #                         callbacks=get_callbacks())
 
 
 if __name__ == '__main__':
