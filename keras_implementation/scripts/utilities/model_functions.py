@@ -1,6 +1,7 @@
 """Contains functions for creating Neural Nets using the Keras Function API"""
 
-from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, Activation, Subtract
+from tensorflow.keras.layers import Input, Conv2D, Conv3D, BatchNormalization, Activation, Subtract
+
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
 from tensorflow.keras.optimizers import Adam
@@ -28,22 +29,49 @@ def findLastCheckpoint(save_dir: str):
     return initial_epoch
 
 
-def My3dDenoiser(depth, filters=64, use_batchnorm=True):
+def My3dDenoiser(depth, num_filters=64, use_batchnorm=True):
     """
     Complete implementation of My3dDenoiser, a 3D residual CNN using TensorFlow.
 
     Parameters
     ----------
     depth: The total number of layers for the network
-    filters: The total number of convolutional kernels in each convolutional layer
+    num_filters: The total number of convolutional kernels in each convolutional layer
         of the network
     use_batchnorm: Whether or not the layers of the network should use batch normalization
 
-    :param depth:
-    :param filters:
-    :param use_batchnorm:
-    :return:
+    Returns
+    -------
+    A My3dDenoiser model, defined using TensorFlow 2 API
     """
+    layer_index = 2
+
+    # Layer 0 - The input layer (An entire brain scan)
+    input_layer = Input(shape=(None, None, None), name='Input')
+
+    # Layer 1 - Convolutional Layer + ReLU activation
+    x = Conv3D(filters=num_filters, kernel_size=(3, 3, 3), strides=(1, 1, 1), kernel_initializer='Orthogonal',
+               padding='same', name=f'Conv{layer_index}')(input_layer)
+    x = Activation('relu', name=f'ReLU{layer_index}')(x)
+
+    # Layer 2 through Layer (depth - 1)
+    for i in range(depth-2):
+        # Layer N - Convolutional Layer + (Optionally) BatchNorm + ReLU Activation
+        x = Conv3D(filters=num_filters, kernel_size=(3, 3, 3), strides=(1, 1, 1), kernel_initializer='Orthogonal',
+                   padding='same', use_bias=False, name=f'Conv{layer_index}')(x)
+        if use_batchnorm:
+            x = BatchNormalization(axis=4, momentum=0.0, epsilon=0.0001, name=f'BatchNorm{layer_index}')(x)
+        x = Activation('relu', name=f'ReLU{layer_index}')(x)
+        layer_index += 1
+
+    # Final Layer
+    x = Conv3D(filters=1, kernel_size=(3, 3, 3), strides=(1, 1, 1), kernel_initializer='Orthogonal', padding='same',
+               use_bias=False, name=f'Conv{layer_index}')(x)
+    x = Subtract(name=f'Subtract{layer_index}')([input_layer, x])
+
+    # Finally, define the model
+    return Model(inputs=input_layer, outputs=x)
+
 
 
 def MyDnCNN(depth, filters=64, image_channels=1, use_batchnorm=True):

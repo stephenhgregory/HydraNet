@@ -7,6 +7,7 @@ from os.path import join
 from typing import List, Tuple, Dict
 from utilities import image_utils
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
+from scipy.ndimage import zoom
 
 # Global variable definitions
 aug_times = 1
@@ -178,6 +179,60 @@ def generate_patches_from_file_name(file_name: str, patch_size: int = 40, stride
 #                 patches.append(patch)
 #
 #     return patches
+
+
+def generate_3d_patch_pairs(clear_volume: np.ndarray, blurry_volume: np.ndarray, patch_size: Tuple[int, int, int] = 40,
+                            stride: int = 10, scales: List[float] = [1., 0.9, 0.8, 0.7]) -> Tuple[List, List]:
+    """
+    Generates lists of image patch volume pairs from a set of 3d image volumes
+    (Not a generator)
+
+    Parameters
+    ----------
+    clear_volume: The clear image volume to generate patches from
+    blurry_volume: The blurry image volume to generate patches from
+    patch_size: The size of the image patch volumes to produce -> (depth, height, width)
+        TODO: Note that CV image dimension convention is (Channel, Height, Width) as opposed to (Height, Width, Channel)
+        TODO: Make sure we're sticking with that!
+    stride: The stride with which to sample the patch volume window
+    scales: A list of scales at which we want to create image patch volumes.
+
+    Returns
+    -------
+    A tuple of a list of image patch volumes, (clear_patches, blurry_patches). TODO: Maybe add more documentation here
+    """
+    # Make sure
+    assert (clear_volume.shape == blurry_volume.shape)
+
+    # Get the volume, height, and width of the image TODO: Make sure we're sticking with (depth, height, width)
+    depth, height, width = clear_volume.shape
+
+    # Store the patch volumes in a list
+    clear_patches = []
+    blurry_patches = []
+
+    # For each scale
+    for scale in scales:
+        # Get the scaled depth, height and width TODO: Make sure we're sticking with (depth, height, width)
+        depth_scaled, height_scaled, width_scaled = int(depth * scale), int(height * scale), int(width * scale)
+
+        # Rescale the images TODO: Make sure we're sticking with (depth, height, width)
+        clear_volume_scaled = zoom(clear_volume, (scale, scale, scale))
+        blurry_volume_scaled = zoom(blurry_volume, (scale, scale, scale))
+
+        # Extract patches TODO: Make sure we're sticking with (depth, height, width)
+        for i in range(0, depth_scaled - patch_size[0] + 1, stride):
+            for j in range(0, height_scaled - patch_size[1] + 1, stride):
+                for k in range(0, width_scaled - patch_size[2] + 1, stride):
+                    # Get the clear and blurry patches
+                    clear_patch = clear_volume_scaled[i:i + patch_size[0], j:j + patch_size[1], k:k + patch_size[2]]
+                    blurry_patch = blurry_volume_scaled[i:i + patch_size[0], j:j + patch_size[1], k:k + patch_size[2]]
+
+                    # Add the clear_patch and blurry_patch to clear_patches and blurry_patches, respectively
+                    clear_patches.append(clear_patch)
+                    blurry_patches.append(blurry_patch)
+
+    return clear_patches, blurry_patches
 
 
 def generate_patch_pairs(clear_image: np.ndarray, blurry_image: np.ndarray, patch_size: int = 40, stride: int = 10,
@@ -440,6 +495,112 @@ def get_lower_and_upper_percentile_stds(data_dir: str, lower_percentile: float, 
     stds = np.array(stds, dtype='float64')
 
     return np.percentile(stds, lower_percentile), np.percentile(stds, upper_percentile)
+
+
+def pair_3d_data_generator_multiple_dirs(root_dirs: str = join('data', 'Volume1', 'train'),
+                                         patch_size: Tuple[int, int, int] = (20, 20, 20), stride: int = 10,
+                                         scales: List[float] = [1, 0.9, 0.8, 0.7]) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Provides a numpy array of training examples, given paths to (one or many) training directory
+
+    Parameters
+    ----------
+    root_dir: The path of the training data directory
+    patch_size: The size of each patches in pixels -> (patch_size, patch_size)
+    stride: The stride with which to slide the patch-taking window
+    scales: A list of scales at which we want to create image patches.
+
+    Returns
+    -------
+    (clear_volume_patches, blurry_volume_patches)
+    """
+    all_clear_volume_patches = []
+    all_blurry_volume_patches = []
+
+    for root_dir in root_dirs:
+        # Obtain 3D image volumes
+        clear_image_volume = image_utils.get_3d_image_volume(image_dir=join(root_dir, 'ClearImages'))
+        blurry_image_volume = image_utils.get_3d_image_volume(image_dir=join(root_dir, 'CoregisteredBlurryImages'))
+
+        # Histogram equalize the blurry volume px distribution to match the clear image px distribution
+        blurry_image_volume = image_utils.hist_match(source=blurry_image_volume, template=clear_image_volume).astype(
+            'uint8')
+
+        # Generate clear and blurry patches from the clear and blurry images, respectively...
+        clear_volume_patches, blurry_volume_patches = generate_3d_patch_pairs(clear_volume=clear_image_volume,
+                                                                              blurry_volume=blurry_image_volume,
+                                                                              patch_size=patch_size, stride=stride,
+                                                                              scales=scales)
+
+        # Append the patches to clear_data and blurry_data
+        all_clear_volume_patches.append(clear_volume_patches)
+        all_blurry_volume_patches.append(blurry_volume_patches)
+
+    # Convert clear_patches and blurry_patches to numpy arrays of ints
+    all_clear_volume_patches = np.array(all_clear_volume_patches, dtype='uint8')
+    all_blurry_volume_patches = np.array(all_blurry_volume_patches, dtype='uint8')
+
+    # Reshape clear_data and blurry_data
+    all_clear_volume_patches = all_clear_volume_patches.reshape(
+        (all_clear_volume_patches.shape[0] * all_clear_volume_patches.shape[1],
+         all_clear_volume_patches.shape[2],
+         all_clear_volume_patches.shape[3],
+         all_clear_volume_patches.shape[4],
+         1
+         ))
+    all_blurry_volume_patches = all_blurry_volume_patches.reshape(
+        (all_blurry_volume_patches.shape[0] * all_blurry_volume_patches.shape[1],
+         all_blurry_volume_patches.shape[2],
+         all_blurry_volume_patches.shape[3],
+         all_blurry_volume_patches.shape[4],
+         1
+         ))
+
+    # Make sure that clear_data and blurry_data have the same shape
+    assert (len(clear_volume_patches) == len(blurry_volume_patches))
+
+    return all_clear_volume_patches, all_blurry_volume_patches
+
+
+def pair_3d_data_generator(root_dir: str = join('data', 'Volume1', 'train'),
+                           patch_size: Tuple[int, int, int] = (20, 20, 20), stride: int = 10,
+                           scales: List[float] = [1, 0.9, 0.8, 0.7]) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Provides a numpy array of training examples, given a path to a training directory
+
+    Parameters
+    ----------
+    root_dir: The path of the training data directory
+    patch_size: The size of each patches in pixels -> (patch_size, patch_size)
+    stride: The stride with which to slide the patch-taking window
+    scales: A list of scales at which we want to create image patches.
+
+    Returns
+    -------
+    (clear_volume_patches, blurry_volume_patches)
+    """
+    # Obtain 3D image volumes
+    clear_image_volume = image_utils.get_3d_image_volume(image_dir=join(root_dir, 'ClearImages'))
+    blurry_image_volume = image_utils.get_3d_image_volume(image_dir=join(root_dir, 'CoregisteredBlurryImages'))
+
+    # Histogram equalize the blurry volume px distribution to match the clear image px distribution
+    blurry_image_volume = image_utils.hist_match(source=blurry_image_volume, template=clear_image_volume).astype(
+        'uint8')
+
+    # Generate clear and blurry patches from the clear and blurry images, respectively...
+    clear_volume_patches, blurry_volume_patches = generate_3d_patch_pairs(clear_volume=clear_image_volume,
+                                                                          blurry_volume=blurry_image_volume,
+                                                                          patch_size=patch_size, stride=stride,
+                                                                          scales=scales)
+
+    # Convert clear_patches and blurry_patches to numpy arrays of ints
+    clear_volume_patches = np.array(clear_volume_patches, dtype='uint8')
+    blurry_volume_patches = np.array(blurry_volume_patches, dtype='uint8')
+
+    # Make sure that clear_data and blurry_data have the same shape
+    assert (len(clear_volume_patches) == len(blurry_volume_patches))
+
+    return clear_volume_patches, blurry_volume_patches
 
 
 def pair_data_generator(root_dir: str = join('data', 'Volume1', 'train'), image_format: ImageFormat = ImageFormat.PNG,
@@ -757,4 +918,7 @@ def pair_data_generator_multiple_data_dirs(root_dirs,
 
 
 if __name__ == '__main__':
-    data = pair_data_generator_multiple_data_dirs(root_dirs=['../data/subj1/train', '../data/subj2/train'])
+    # data = pair_data_generator_multiple_data_dirs(root_dirs=['../data/subj1/train', '../data/subj2/train'])
+    # data = pair_data_generator(root_dir='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train')
+    # data = pair_3d_data_generator(root_dir='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train')
+    data = pair_3d_data_generator_multiple_dirs(root_dirs=['/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train'])

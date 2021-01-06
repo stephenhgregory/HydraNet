@@ -1,5 +1,5 @@
 """
-This file contains various image augmentation functions
+Various image augmentation functions
 """
 
 import cv2
@@ -11,6 +11,7 @@ from skimage.restoration import denoise_nl_means, estimate_sigma
 from skimage.metrics import structural_similarity
 import matplotlib.pyplot as plt
 import seaborn as sns
+import re
 from typing import List
 
 
@@ -168,14 +169,17 @@ def reverse_standardize(x, original_mean, original_std):
     return restored_x
 
 
-def nlm_denoise_single_image(image):
+def nlm_denoise_single_image(image: np.ndarray) -> np.ndarray:
     """
     Applies Non-Local Means filtering to denoise an input image x
 
-    :param image: The input image to be denoised
-    :type image: numpy array
+    Parameters
+    ----------
+    image: The input image to be denoised
 
-    :return: The denoised image
+    Returns
+    -------
+    The denoised image
     """
 
     # Estimate the sigma (noise) value for the image
@@ -371,22 +375,73 @@ def get_residual(clear_image, blurry_image):
     return residual
 
 
-def hist_match(source, template):
+def get_3d_image_volume(image_dir: str) -> np.ndarray:
+    """
+
+    Parameters
+    ----------
+    image_dir: Directory containing image slices
+
+    Returns
+    -------
+    All images in image_dir concatenated together into a 3d image volume
+    """
+    images_and_numbers = []
+    # Iterate over the entire list of images
+    for i, file_name in enumerate(os.listdir(image_dir)):
+        if file_name.endswith('.jpg') or file_name.endswith('.png'):
+            # Open the image
+            image = cv2.imread(os.path.join(image_dir, file_name), 0)
+            # Get the number of the image
+            image_number = list(map(int, re.findall(r'\d+', file_name)))[0]
+            # Add a tuple containing the image and its number to the list of images
+            images_and_numbers.append((image, image_number))
+
+    # Sort the list of images and numbers by number
+    images_and_numbers = sorted(images_and_numbers, key=lambda x: x[1])
+    # Only get the images from the images and numbers list
+    images = np.array([image for image, number in images_and_numbers])
+    return images
+
+
+def get_3d_residual(clear_image_volume, blurry_image_volume):
+    """
+    Calculate the residual (difference) between a blurry image volume and a
+    matching clear image volume.
+
+    :param clear_image_volume: A clear image volume
+    :type clear_image_volume: numpy array
+    :param blurry_image_volume: A blurry image volume matching the above clear_image
+    :type blurry_image_volume: numpy array
+
+    :return: The residual difference between the clear image and blurry image
+    :rtype: numpy array
+    """
+
+    # Convert blurry_image and clear_image into 2 dimensional arrays -- from (x,x,x,1) to (x,x,x,)
+    blurry_image_volume = blurry_image_volume.reshape(blurry_image_volume.shape[0], blurry_image_volume.shape[1], blurry_image_volume.shape[2])
+    clear_image_volume = clear_image_volume.reshape(clear_image_volume.shape[0], clear_image_volume.shape[1], clear_image_volume.shape[2])
+
+    # Throw away the SSIM score and keep the residual between the two images
+    (_, residual) = structural_similarity(blurry_image_volume, clear_image_volume, full=True)
+
+    return residual
+
+
+def hist_match(source: np.ndarray, template: np.ndarray) -> np.ndarray:
     """
     Adjust the pixel values of a grayscale image such that its histogram
     matches that of a target image
 
-    Arguments:
+    Parameters:
     -----------
-        source: np.ndarray
-            Image to transform; the histogram is computed over the flattened
-            array
-        template: np.ndarray
-            Template image; can have different dimensions to source
+    source: Image to transform; the histogram is computed over the flattened
+        array
+    template: Template image; can have different dimensions to source
+
     Returns:
     -----------
-        matched: np.ndarray
-            The transformed output image
+    matched: The transformed output image
     """
 
     # get the original shape of the source images
@@ -429,8 +484,6 @@ def from_tensor(img):
     return np.squeeze(np.moveaxis(img[..., 0], 0, -1))
 
 
-
-# if __name__ == "__main__":
-#     png_folder = ''
-#     output_file_name = 'denoised_subj6'
-#     pngs_to_nii(png_folder, output_file_name)
+if __name__ == "__main__":
+    image_folder = '/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj4/ClearImages'
+    image_volume = get_3d_image_volume(image_dir=image_folder)
