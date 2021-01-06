@@ -5,6 +5,9 @@ Main script used to train HydraNet
 from deprecated import deprecated
 import argparse
 import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow logging (1)
+import tensorflow as tf
 import sys
 import numpy as np
 from skimage.metrics import peak_signal_noise_ratio
@@ -16,10 +19,22 @@ from typing import List
 from utilities import data_generator, logger, model_functions, image_utils
 from utilities.data_generator import NoiseLevel
 
-# Allow memory growth for CUDA in order to fix a Tensorflow bug
-import tensorflow as tf
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(physical_devices[0], True)
+'''GPU Settings for CUDA'''
+### Option A: ###
+# Set specific memory limit for the GPU
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        tf.config.experimental.set_virtual_device_configuration(gpus[0], [
+            tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)])
+    except RuntimeError as e:
+        print(e)
+#################
+### Option B: ###
+# # Allow memory growth for CUDA in order to fix a Tensorflow bug
+# physical_devices = tf.config.experimental.list_physical_devices('GPU')
+# tf.config.experimental.set_memory_growth(physical_devices[0], True)
+#################
 
 # Command-line parameters
 parser = argparse.ArgumentParser()
@@ -125,7 +140,7 @@ def my_train_datagen_single_model(epoch_iter: int = 2000,
     Yields a training example x and a noisy example y
     """
     # Make sure we don't have an empty set of data directories
-    assert(len(data_dir)) > 0
+    assert (len(data_dir)) > 0
 
     # Loop the following indefinitely...
     while True:

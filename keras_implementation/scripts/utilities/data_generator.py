@@ -541,8 +541,12 @@ def pair_3d_data_generator(root_dirs: str = join('data', 'Volume1', 'train'),
     all_clear_volume_patches = np.array(all_clear_volume_patches, dtype='uint8')
     all_blurry_volume_patches = np.array(all_blurry_volume_patches, dtype='uint8')
 
+    # Extend the dimensionality of the patches by adding a new dimension
+    all_clear_volume_patches = all_clear_volume_patches[..., np.newaxis]
+    all_blurry_volume_patches = all_blurry_volume_patches[..., np.newaxis]
+
     # Make sure that clear_data and blurry_data have the same shape
-    assert (all_clear_volume_patches.shape == blurry_volume_patches.shape)
+    assert (all_clear_volume_patches.shape == all_blurry_volume_patches.shape)
 
     return all_clear_volume_patches, all_blurry_volume_patches
 
@@ -835,7 +839,7 @@ def pair_data_generator_multiple_data_dirs(root_dirs,
     clear_data = np.array(clear_data, dtype='uint8')
     blurry_data = np.array(blurry_data, dtype='uint8')
 
-    # Reshape clear_data, blurry_data, and std_data
+    # Reshape clear_data and blurry_data
     clear_data = clear_data.reshape((clear_data.shape[0] * clear_data.shape[1],
                                      clear_data.shape[2],
                                      clear_data.shape[3],
