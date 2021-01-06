@@ -680,20 +680,20 @@ def train_3d():
     # Print a summary of the model to the console
     model.summary()
     # Load the last model
-    initial_epoch = model_functions.findLastCheckpoint(save_dir=save_dir)
-    if initial_epoch > 0:
-        print('resuming by loading epoch %03d' % initial_epoch)
-        model = load_model(os.path.join(save_dir, 'model_%03d.hdf5' % initial_epoch), compile=False)
-    # Compile the model
-    model.compile(optimizer=Adam(0.001), loss=sum_squared_error)
-
-    # Train the model
-    history = model.fit(my_train_datagen_single_model(batch_size=args.batch_size,
-                                                      data_dir=args.train_data, is_3d=True),
-                        steps_per_epoch=2000,
-                        epochs=args.epoch,
-                        initial_epoch=initial_epoch,
-                        callbacks=get_callbacks())
+    # initial_epoch = model_functions.findLastCheckpoint(save_dir=save_dir)
+    # if initial_epoch > 0:
+    #     print('resuming by loading epoch %03d' % initial_epoch)
+    #     model = load_model(os.path.join(save_dir, 'model_%03d.hdf5' % initial_epoch), compile=False)
+    # # Compile the model
+    # model.compile(optimizer=Adam(0.001), loss=sum_squared_error)
+    #
+    # # Train the model
+    # history = model.fit(my_train_datagen_single_model(batch_size=args.batch_size,
+    #                                                   data_dir=args.train_data, is_3d=True),
+    #                     steps_per_epoch=2000,
+    #                     epochs=args.epoch,
+    #                     initial_epoch=initial_epoch,
+    #                     callbacks=get_callbacks())
 
 
 if __name__ == '__main__':

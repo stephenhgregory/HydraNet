@@ -47,12 +47,12 @@ def My3dDenoiser(depth, num_filters=64, use_batchnorm=True):
     layer_index = 2
 
     # Layer 0 - The input layer (An entire brain scan)
-    input_layer = Input(shape=(None, None, None), name='Input')
+    input_layer = Input(shape=(None, None, None, 1), name='Input')
 
     # Layer 1 - Convolutional Layer + ReLU activation
     x = Conv3D(filters=num_filters, kernel_size=(3, 3, 3), strides=(1, 1, 1), kernel_initializer='Orthogonal',
-               padding='same', name=f'Conv{layer_index}')(input_layer)
-    x = Activation('relu', name=f'ReLU{layer_index}')(x)
+               padding='same', name=f'Conv1')(input_layer)
+    x = Activation('relu', name=f'ReLU1')(x)
 
     # Layer 2 through Layer (depth - 1)
     for i in range(depth-2):
@@ -71,7 +71,6 @@ def My3dDenoiser(depth, num_filters=64, use_batchnorm=True):
 
     # Finally, define the model
     return Model(inputs=input_layer, outputs=x)
-
 
 
 def MyDnCNN(depth, filters=64, image_channels=1, use_batchnorm=True):
