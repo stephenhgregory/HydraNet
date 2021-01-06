@@ -12,8 +12,7 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
 from tensorflow.keras.optimizers import Adam
 import tensorflow.keras.backend as K
-
-# This is for running normally, where the root directory is MyDenoiser/keras_implementation
+from typing import List
 from utilities import data_generator, logger, model_functions, image_utils
 from utilities.data_generator import NoiseLevel
 
@@ -103,21 +102,29 @@ def new_lr_schedule(epoch):
     return lr
 
 
-def my_train_datagen_single_model(epoch_iter=2000,
-                                  num_epochs=5,
-                                  batch_size=128,
-                                  data_dir=args.train_data):
+def my_train_datagen_single_model(epoch_iter: int = 2000,
+                                  num_epochs: int = 5,
+                                  batch_size: int = 128,
+                                  data_dir: List[str] = args.train_data,
+                                  is_3d: bool = False):
     """
     Generator function that yields training data samples from a specified data directory.
     This is used to generate all patches at once regardless of the noise level.
 
-    :param epoch_iter: The number of iterations per epoch
-    :param num_epochs: The total number of epochs
-    :param batch_size: The number of training examples for each training iteration
-    :param data_dir: The directory in which training examples are stored
+    Parameters
+    ----------
+    epoch_iter: The number of iterations per epoch
+    num_epochs: The total number of epochs
+    batch_size: The number of training examples for each training iteration
+    data_dir: The directory in which training examples are stored
+    is_3d:
 
-    :return: Yields a training example x and noisy image y
+    Returns
+    -------
+    Yields a training example x and a noisy example y
     """
+    # Make sure we don't have an empty set of data directories
+    assert(len(data_dir)) > 0
 
     # Loop the following indefinitely...
     while True:
@@ -128,19 +135,14 @@ def my_train_datagen_single_model(epoch_iter=2000,
         if counter == 0:
             print(f'Accessing training data in: {data_dir}')
 
-            # If we are getting train data from one directory...
-            if len(data_dir) == 1:
-                # Get training examples from data_dir[0] using pair_data_generator
-                x, y = data_generator.pair_data_generator(data_dir[0])
-
-            # Else, if we're getting data from multiple directories...
-            elif len(data_dir) > 1:
-                # Get training examples from data_dir using pair_data_generator_multiple_data_dirs
-                x, y = data_generator.pair_data_generator_multiple_data_dirs(data_dir)
-
-            # Else, something is wrong - we don't have train data! Exit.
+            '''Load training data'''
+            if is_3d:
+                x, y = data_generator.pair_3d_data_generator(data_dir)
             else:
-                sys.exit('ERROR: You didn\'t provide any data directories to train on!')
+                if len(data_dir) == 1:
+                    x, y = data_generator.pair_data_generator(data_dir[0])
+                elif len(data_dir) > 1:
+                    x, y = data_generator.pair_data_generator_multiple_data_dirs(data_dir)
 
             # Create lists to store all of the clear patches (x) and blurry patches (y)
             x_filtered = []
@@ -686,69 +688,16 @@ def train_3d():
     # Compile the model
     model.compile(optimizer=Adam(0.001), loss=sum_squared_error)
 
-
-
-    # Select the type of model to use
-    if args.model == 'MyDnCNN':
-        # Create a MyDnCNN model
-        model = model_functions.MyDnCNN(depth=17, filters=64, image_channels=1, use_batchnorm=True)
-    elif args.model == 'MyDenoiser':
-        # Create a MyDenoiser model
-        model = model_functions.MyDenoiser(image_channels=1, num_blocks=4)
-
-    # Print a summary of the model
-    model.summary()
-
-    # Load the last model
-    initial_epoch = model_functions.findLastCheckpoint(save_dir=save_dir)
-    if initial_epoch > 0:
-        print('resuming by loading epoch %03d' % initial_epoch)
-        model = load_model(os.path.join(save_dir, 'model_%03d.hdf5' % initial_epoch), compile=False)
-
-    # Compile the model
-    model.compile(optimizer=Adam(0.001), loss=sum_squared_error)
-
-    if noise_level == NoiseLevel.ALL:
-        # Train the model on all noise levels
-        history = model.fit(my_train_datagen_single_model(batch_size=args.batch_size,
-                                                          data_dir=args.train_data),
-                            steps_per_epoch=2000,
-                            epochs=args.epoch,
-                            initial_epoch=initial_epoch,
-                            callbacks=get_callbacks())
-    elif noise_level == NoiseLevel.LOW:
-        # Train the model on the individual noise level
-        history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
-                                                                 data_dir=args.train_data,
-                                                                 low_psnr_threshold=30.0,
-                                                                 high_psnr_threshold=100.0),
-                            steps_per_epoch=2000,
-                            epochs=args.epoch,
-                            initial_epoch=initial_epoch,
-                            callbacks=get_callbacks())
-    elif noise_level == NoiseLevel.MEDIUM:
-        # Train the model on the individual noise level
-        history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
-                                                                 data_dir=args.train_data,
-                                                                 low_psnr_threshold=15.0,
-                                                                 high_psnr_threshold=40.0),
-                            steps_per_epoch=2000,
-                            epochs=args.epoch,
-                            initial_epoch=initial_epoch,
-                            callbacks=get_callbacks())
-    elif noise_level == NoiseLevel.HIGH:
-        # Train the model on the individual noise level
-        history = model.fit(my_train_datagen_estimated_with_psnr(batch_size=args.batch_size,
-                                                                 data_dir=args.train_data,
-                                                                 low_psnr_threshold=0.0,
-                                                                 high_psnr_threshold=30.0),
-                            steps_per_epoch=2000,
-                            epochs=args.epoch,
-                            initial_epoch=initial_epoch,
-                            callbacks=get_callbacks())
-
+    # Train the model
+    history = model.fit(my_train_datagen_single_model(batch_size=args.batch_size,
+                                                      data_dir=args.train_data, is_3d=True),
+                        steps_per_epoch=2000,
+                        epochs=args.epoch,
+                        initial_epoch=initial_epoch,
+                        callbacks=get_callbacks())
 
 
 if __name__ == '__main__':
     # Run the main function
-    main()
+    # train()
+    train_3d()
