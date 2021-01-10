@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import re
 from typing import List, Tuple
+from collections import namedtuple
 
 
 def save_image(x, save_dir_name, save_file_name):
@@ -351,7 +352,10 @@ def plot_standard_deviations(stds):
     plt.show()
 
 
-def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]]) -> None:
+# def plot_psnr_comparisons(psnr_comparisons: List[namedtuple('PsnrComparisonTuple', ['true', 'predicted'])],
+#                           plot_type: str = "scatterplot") -> None:
+
+def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], plot_type: str = "scatterplot") -> None:
     """
     Plots PSNR estimates for a list of patches compared to the true PSNRs
 
@@ -365,6 +369,43 @@ def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]]) -> None:
     -------
     None
     """
+    # Extract the relevant lists from psnr_comparisons
+    # true_psnrs = [comparison.true for comparison in psnr_comparisons]
+    # predicted_psnrs = [comparison.predicted for comparison in psnr_comparisons]
+    # psnr_differences = [comparison.true - comparison.predicted for comparison in psnr_comparisons]
+
+    true_psnrs = [comparison[0] for comparison in psnr_comparisons]
+    predicted_psnrs = [comparison[1] for comparison in psnr_comparisons]
+    psnr_differences = [comparison[0] - comparison[1] for comparison in psnr_comparisons]
+
+    # Convert these lists into numpy arrays
+    true_psnrs = np.array(true_psnrs)
+    predicted_psnrs = np.array(predicted_psnrs)
+    psnr_differences = np.array(psnr_differences)
+
+    # If we wish to show a scatterplot of true vs. predicted PSNRs
+    if plot_type == "scatterplot":
+        # Seaborn scatterplot
+        sns.scatterplot(x=true_psnrs, y=predicted_psnrs)
+        # Add labels
+        plt.title('True PSNR of training patches and Predicted PSNR (PSNR of closest patch)')
+        plt.xlabel('True PSNRs')
+        plt.ylabel('Predicted PSNRs')
+        # Show the plot
+        plt.show()
+
+    # IF we wish to show a histogram of errors in PSNR estimations
+    elif plot_type == "histogram":
+        # seaborn histogram
+        sns.histplot(psnr_differences, hist=True, kde=False, stat="probability",
+                     bins=int(20), color='blue',
+                     hist_kws={'edgecolor': 'black'})
+        # Add labels
+        plt.title('Histogram of PSNR Prediction error')
+        plt.xlabel('Residual Standard Deviation')
+        plt.ylabel('Patches')
+        plt.show()
+
     pass
 
 

@@ -12,6 +12,7 @@ import copy
 from utilities import data_generator, logger, image_utils
 from utilities.image_utils import plot_psnr_comparisons
 from typing import Dict, Tuple, List
+from tqdm import tqdm
 
 # Command-line parameters
 parser = argparse.ArgumentParser()
@@ -20,11 +21,11 @@ parser.add_argument('--reference_data', default='subj1_coregistered_data/subj2',
                     help='path to data used to reference '
                          'training patches')
 parser.add_argument("--lower_psnr_threshold", default=20., type=float, help='lower threshold used to separate patches '
-                                                                          'into low, medium, and high noise '
-                                                                          'categories')
+                                                                            'into low, medium, and high noise '
+                                                                            'categories')
 parser.add_argument("--upper_psnr_threshold", default=35., type=float, help='upper threshold used to separate patches '
-                                                                          'into low, medium, and high noise '
-                                                                          'categories')
+                                                                            'into low, medium, and high noise '
+                                                                            'categories')
 args = parser.parse_args()
 
 # Initialize global variable to keep track of # of patches per noise level
@@ -63,7 +64,8 @@ def compare_to_closest_training_patch_with_statistics(patch: np.ndarray, trainin
 
     for i in range(len(training_patches_with_statistics["y"])):
         # First, reshape training_patch and patch to get the ssim
-        training_patch = training_patches_with_statistics["y"][i].reshape(training_patches_with_statistics["y"][i].shape[0], training_patches_with_statistics["y"][i].shape[1])
+        training_patch = training_patches_with_statistics["y"][i].reshape(
+            training_patches_with_statistics["y"][i].shape[0], training_patches_with_statistics["y"][i].shape[1])
         patch = patch.reshape(patch.shape[0], patch.shape[1])
         if comparison_metric == 'psnr':
             # Get the PSNR between y_patch and y_low_noise_patch
@@ -80,9 +82,13 @@ def compare_to_closest_training_patch_with_statistics(patch: np.ndarray, trainin
     return max_score, max_patch_psnr
 
 
-def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_original_mean: float, x_original_std: float,
+# def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_original_mean: float, x_original_std: float,
+#                                          y_original_mean: float, y_original_std: float,
+#                                          training_patches: Dict = None) -> List[namedtuple('PsnrComparisonTuple', ['true', 'predicted'])]:
+def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_original_mean: float,
+                                         x_original_std: float,
                                          y_original_mean: float, y_original_std: float,
-                                         training_patches: Dict = None) -> List[namedtuple()]:
+                                         training_patches: Dict = None) -> List[Tuple[float, float]]:
     """
     Takes an input image and denoises it using a patch-based approach
 
@@ -165,8 +171,9 @@ def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_origina
             psnr_x = peak_signal_noise_ratio(reversed_x_patch, reversed_y_patch)
 
             # Add the closest patch PSNR and actual PSNR to lists to keep track of them
-            PsnrComparisonTuple = namedtuple('PsnrComparisonTuple', ['true', 'predicted'])
-            psnr_comparisons.append(PsnrComparisonTuple(true=psnr_x, predicted=closest_patch_psnr))
+            # PsnrComparisonTuple = namedtuple('PsnrComparisonTuple', ['true', 'predicted'])
+            # psnr_comparisons.append(PsnrComparisonTuple(true=psnr_x, predicted=closest_patch_psnr))
+            psnr_comparisons.append((psnr_x, closest_patch_psnr))
 
             # Keep track of total patches called per each category
             total_patches_per_category[max_ssim_category] += 1
@@ -175,7 +182,6 @@ def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_origina
 
 
 def main():
-
     reference_data = "/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/subj1_coregistered_data/subj2/train"
     test_data = "/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/subj1_coregistered_data/subj1/train"
     lower_psnr_threshold = 20.
@@ -192,7 +198,8 @@ def main():
     psnr_comparisons = []
 
     # Iterate over all of the test images from test_data
-    for image_name in os.listdir(os.path.join(test_data, 'CoregisteredBlurryImages')):
+    image_names = os.listdir(os.path.join(test_data, 'CoregisteredBlurryImages'))
+    for image_name in tqdm(image_names):
         if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
             # 1. Load the Clear Image x (as grayscale), and standardize the pixel values, and..
             # 2. Save the original mean and standard deviation of x
@@ -213,8 +220,6 @@ def main():
                                                                          training_patches=training_patches))
 
     plot_psnr_comparisons(psnr_comparisons)
-
-    print(psnr_comparisons)
 
 
 if __name__ == "__main__":
