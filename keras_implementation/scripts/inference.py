@@ -246,10 +246,15 @@ def compare_to_closest_training_patch(patch: np.ndarray, training_patches: np.nd
     the one with max similarity. Returns the similarity between the given image patch and that chosen
     training patch.
 
-    :param patch: The patch to find a closest match to
-    :param training_patches: The set of training patches to compare the input patch with
-    :param comparison_metric: If 'ssim', we find max SSIM, otherwise, if 'psnr', we find max PSNR
-    :return: The PSNR or SSIM between the input patch and the closest match in training_patches
+    Parameters
+    ----------
+    patch: The patch to find a closest match to
+    training_patches: The set of training patches to compare the input patch with
+    comparison_metric: If 'ssim', we find max SSIM, otherwise, if 'psnr', we find max PSNR
+
+    Returns
+    -------
+    The PSNR or SSIM between the input patch and the closest match in training_patches
     """
     max_score = 0
     for training_patch in training_patches:

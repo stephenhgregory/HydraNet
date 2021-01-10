@@ -1,0 +1,206 @@
+"""Analyzes the effectivess of different patch similarity metrics in esimating the noise level of a patch"""
+
+import argparse
+import sys
+import os
+import numpy as np
+from skimage.metrics import peak_signal_noise_ratio, structural_similarity
+from skimage.io import imread
+import cv2
+import copy
+from utilities import data_generator, logger, image_utils
+from typing import Dict, Tuple, List
+
+# Command-line parameters
+parser = argparse.ArgumentParser()
+parser.add_argument('--test_data', action='append', default=[], type=str, help='path to test data')
+parser.add_argument('--reference_data', action='append', default=[], type=str, help='path to data used to reference '
+                                                                                    'training patches')
+parser.add_argument("lower_psnr_threshold", default=20., type=float, help='lower threshold used to separate patches '
+                                                                          'into low, medium, and high noise '
+                                                                          'categories')
+parser.add_argument("upper_psnr_threshold", default=35., type=float, help='upper threshold used to separate patches '
+                                                                          'into low, medium, and high noise '
+                                                                          'categories')
+parser.add_argument('--save_dir', default=None, type=str, help='directory in which to save pyplot')
+args = parser.parse_args()
+
+# Initialize global variable to keep track of # of patches per noise level
+total_patches_per_category = {
+    'low': 0,
+    'medium': 0,
+    'high': 0
+}
+
+
+def compare_to_closest_training_patch_with_statistics(patch: np.ndaray, training_patches_with_statistics: np.ndarray,
+                                                      comparison_metric: str = 'ssim') -> Tuple[float, float]:
+    """
+    Takes an image patch and compares it with all patches in a given set of training patches to find
+    the one with max similarity. Returns the similarity between the given image patch and that chosen
+    training patch.
+
+    Parameters
+    ----------
+    patch: The patch to find a closest match to
+    training_patches_with_statistics: The set of training patches to compare the input patch with.
+        These training patches include the PSNR with their respective clear images.
+    comparison_metric: If 'ssim', we find max SSIM, otherwise, if 'psnr', we find max PSNR
+
+    Returns
+    -------
+    The PSNR or SSIM between the input patch and the closest match in training_patches, as well as the PSNR of the
+        chosen closest training patch with respect to its true, clear patch counterpart
+    """
+    max_score = 0
+    for training_patch, psnr in training_patches_with_statistics:
+        # First, reshape training_patch and patch to get the ssim
+        training_patch = training_patch.reshape(training_patch.shape[0], training_patch.shape[1])
+        patch = patch.reshape(patch.shape[0], patch.shape[1])
+        if comparison_metric == 'psnr':
+            # Get the PSNR between y_patch and y_low_noise_patch
+            score = peak_signal_noise_ratio(patch, training_patch)
+        elif comparison_metric == 'ssim':
+            # Get the SSIM between y_patch and y_low_noise_patch
+            score = structural_similarity(training_patch, patch)
+        # Then, reshape the input patch back
+        patch = patch.reshape(patch.shape[0], patch.shape[1], 1)
+        # If it's greater than the max, update the max
+        if score > max_score:
+            max_score = score
+            max_patch_psnr = psnr
+    return max_score, max_patch_psnr
+
+
+def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_original_mean: float, x_original_std: float,
+                                         y_original_mean: float, y_original_std: float,
+                                         training_patches_with_statistics: Dict = None) -> List[Tuple]:
+    """
+    Takes an input image and denoises it using a patch-based approach
+
+    Parameters
+    ----------
+    y: The input image to denoise
+    x: The ground truth, high SNR patch
+    x_original_mean: The original mean px value of the image that the patch x is part of, which was used to
+                            standardize the image
+    x_original_std: The original standard deviation px value of the image that the patch x is part of, which was
+                            used to standardize the image
+    y_original_mean: The original mean px value of the image that the patch y is part of, which was used to
+                            standardize the image
+    y_original_std: The original standard deviation px value of the image that the patch y is part of, which was
+                            used to standardize the image
+    training_patches_with_statistics: A nested dictionary of training patches and their residual stds
+        TODO: This is inaccurate, fix this documentation
+
+    Returns
+    -------
+    psnr_comparisons: A list of tuples, each of which contains (psnr_x, closest_patch_psnr)
+    """
+    # First, create a denoised x_pred to INITIALLY be a deep copy of y. Then we will modify x_pred in place
+    x_pred = copy.deepcopy(y)
+
+    psnr_comparisons = []
+
+    # Loop over the indices of y to get 40x40 patches from y
+    for i in range(0, len(y[0]), 40):
+        for j in range(0, len(y[1]), 40):
+
+            # If the patch does not 'fit' within the dimensions of y, skip this and do not denoise
+            if i + 40 > len(y[0]) or j + 40 > len(y[1]):
+                continue
+
+            # Get the (40, 40) patch, make a copy as a tensor, and then reshape the original to be a (40, 40, 1) patch
+            y_patch = y[i:i + 40, j:j + 40]
+            y_patch_tensor = image_utils.to_tensor(y_patch)
+            y_patch = y_patch.reshape(y_patch.shape[0], y_patch.shape[1], 1)
+
+            '''Iterate over all of the training patches to get the training patch with the highest 
+            SSIM compared to y_patch. Then, use the category of that training image to determine 
+            which model to use to denoise this patch'''
+
+            # Get the Max SSIM value and between y_patch and the most similar x in every category, as well as the PSNR
+            # of each of those most similar x patches
+            reversed_y_patch = image_utils.reverse_standardize(y_patch, y_original_mean, y_original_std)
+            low_max_ssim, low_closest_patch_psnr = compare_to_closest_training_patch_with_statistics(reversed_y_patch,
+                                                                                                     training_patches_with_statistics[
+                                                                                                         "low_noise"][
+                                                                                                         "y"],
+                                                                                                     comparison_metric='ssim')
+            medium_max_ssim, medium_closest_patch_psnr = compare_to_closest_training_patch_with_statistics(
+                reversed_y_patch,
+                training_patches_with_statistics[
+                    "medium_noise"][
+                    "y"],
+                comparison_metric='ssim')
+            high_max_ssim, high_closest_patch_psnr = compare_to_closest_training_patch_with_statistics(reversed_y_patch,
+                                                                                                       training_patches_with_statistics[
+                                                                                                           "high_noise"][
+                                                                                                           "y"],
+                                                                                                       comparison_metric='ssim')
+
+            # Get the overall max_ssim and PSNR of the closest patch from those above categorical maxes
+            max_ssim_category = ''
+            closest_patch_psnr = 0.
+            max_ssim = max([low_max_ssim, medium_max_ssim, high_max_ssim])
+            if max_ssim == high_max_ssim:
+                max_ssim_category = 'high'
+                closest_patch_psnr = high_closest_patch_psnr
+            elif max_ssim == medium_max_ssim:
+                max_ssim_category = 'medium'
+                closest_patch_psnr = medium_closest_patch_psnr
+            elif max_ssim == low_max_ssim:
+                max_ssim_category = 'low'
+                closest_patch_psnr = low_closest_patch_psnr
+
+            # Reverse the standardization of x and x_pred (we actually don't need y at this point, only for logging)
+            x = image_utils.reverse_standardize(x, original_mean=x_original_mean, original_std=x_original_std)
+            x_pred = image_utils.reverse_standardize(x_pred, original_mean=x_original_mean, original_std=x_original_std)
+
+            # Get the actual PSNR for x
+            psnr_x = peak_signal_noise_ratio(x, reversed_y_patch)
+
+            # Add the closest patch PSNR and actual PSNR to lists to keep track of them
+            psnr_comparisons.append((psnr_x, closest_patch_psnr))
+
+            # Keep track of total patches called per each category
+            total_patches_per_category[max_ssim_category] += 1
+
+    return psnr_comparisons
+
+
+def main():
+    # Get our training data to use for determining which denoising network to send each patch through
+    training_patches_with_statistics = data_generator.retrieve_train_data(args.reference_data,
+                                                                          low_noise_threshold=args.lower_psnr_threshold,
+                                                                          high_noise_threshold=args.upper_psnr_threshold,
+                                                                          skip_every=3,
+                                                                          patch_size=40,
+                                                                          stride=20, scales=[1])
+
+    psnr_comparisons = []
+
+    # Iterate over all of the test images from test_data
+    for image_name in os.listdir(os.path.join(args.test_data, 'CoregisteredBlurryImages')):
+        if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
+            # 1. Load the Clear Image x (as grayscale), and standardize the pixel values, and..
+            # 2. Save the original mean and standard deviation of x
+            x, x_orig_mean, x_orig_std = image_utils.standardize(imread(os.path.join(args.test_data,
+                                                                                     'ClearImages',
+                                                                                     str(image_name)), 0))
+
+            # Load the Coregistered Blurry Image y (as grayscale), and standardize the pixel values, and...
+            # 2. Save the original mean and standard deviation of y
+            y, y_orig_mean, y_orig_std = image_utils.standardize(imread(os.path.join(args.test_data,
+                                                                                     'CoregisteredBlurryImages',
+                                                                                     str(image_name)), 0))
+
+            psnr_comparisons.extend(estimate_noise_statistics_by_patches(y=y, x=x, x_original_mean=x_orig_mean,
+                                                                         x_original_std=x_orig_std,
+                                                                         y_original_mean=y_orig_mean,
+                                                                         y_original_std=y_orig_std,
+                                                                         training_patches_with_statistics=training_patches_with_statistics))
+
+
+if __name__ == "__main__":
+    main()
