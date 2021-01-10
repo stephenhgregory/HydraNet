@@ -12,7 +12,7 @@ from skimage.metrics import structural_similarity
 import matplotlib.pyplot as plt
 import seaborn as sns
 import re
-from typing import List
+from typing import List, Tuple
 
 
 def save_image(x, save_dir_name, save_file_name):
@@ -349,6 +349,23 @@ def plot_standard_deviations(stds):
     plt.xlabel('Residual Standard Deviation')
     plt.ylabel('Patches')
     plt.show()
+
+
+def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]]) -> None:
+    """
+    Plots PSNR estimates for a list of patches compared to the true PSNRs
+
+    Parameters
+    ----------
+    psnr_comparisons: Contains the actual PSNR of each patch as well as the predicted PSNR of the patch.
+        This predicted PSNR is measured as the actual PSNR of the closest patch.
+        The order of the datatype is List[Tuple[actual_psnr, predicted_psnr]]
+
+    Returns
+    -------
+    None
+    """
+    pass
 
 
 def get_residual(clear_image, blurry_image):

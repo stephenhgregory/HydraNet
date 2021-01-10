@@ -209,6 +209,9 @@ def apply_masks_to_volume(root_dir):
             blurry_image = cv2.imread(join(blurry_image_dir, file_name), 0)
             mask_image = cv2.imread(join(mask_dir, file_name), 0)
 
+            if type(blurry_image) is None:
+                pass
+
             # Apply the mask to the clear image AND the blurry image
             clear_image_masked = clear_image * (mask_image // 255)
             blurry_image_masked = blurry_image * (mask_image // 255)
@@ -368,7 +371,7 @@ def populate_train_test_val_dirs_randomly(root_dir=(os.getcwd()), val_ratio=0.15
 
 if __name__ == "__main__":
     # Get the root directory by going "up" two directories
-    rootdir = Path(__file__).resolve().parents[1]
+    rootdir = Path(__file__).resolve().parents[2]
 
     # Pass that root directory to the main function
-    main(root_dir=join(rootdir, 'data'))
+    main(root_dir=join(rootdir, 'subj1_coregistered_data'))
