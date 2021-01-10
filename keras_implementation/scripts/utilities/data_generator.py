@@ -649,154 +649,6 @@ def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.03, 
     Gets and returns the image patches used during training time, split into 3 noise levels.
     Used to cross-reference patches at inference time.
 
-    :param train_data_dir: The root directory of the training data
-    :param low_noise_threshold: The lower residual image standard deviation threshold used to determine which data
-                                should go to which network
-    :param high_noise_threshold: The upper residual image standard deviation threshold used to determine which data
-                                should go to which network
-    :param skip_every: If 1, we skip every 'skip_every' number of patches, and so return a smaller subset of patches
-    :param patch_size: The size of each patches in pixels -> (patch_size, patch_size)
-    :param stride: The stride with which to slide the patch-taking window
-    :param scales: A list of scales at which we want to create image patches.
-        If None, this function simply performs no rescaling of the image to create patches
-    :param similarity_metric: The similarity metric used to bin training data into noise categories
-
-    :return: A dictionary of the following:
-                1. x_low_noise: the clear patches at a low noise level
-                2. y_low_noise: the blurry patches at a low noise level
-                3. comparison_metrics_low_noise: the standard deviation of the residuals at a low noise level
-                4. x_medium_noise: the clear patches at a medium noise level
-                5. y_medium_noise: the blurry patches at a medium noise level
-                6. comparison_metrics_medium_noise: the standard deviation of the residuals at a medium noise level
-                7. x_high_noise: the clear patches at a high noise level
-                8. y_high_noise: the blurry patches at a high noise level
-                9. comparison_metrics_high_noise: the standard deviation of the residuals at a high noise level
-    """
-
-    print(f'Accessing training data in: {train_data_dir}')
-
-    # Get training examples from data_dir using data_generator
-    x, y = pair_data_generator(train_data_dir, patch_size=patch_size, stride=stride, scales=scales)
-
-    # Create lists to store all of the patches and comparison metrics for each noise level category
-    x_low_noise = []
-    y_low_noise = []
-    comparison_metrics_low_noise = []
-    x_medium_noise = []
-    y_medium_noise = []
-    comparison_metrics_medium_noise = []
-    x_high_noise = []
-    y_high_noise = []
-    comparison_metrics_high_noise = []
-
-    # Iterate over all of the image patches
-    for x_patch, y_patch in zip(x, y):
-
-        # If the patch is black (i.e. the max px value < 10), just skip this training example
-        if np.max(x_patch) < 10:
-            continue
-
-        if similarity_metric == 'std':
-            # Get the residual std
-            comparison_metric = get_residual_std(clear_patch=x_patch, blurry_patch=y_patch)
-            # Add the patches and their residual stds to their corresponding lists based on noise level
-            if comparison_metric < low_noise_threshold:
-                x_low_noise.append(x_patch)
-                y_low_noise.append(y_patch)
-                comparison_metrics_low_noise.append(comparison_metric)
-                continue
-            elif low_noise_threshold < comparison_metric < high_noise_threshold:
-                x_medium_noise.append(x_patch)
-                y_medium_noise.append(y_patch)
-                comparison_metrics_medium_noise.append(comparison_metric)
-                continue
-            elif comparison_metric > high_noise_threshold:
-                x_high_noise.append(x_patch)
-                y_high_noise.append(y_patch)
-                comparison_metrics_high_noise.append(comparison_metric)
-                continue
-
-        elif similarity_metric == 'psnr':
-            # Get the PSNR
-            comparison_metric = peak_signal_noise_ratio(image_true=x_patch, image_test=y_patch)
-            # Add the patches and their PSNRs to their corresponding lists based on noise level
-            if comparison_metric < low_noise_threshold:
-                x_high_noise.append(x_patch)
-                y_high_noise.append(y_patch)
-                comparison_metrics_high_noise.append(comparison_metric)
-                continue
-            elif low_noise_threshold < comparison_metric < high_noise_threshold:
-                x_medium_noise.append(x_patch)
-                y_medium_noise.append(y_patch)
-                comparison_metrics_medium_noise.append(comparison_metric)
-                continue
-            elif comparison_metric > high_noise_threshold:
-                x_low_noise.append(x_patch)
-                y_low_noise.append(y_patch)
-                comparison_metrics_low_noise.append(comparison_metric)
-                continue
-
-        elif similarity_metric == 'ssim':
-            # Get the PSNR
-            comparison_metric, _ = structural_similarity(x_patch, y_patch, full=True)
-            # Add the patches and their PSNRs to their corresponding lists based on noise level
-            if comparison_metric < low_noise_threshold:
-                x_high_noise.append(x_patch)
-                y_high_noise.append(y_patch)
-                comparison_metrics_high_noise.append(comparison_metric)
-                continue
-            elif low_noise_threshold < comparison_metric < high_noise_threshold:
-                x_medium_noise.append(x_patch)
-                y_medium_noise.append(y_patch)
-                comparison_metrics_medium_noise.append(comparison_metric)
-                continue
-            elif comparison_metric > high_noise_threshold:
-                x_low_noise.append(x_patch)
-                y_low_noise.append(y_patch)
-                comparison_metrics_low_noise.append(comparison_metric)
-                continue
-
-    # Convert image patches and stds into numpy arrays
-    x_low_noise = np.array(x_low_noise[::skip_every], dtype='uint8')
-    y_low_noise = np.array(y_low_noise[::skip_every], dtype='uint8')
-    comparison_metrics_low_noise = np.array(comparison_metrics_low_noise[::skip_every], dtype='float64')
-    x_medium_noise = np.array(x_medium_noise[::skip_every], dtype='uint8')
-    y_medium_noise = np.array(y_medium_noise[::skip_every], dtype='uint8')
-    comparison_metrics_medium_noise = np.array(comparison_metrics_medium_noise[::skip_every], dtype='float64')
-    x_high_noise = np.array(x_high_noise[::skip_every], dtype='uint8')
-    y_high_noise = np.array(y_high_noise[::skip_every], dtype='uint8')
-    comparison_metrics_high_noise = np.array(comparison_metrics_high_noise[::skip_every], dtype='float64')
-
-    training_patches = {
-        "low_noise": {
-            "x": x_low_noise,
-            "y": y_low_noise,
-            "stds": comparison_metrics_low_noise
-        },
-        "medium_noise": {
-            "x": x_medium_noise,
-            "y": y_medium_noise,
-            "stds": comparison_metrics_medium_noise
-        },
-        "high_noise": {
-            "x": x_high_noise,
-            "y": y_high_noise,
-            "stds": comparison_metrics_high_noise
-        }
-    }
-
-    # Return all of the patches and stds for the 3 categories
-    return training_patches
-
-
-def retrieve_train_data_with_statistics(train_data_dir: str, low_noise_threshold: float = 0.03,
-                                        high_noise_threshold: float = 0.15,
-                                        skip_every: int = 3, patch_size: int = 40, stride: int = 10, scales: List = [1],
-                                        similarity_metric: str = 'psnr') -> Dict:
-    """
-    Gets and returns the image patches used during training time, split into 3 noise levels.
-    Used to cross-reference patches at inference time.
-
     NOTE: Also returns PSNR of each patch.
 
     Parameters
@@ -824,7 +676,7 @@ def retrieve_train_data_with_statistics(train_data_dir: str, low_noise_threshold
                 7. x_high_noise: the clear patches at a high noise level
                 8. y_high_noise: the blurry patches at a high noise level
                 9. comparison_metrics_high_noise: the standard deviation of the residuals at a high noise level
-    """
+        """
 
     print(f'Accessing training data in: {train_data_dir}')
 
@@ -924,98 +776,22 @@ def retrieve_train_data_with_statistics(train_data_dir: str, low_noise_threshold
         "low_noise": {
             "x": x_low_noise,
             "y": y_low_noise,
-            "stds": comparison_metrics_low_noise
+            "comparison_metrics": comparison_metrics_low_noise
         },
         "medium_noise": {
             "x": x_medium_noise,
             "y": y_medium_noise,
-            "stds": comparison_metrics_medium_noise
+            "comparison_metrics": comparison_metrics_medium_noise
         },
         "high_noise": {
             "x": x_high_noise,
             "y": y_high_noise,
-            "stds": comparison_metrics_high_noise
+            "comparison_metrics": comparison_metrics_high_noise
         }
     }
 
     # Return all of the patches and stds for the 3 categories
     return training_patches
-
-
-def pair_data_generator_multiple_data_dirs(root_dirs,
-                                           image_format=ImageFormat.PNG):
-    """
-    Provides a numpy array of training examples, given pahths to multiple training directories
-
-    :param root_dirs: The paths of the training data directories
-    :type root_dirs: list
-    :param image_format: The format of image that our training data is (JPG or PNG)
-    :type image_format: ImageFormat
-
-    :return: training data
-    :rtype: numpy.array
-    """
-
-    # initialize clear_data and clurry_data lists
-    clear_data = []
-    blurry_data = []
-
-    # Iterate over the entire list of images
-    for root_dir in root_dirs:
-        print(f'Accessing training data in {root_dir}')
-        for i, file_name in enumerate(os.listdir(join(root_dir, 'ClearImages'))):
-            if file_name.endswith('.jpg') or file_name.endswith('.png'):
-                # Read the Clear and Blurry Images as numpy arrays
-                clear_image = cv2.imread(os.path.join(root_dir, 'ClearImages', file_name), 0)
-                blurry_image = cv2.imread(os.path.join(root_dir, 'CoregisteredBlurryImages', file_name), 0)
-
-                # Histogram equalize the blurry image px distribution to match the clear image px distribution
-                blurry_image = image_utils.hist_match(blurry_image, clear_image).astype('uint8')
-
-                ''' Just logging 
-                # Show the blurry image (Pre-Histogram Equalization), clear image, and
-                # blurry image (Post-Histogram Equalization)
-                logger.show_images([(f'CoregisteredBlurryImage (Pre-Histogram Equalization)', image),
-                                    (f'Matching Clear Image', clear_image),
-                                    ('CoregisteredBlurryImage (Post-Histogram Equalization)', equalized_image)])
-                '''
-
-                # Generate clear and blurry patches from the clear and blurry images, respectively...
-                clear_patches, blurry_patches = generate_patch_pairs(clear_image=clear_image,
-                                                                     blurry_image=blurry_image)
-
-                # Append the patches to clear_data and blurry_data
-                clear_data.append(clear_patches)
-                blurry_data.append(blurry_patches)
-
-    # Convert clear_data and blurry_data to numpy arrays of ints
-    clear_data = np.array(clear_data, dtype='uint8')
-    blurry_data = np.array(blurry_data, dtype='uint8')
-
-    # Reshape clear_data and blurry_data
-    clear_data = clear_data.reshape((clear_data.shape[0] * clear_data.shape[1],
-                                     clear_data.shape[2],
-                                     clear_data.shape[3],
-                                     1
-                                     ))
-    blurry_data = blurry_data.reshape((blurry_data.shape[0] * blurry_data.shape[1],
-                                       blurry_data.shape[2],
-                                       blurry_data.shape[3],
-                                       1
-                                       ))
-
-    # Make sure that clear_data and blurry_data have the same length
-    assert (len(blurry_data) == len(clear_data))
-
-    ''' Commenting this out, as it will be done in train_datagen
-    # Get the number of elements to discard
-    num_elements_to_discard = len(clear_data) - len(clear_data) // batch_size * batch_size
-    # Remove "num_elements_to_discard" elements from from clear_data and blurry_data
-    clear_data = np.delete(clear_data, range(num_elements_to_discard), axis=0)
-    blurry_data = np.delete(blurry_data, range(num_elements_to_discard), axis=0)
-    '''
-
-    return clear_data, blurry_data
 
 
 if __name__ == '__main__':

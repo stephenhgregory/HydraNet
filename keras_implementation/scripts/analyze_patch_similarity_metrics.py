@@ -72,9 +72,42 @@ def compare_to_closest_training_patch_with_statistics(patch: np.ndaray, training
     return max_score, max_patch_psnr
 
 
+def main():
+    # Get our training data to use for determining which denoising network to send each patch through
+    training_patches = data_generator.retrieve_train_data(args.reference_data,
+                                                          low_noise_threshold=args.lower_psnr_threshold,
+                                                          high_noise_threshold=args.upper_psnr_threshold,
+                                                          skip_every=3,
+                                                          patch_size=40,
+                                                          stride=20, scales=[1])
+
+    psnr_comparisons = []
+
+    # Iterate over all of the test images from test_data
+    for image_name in os.listdir(os.path.join(args.test_data, 'CoregisteredBlurryImages')):
+        if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
+            # 1. Load the Clear Image x (as grayscale), and standardize the pixel values, and..
+            # 2. Save the original mean and standard deviation of x
+            x, x_orig_mean, x_orig_std = image_utils.standardize(imread(os.path.join(args.test_data,
+                                                                                     'ClearImages',
+                                                                                     str(image_name)), 0))
+
+            # Load the Coregistered Blurry Image y (as grayscale), and standardize the pixel values, and...
+            # 2. Save the original mean and standard deviation of y
+            y, y_orig_mean, y_orig_std = image_utils.standardize(imread(os.path.join(args.test_data,
+                                                                                     'CoregisteredBlurryImages',
+                                                                                     str(image_name)), 0))
+
+            psnr_comparisons.extend(estimate_noise_statistics_by_patches(y=y, x=x, x_original_mean=x_orig_mean,
+                                                                         x_original_std=x_orig_std,
+                                                                         y_original_mean=y_orig_mean,
+                                                                         y_original_std=y_orig_std,
+                                                                         training_patches=training_patches))
+
+
 def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_original_mean: float, x_original_std: float,
                                          y_original_mean: float, y_original_std: float,
-                                         training_patches_with_statistics: Dict = None) -> List[Tuple]:
+                                         training_patches: Dict = None) -> List[Tuple]:
     """
     Takes an input image and denoises it using a patch-based approach
 
@@ -90,8 +123,8 @@ def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_origina
                             standardize the image
     y_original_std: The original standard deviation px value of the image that the patch y is part of, which was
                             used to standardize the image
-    training_patches_with_statistics: A nested dictionary of training patches and their residual stds
-        TODO: This is inaccurate, fix this documentation
+    training_patches: A nested dictionary of training patches and their comparison metrics
+        (PSNR, SSIM, or residual standard deviation)
 
     Returns
     -------
@@ -123,18 +156,18 @@ def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_origina
             # of each of those most similar x patches
             reversed_y_patch = image_utils.reverse_standardize(y_patch, y_original_mean, y_original_std)
             low_max_ssim, low_closest_patch_psnr = compare_to_closest_training_patch_with_statistics(reversed_y_patch,
-                                                                                                     training_patches_with_statistics[
+                                                                                                     training_patches[
                                                                                                          "low_noise"][
                                                                                                          "y"],
                                                                                                      comparison_metric='ssim')
             medium_max_ssim, medium_closest_patch_psnr = compare_to_closest_training_patch_with_statistics(
-                reversed_y_patch,
-                training_patches_with_statistics[
-                    "medium_noise"][
-                    "y"],
-                comparison_metric='ssim')
+                                                                                                    reversed_y_patch,
+                                                                                                    training_patches[
+                                                                                                        "medium_noise"][
+                                                                                                        "y"],
+                                                                                                    comparison_metric='ssim')
             high_max_ssim, high_closest_patch_psnr = compare_to_closest_training_patch_with_statistics(reversed_y_patch,
-                                                                                                       training_patches_with_statistics[
+                                                                                                       training_patches[
                                                                                                            "high_noise"][
                                                                                                            "y"],
                                                                                                        comparison_metric='ssim')
@@ -167,39 +200,6 @@ def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_origina
             total_patches_per_category[max_ssim_category] += 1
 
     return psnr_comparisons
-
-
-def main():
-    # Get our training data to use for determining which denoising network to send each patch through
-    training_patches_with_statistics = data_generator.retrieve_train_data(args.reference_data,
-                                                                          low_noise_threshold=args.lower_psnr_threshold,
-                                                                          high_noise_threshold=args.upper_psnr_threshold,
-                                                                          skip_every=3,
-                                                                          patch_size=40,
-                                                                          stride=20, scales=[1])
-
-    psnr_comparisons = []
-
-    # Iterate over all of the test images from test_data
-    for image_name in os.listdir(os.path.join(args.test_data, 'CoregisteredBlurryImages')):
-        if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
-            # 1. Load the Clear Image x (as grayscale), and standardize the pixel values, and..
-            # 2. Save the original mean and standard deviation of x
-            x, x_orig_mean, x_orig_std = image_utils.standardize(imread(os.path.join(args.test_data,
-                                                                                     'ClearImages',
-                                                                                     str(image_name)), 0))
-
-            # Load the Coregistered Blurry Image y (as grayscale), and standardize the pixel values, and...
-            # 2. Save the original mean and standard deviation of y
-            y, y_orig_mean, y_orig_std = image_utils.standardize(imread(os.path.join(args.test_data,
-                                                                                     'CoregisteredBlurryImages',
-                                                                                     str(image_name)), 0))
-
-            psnr_comparisons.extend(estimate_noise_statistics_by_patches(y=y, x=x, x_original_mean=x_orig_mean,
-                                                                         x_original_std=x_orig_std,
-                                                                         y_original_mean=y_orig_mean,
-                                                                         y_original_std=y_orig_std,
-                                                                         training_patches_with_statistics=training_patches_with_statistics))
 
 
 if __name__ == "__main__":
