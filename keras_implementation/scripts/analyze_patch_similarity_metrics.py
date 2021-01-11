@@ -170,6 +170,9 @@ def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_origina
             # Get the actual PSNR for x
             psnr_x = peak_signal_noise_ratio(reversed_x_patch, reversed_y_patch)
 
+            ''' Just logging '''
+            logger.show_images([("reversed_x_patch", reversed_x_patch), ("reversed_y_patch", reversed_y_patch)])
+
             # Add the closest patch PSNR and actual PSNR to lists to keep track of them
             # PsnrComparisonTuple = namedtuple('PsnrComparisonTuple', ['true', 'predicted'])
             # psnr_comparisons.append(PsnrComparisonTuple(true=psnr_x, predicted=closest_patch_psnr))
