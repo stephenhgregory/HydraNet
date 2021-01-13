@@ -16,10 +16,8 @@ from tqdm import tqdm
 
 # Command-line parameters
 parser = argparse.ArgumentParser()
-parser.add_argument('--test_data', default='subj1_coregistered_data/subj1', type=str, help='path to test data')
-parser.add_argument('--reference_data', default='subj1_coregistered_data/subj2', type=str,
-                    help='path to data used to reference '
-                         'training patches')
+parser.add_argument('--test_data_subj', default='subj1', type=str, help='name of subject used for testing')
+parser.add_argument('--reference_data_subj', default='subj2', type=str, help='name of subject used for reference')
 parser.add_argument("--lower_psnr_threshold", default=20., type=float, help='lower threshold used to separate patches '
                                                                             'into low, medium, and high noise '
                                                                             'categories')
@@ -113,6 +111,10 @@ def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_origina
     """
     psnr_comparisons = []
 
+    ''' Just logging
+    logger.show_images([("x", x), ("y", y)])
+    '''
+
     # Loop over the indices of y to get 40x40 patches from y
     for i in range(0, len(y[0]), 40):
         for j in range(0, len(y[1]), 40):
@@ -164,14 +166,14 @@ def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_origina
                 max_ssim_category = 'low'
                 closest_patch_psnr = low_closest_patch_psnr
 
-            # Reverse the standardization of x and x_pred (we actually don't need y at this point, only for logging)
-            x = image_utils.reverse_standardize(x, original_mean=x_original_mean, original_std=x_original_std)
-
             # Get the actual PSNR for x
             psnr_x = peak_signal_noise_ratio(reversed_x_patch, reversed_y_patch)
 
-            ''' Just logging '''
-            logger.show_images([("reversed_x_patch", reversed_x_patch), ("reversed_y_patch", reversed_y_patch)])
+            ''' Just logging
+            logger.show_images([("reversed_x_patch", reversed_x_patch),
+                                ("x_patch", x_patch),
+                                ("reversed_y_patch", reversed_y_patch)])
+            '''
 
             # Add the closest patch PSNR and actual PSNR to lists to keep track of them
             # PsnrComparisonTuple = namedtuple('PsnrComparisonTuple', ['true', 'predicted'])
@@ -185,8 +187,8 @@ def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_origina
 
 
 def main():
-    reference_data = "/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/subj1_coregistered_data/subj2/train"
-    test_data = "/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/subj1_coregistered_data/subj1/train"
+    reference_data = f"/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/subj1_coregistered_data/{args.reference_data_subj}/train"
+    test_data = f"/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/subj1_coregistered_data/{args.test_data_subj}/train"
     lower_psnr_threshold = 20.
     upper_psnr_threshold = 35.
 
@@ -208,13 +210,13 @@ def main():
             # 2. Save the original mean and standard deviation of x
             x, x_orig_mean, x_orig_std = image_utils.standardize(imread(os.path.join(test_data,
                                                                                      'ClearImages',
-                                                                                     str(image_name)), 0))
+                                                                                     str(image_name))))
 
             # Load the Coregistered Blurry Image y (as grayscale), and standardize the pixel values, and...
             # 2. Save the original mean and standard deviation of y
             y, y_orig_mean, y_orig_std = image_utils.standardize(imread(os.path.join(test_data,
                                                                                      'CoregisteredBlurryImages',
-                                                                                     str(image_name)), 0))
+                                                                                     str(image_name))))
 
             psnr_comparisons.extend(estimate_noise_statistics_by_patches(y=y, x=x, x_original_mean=x_orig_mean,
                                                                          x_original_std=x_orig_std,
@@ -222,7 +224,9 @@ def main():
                                                                          y_original_std=y_orig_std,
                                                                          training_patches=training_patches))
 
-    plot_psnr_comparisons(psnr_comparisons)
+    plot_psnr_comparisons(psnr_comparisons, plot_type="scatterplot",
+                          test_data_name=args.test_data_subj, reference_data_name=args.reference_data_subj,
+                          save_dir="/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/resources/psnr_estimation")
 
 
 if __name__ == "__main__":

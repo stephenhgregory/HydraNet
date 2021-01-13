@@ -355,7 +355,8 @@ def plot_standard_deviations(stds):
 # def plot_psnr_comparisons(psnr_comparisons: List[namedtuple('PsnrComparisonTuple', ['true', 'predicted'])],
 #                           plot_type: str = "scatterplot") -> None:
 
-def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], plot_type: str = "scatterplot") -> None:
+def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], plot_type: str = "scatterplot",
+                          test_data_name: str = None, reference_data_name: str = None, save_dir: str = None) -> None:
     """
     Plots PSNR estimates for a list of patches compared to the true PSNRs
 
@@ -364,6 +365,12 @@ def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], plot_type
     psnr_comparisons: Contains the actual PSNR of each patch as well as the predicted PSNR of the patch.
         This predicted PSNR is measured as the actual PSNR of the closest patch.
         The order of the datatype is List[Tuple[actual_psnr, predicted_psnr]]
+    plot_type: One of ["scatterplot", "histogram"].
+        If "scatterplot", we will show a scatterplot of true vs. predicted PSNRs
+        If "histogram", we will show a histogram of errors in PSNR distributions
+    test_data_name: Name of data subject used as test data
+    reference_data_name: Name of data subject used as reference
+    save_dir: Directory in which to save plot
 
     Returns
     -------
@@ -389,8 +396,11 @@ def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], plot_type
         sns.scatterplot(x=true_psnrs, y=predicted_psnrs)
         # Add labels
         plt.title('True PSNR of training patches and Predicted PSNR (PSNR of closest patch)')
-        plt.xlabel('True PSNRs')
-        plt.ylabel('Predicted PSNRs')
+        plt.xlabel(f'True PSNRs ({test_data_name})')
+        plt.ylabel(f'Predicted PSNRs ({reference_data_name})')
+        # Optionally save the plot
+        if save_dir is not None:
+            plt.savefig(os.path.join(save_dir, f'{test_data_name}test_{reference_data_name}ref_psnr_estimation.png'))
         # Show the plot
         plt.show()
 
@@ -404,6 +414,9 @@ def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], plot_type
         plt.title('Histogram of PSNR Prediction error')
         plt.xlabel('Residual Standard Deviation')
         plt.ylabel('Patches')
+        # Optionally save the plot
+        # TODO: Implement saving this plot
+        # Show the plot
         plt.show()
 
     pass
