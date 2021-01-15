@@ -419,7 +419,8 @@ def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], plot_type
         plt.xlabel('Residual Standard Deviation')
         plt.ylabel('Patches')
         # Optionally save the plot
-        # TODO: Implement saving this plot
+        if save_dir is not None:
+            plt.savefig(os.path.join(save_dir, f'{test_data_name}test_{reference_data_name}ref_psnr_error_distribution.png'))
         # Show the plot
         if show_plot:
             plt.show()

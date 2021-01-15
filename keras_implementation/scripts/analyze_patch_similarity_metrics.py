@@ -247,14 +247,25 @@ def main():
                                                                          y_original_std=y_orig_std,
                                                                          training_patches=training_patches))
 
+    # Save the PSNR comparisons by pickling them to a binary file
     pickle_psnr_comparisons(psnr_comparisons, test_data_name=args.test_data_subj,
                             reference_data_name=args.reference_data_subj,
-                            save_dir="/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/resources/psnr_estimation")
+                            save_dir="/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/resources"
+                                     "/psnr_estimation")
 
+    # Plot/save a scatterplot of predicted vs. actual PSNR
     plot_psnr_comparisons(psnr_comparisons, plot_type="scatterplot",
                           test_data_name=args.test_data_subj, reference_data_name=args.reference_data_subj,
-                          save_dir="/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/resources/psnr_estimation",
-                          show_images=False)
+                          save_dir="/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/resources"
+                                   "/psnr_estimation",
+                          show_plot=False)
+
+    # Plot/save a histogram of PSNR prediction error
+    plot_psnr_comparisons(psnr_comparisons, plot_type="histogram",
+                          test_data_name=args.test_data_subj, reference_data_name=args.reference_data_subj,
+                          save_dir="/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/resources"
+                                   "/psnr_estimation",
+                          show_plot=False)
 
 
 if __name__ == "__main__":
