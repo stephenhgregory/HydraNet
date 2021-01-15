@@ -356,7 +356,8 @@ def plot_standard_deviations(stds):
 #                           plot_type: str = "scatterplot") -> None:
 
 def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], plot_type: str = "scatterplot",
-                          test_data_name: str = None, reference_data_name: str = None, save_dir: str = None) -> None:
+                          test_data_name: str = None, reference_data_name: str = None, save_dir: str = None,
+                          show_plot: bool = True) -> None:
     """
     Plots PSNR estimates for a list of patches compared to the true PSNRs
 
@@ -371,6 +372,8 @@ def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], plot_type
     test_data_name: Name of data subject used as test data
     reference_data_name: Name of data subject used as reference
     save_dir: Directory in which to save plot
+    show_plot: True if we wish to show the plots (this will halt execution of the program until the user \
+        terminates the plot window. Set this to False if running an automatic script to save multiple PSNR comparisons.
 
     Returns
     -------
@@ -402,7 +405,8 @@ def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], plot_type
         if save_dir is not None:
             plt.savefig(os.path.join(save_dir, f'{test_data_name}test_{reference_data_name}ref_psnr_estimation.png'))
         # Show the plot
-        plt.show()
+        if show_plot:
+            plt.show()
 
     # IF we wish to show a histogram of errors in PSNR estimations
     elif plot_type == "histogram":
@@ -417,9 +421,8 @@ def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], plot_type
         # Optionally save the plot
         # TODO: Implement saving this plot
         # Show the plot
-        plt.show()
-
-    pass
+        if show_plot:
+            plt.show()
 
 
 def get_residual(clear_image, blurry_image):

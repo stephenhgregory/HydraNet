@@ -6,7 +6,7 @@
 #python scripts/analyze_patch_similarity_metrics.py --test_data_subj=subj1 --reference_data_subj=subj2
 
 # Test: subj2, Reference: subj3
-python scripts/analyze_patch_similarity_metrics.py --test_data_subj=subj2 --reference_data_subj=subj3
+#python scripts/analyze_patch_similarity_metrics.py --test_data_subj=subj2 --reference_data_subj=subj3
 
 # Test: subj3, Reference: subj4
 python scripts/analyze_patch_similarity_metrics.py --test_data_subj=subj3 --reference_data_subj=subj4

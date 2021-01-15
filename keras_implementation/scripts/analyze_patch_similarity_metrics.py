@@ -9,6 +9,7 @@ from skimage.io import imread
 from collections import namedtuple
 import cv2
 import copy
+import pickle
 from utilities import data_generator, logger, image_utils
 from utilities.image_utils import plot_psnr_comparisons
 from typing import Dict, Tuple, List
@@ -186,6 +187,28 @@ def estimate_noise_statistics_by_patches(y: np.ndarray, x: np.ndarray, x_origina
     return psnr_comparisons
 
 
+def pickle_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], test_data_name: str = None,
+                            reference_data_name: str = None, save_dir: str = None) -> None:
+    """
+    Pickles psnr_comparisons for future retrieval.
+
+    Parameters
+    ----------
+    psnr_comparisons: Contains the actual PSNR of each patch as well as the predicted PSNR of the patch.
+        This predicted PSNR is measured as the actual PSNR of the closest patch.
+        The order of the datatype is List[Tuple[actual_psnr, predicted_psnr]]
+    test_data_name: Name of data subject used as test data
+    reference_data_name: Name of data subject used as reference
+    save_dir: Directory in which to save plot
+
+    Returns
+    -------
+    None
+    """
+    with open(os.path.join(save_dir, f'{test_data_name}test_{reference_data_name}ref_psnr_comparisons'), 'wb') as pickle_file:
+        pickle.dump(psnr_comparisons, pickle_file)
+
+
 def main():
     reference_data = f"/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/subj1_coregistered_data/{args.reference_data_subj}/train"
     test_data = f"/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/subj1_coregistered_data/{args.test_data_subj}/train"
@@ -224,9 +247,14 @@ def main():
                                                                          y_original_std=y_orig_std,
                                                                          training_patches=training_patches))
 
+    pickle_psnr_comparisons(psnr_comparisons, test_data_name=args.test_data_subj,
+                            reference_data_name=args.reference_data_subj,
+                            save_dir="/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/resources/psnr_estimation")
+
     plot_psnr_comparisons(psnr_comparisons, plot_type="scatterplot",
                           test_data_name=args.test_data_subj, reference_data_name=args.reference_data_subj,
-                          save_dir="/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/resources/psnr_estimation")
+                          save_dir="/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/resources/psnr_estimation",
+                          show_images=False)
 
 
 if __name__ == "__main__":
