@@ -49,6 +49,10 @@ parser.add_argument('--save_every', default=1, type=int, help='save model every 
 parser.add_argument('--result_dir', default='', type=str, help='save directory for resultant model .hdf5 files')
 parser.add_argument('--is_3d', default=False, type=bool, help='True if we wish to retrain a 3d denoiser')
 parser.add_argument('--is_cleanup', default=False, type=bool, help='True if we wish to retrain a cleanup denoiser')
+parser.add_argument('--clear_data', action='append', default=[], type=str, help='Clear data directories (only used '
+                                                                                'when is_cleanup == True')
+parser.add_argument('--blurry_data', action='append', default=[], type=str, help='Blurry data directories (only used '
+                                                                                 'when is_cleanup == True')
 args = parser.parse_args()
 
 # Set the noise level to decide which model to train
@@ -64,7 +68,10 @@ else:
     sys.exit("noise_level must be 'low', 'medium', 'high', or 'all'. Try again!")
 
 # Set the save directory of the trained model hdf5 file
-save_dir = os.path.join(args.result_dir, args.model + '_' + args.noise_level + '_noise')
+if args.is_cleanup:
+    save_dir = os.path.join(args.result_dir, args.model + '_' + 'cleanup')
+else:
+    save_dir = os.path.join(args.result_dir, args.model + '_' + args.noise_level + '_noise')
 
 # Create the <save_dir> folder if it doesn't exist already
 if not os.path.exists(save_dir):
@@ -247,7 +254,8 @@ def my_train_datagen_single_model(epoch_iter: int = 2000,
                 yield batch_y, batch_x
 
 
-def my_cleanup_train_datagen(num_epochs: int = 5, batch_size: int = 8, data_dir: List[str] = args.train_data):
+def my_cleanup_train_datagen(num_epochs: int = 5, batch_size: int = 8, clear_data: List[str] = args.clear_data,
+                             blurry_data: List[str] = args.blurry_data):
     """
     Generator function that yields training data from a specified directory.
     NOTE: This function does not split up data into patches. It yields entire images.
@@ -267,9 +275,10 @@ def my_cleanup_train_datagen(num_epochs: int = 5, batch_size: int = 8, data_dir:
 
         # If this is the first iteration...
         if counter == 0:
-            print(f'Accessing training data in: {data_dir}')
+            print(f'Accessing: \n\n- Clear training data in: {clear_data}\n- Blurry training data in: {blurry_data}')
 
-            x_original, y_original = data_generator.cleanup_data_generator(data_dir)
+            x_original, y_original = data_generator.cleanup_data_generator(clear_image_dirs=clear_data,
+                                                                           blurry_image_dirs=blurry_data)
 
             ''' Just logging 
             logger.show_images([("x_original", x_original),
@@ -831,18 +840,15 @@ def train_cleanup_model():
     None
     """
 
-    '''Get save dir for the model'''
-    cleanup_save_dir = os.path.join(args.result_dir, args.model + '_' + 'cleanup')
-
     '''Load and initialize model'''
-    model = model_functions.My3dDenoiser(depth=17, num_filters=64, use_batchnorm=True)
+    model = model_functions.MyDnCNN(depth=17, filters=64, image_channels=1, use_batchnorm=True)
     # Print a summary of the model to the console
     model.summary()
     # Load the last model
-    initial_epoch = model_functions.findLastCheckpoint(save_dir=cleanup_save_dir)
+    initial_epoch = model_functions.findLastCheckpoint(save_dir=save_dir)
     if initial_epoch > 0:
         print('resuming by loading epoch %03d' % initial_epoch)
-        model = load_model(os.path.join(cleanup_save_dir, 'model_%03d.hdf5' % initial_epoch), compile=False)
+        model = load_model(os.path.join(save_dir, 'model_%03d.hdf5' % initial_epoch), compile=False)
     # Compile the model
     model.compile(optimizer=Adam(0.001), loss=sum_squared_error)
 

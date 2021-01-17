@@ -551,27 +551,29 @@ def pair_3d_data_generator(root_dirs: str = join('data', 'Volume1', 'train'),
     return all_clear_volume_patches, all_blurry_volume_patches
 
 
-def cleanup_data_generator(root_dirs: str = join('data', 'subj1', 'train'),
-                           image_format = ImageFormat.PNG) -> Tuple[np.ndarray, np.ndarray]:
+def cleanup_data_generator(clean_image_dirs: List[str] = join('data', 'subj1', 'train'),
+                           blurry_image_dirs: List[str] = join('psnr_results', 'subj1_results', 'train'),
+                           image_format: ImageFormat = ImageFormat.PNG) -> Tuple[np.ndarray, np.ndarray]:
     """
 
     Parameters
     ----------
-    root_dirs: The directories under which data is found
+    clean_image_dirs: The directories under which clean images (x) are found
+    blurry_image_dirs: The directories under which blurry images (y) are found
     image_format: The type of image format used (PNG, JPG, etc.)
 
     Return
     ------
     (clear_data, blurry_data)
     """
+    # Sort the image directories by their subject number
+    clean_image_dirs.sort(key=lambda clean_image_dir: int(''.join(filter(str.isdigit, clean_image_dir))))
+    blurry_image_dirs.sort(key=lambda blurry_image_dir: int(''.join(filter(str.isdigit, blurry_image_dir))))
+
     clear_data = []
     blurry_data = []
 
-    for root_dir in root_dirs:
-
-        # Get the directory name for the Clear and Blurry Images
-        clear_image_dir = join(root_dir, 'ClearImages')
-        blurry_image_dir = join(root_dir, 'CoregisteredBlurryImages')
+    for clear_image_dir, blurry_image_dir in zip(clean_image_dirs, blurry_image_dirs):
 
         # Iterate over the entire list of images
         for i, file_name in enumerate(os.listdir(clear_image_dir)):
