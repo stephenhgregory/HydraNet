@@ -43,11 +43,12 @@ parser.add_argument('--batch_size', default=128, type=int, help='batch size')
 parser.add_argument('--train_data', action='append', default=[], type=str, help='path of train data')
 parser.add_argument('--val_data', default='data/subj5/val', type=str, help='path of val data')
 parser.add_argument('--noise_level', default='all', type=str, help='Noise Level: Can be low, medium, high, or all')
-parser.add_argument('--epoch', default=80, type=int, help='number of train epoches')
+parser.add_argument('--epoch', default=80, type=int, help='number of train epochs')
 parser.add_argument('--lr', default=2e-3, type=float, help='initial learning rate for Adam')
 parser.add_argument('--save_every', default=1, type=int, help='save model every x # of epochs')
 parser.add_argument('--result_dir', default='', type=str, help='save directory for resultant model .hdf5 files')
 parser.add_argument('--is_3d', default=False, type=bool, help='True if we wish to retrain a 3d denoiser')
+parser.add_argument('--is_cleanup', default=False, type=bool, help='True if we wish to retrain a cleanup denoiser')
 args = parser.parse_args()
 
 # Set the noise level to decide which model to train
@@ -246,6 +247,118 @@ def my_train_datagen_single_model(epoch_iter: int = 2000,
                 yield batch_y, batch_x
 
 
+def my_cleanup_train_datagen(num_epochs: int = 5, batch_size: int = 8, data_dir: List[str] = args.train_data):
+    """
+    Generator function that yields training data from a specified directory.
+    NOTE: This function does not split up data into patches. It yields entire images.
+
+    Parameters
+    ----------
+    num_epochs: The total number of epochs
+    batch_size: The number of training examples for each training iteration
+    data_dir: The directory in which training examples are stored
+
+    Yields
+    ------
+    Training images
+    """
+    while True:
+        counter = 0
+
+        # If this is the first iteration...
+        if counter == 0:
+            print(f'Accessing training data in: {data_dir}')
+
+            x_original, y_original = data_generator.cleanup_data_generator(data_dir)
+
+            ''' Just logging 
+            logger.show_images([("x_original", x_original),
+                                ("y_original", y_original)])
+            '''
+
+            # Convert image patches and stds into numpy arrays
+            x_filtered = np.array(x_original, dtype='uint8')
+            y_filtered = np.array(y_original, dtype='uint8')
+
+            # Remove elements from x_filtered and y_filtered so that they has the right number of patches
+            discard_n = len(x_filtered) - len(x_filtered) // batch_size * batch_size;
+            print(f'discard_n ={discard_n}')
+            x_filtered = np.delete(x_filtered, range(discard_n), axis=0)
+            y_filtered = np.delete(y_filtered, range(discard_n), axis=0)
+
+            print(f'The length of x_filtered: {len(x_filtered)}')
+            print(f'The length of y_filtered: {len(y_filtered)}')
+
+            # Assert that the last iteration has a full batch size
+            assert len(x_filtered) % args.batch_size == 0, \
+                logger.log(
+                    'make sure the last iteration has a full batchsize, '
+                    'this is important if you use batch normalization!')
+            assert len(y_filtered) % args.batch_size == 0, \
+                logger.log(
+                    'make sure the last iteration has a full batchsize, '
+                    'this is important if you use batch normalization!')
+
+            # Standardize x and y to have a mean of 0 and standard deviation of 1
+            # NOTE: x and y px values are centered at 0, meaning there are negative px values. We might have trouble
+            # visualizing px that aren't either from [0, 255] or [0, 1], so just watch out for that
+            x, x_orig_mean, x_orig_std = image_utils.standardize(x_filtered)
+            y, y_orig_mean, y_orig_std = image_utils.standardize(y_filtered)
+
+            ''' Just logging 
+            logger.print_numpy_statistics(x, "x (standardized)")
+            logger.print_numpy_statistics(y, "y (standardized)")
+            '''
+
+            '''Just for logging
+            # Save the reversed standardization of x and y into variables
+            x_reversed = image_utils.reverse_standardize(x, x_orig_mean, x_orig_std)
+            y_reversed = image_utils.reverse_standardize(y, y_orig_mean, y_orig_std)
+            '''
+
+            # Get a list of indices, from 0 to the total number of training examples
+            indices = list(range(x.shape[0]))
+
+            # Make sure that x and y have the same number of training examples
+            assert indices == list(range(y.shape[0])), logger.log('Make sure x and y are paired up properly! That is, x'
+                                                                  'is a ClearImage, and y is a CoregisteredBlurryImage'
+                                                                  'but that the two frames match eachother. ')
+
+            # Increment the counter
+            counter += 1
+
+        # Iterate over the number of epochs
+        for _ in range(num_epochs):
+
+            # Shuffle the indices of the training examples
+            np.random.shuffle(indices)
+
+            # Iterate over the entire training set, skipping "batch_size" at a time
+            for i in range(0, len(indices), batch_size):
+                # Get the batch_x (clear) and batch_y (blurry)
+                batch_x = x[indices[i:i + batch_size]]
+                batch_y = y[indices[i:i + batch_size]]
+
+                '''Just logging
+                # Get equivalently indexed batches from x_original, x_reversed, y_original, and y_reversed
+                batch_x_original = x_original[indices[i:i + batch_size]]
+                batch_x_reversed = x_reversed[indices[i:i + batch_size]]
+                batch_y_original = y_original[indices[i:i + batch_size]]
+                batch_y_reversed = y_reversed[indices[i:i + batch_size]]
+
+                # Show some images from this batch
+                logger.show_images(images=[("batch_x[0]", batch_x[0]),
+                                         ("batch_x_original[0]", batch_x_original[0]),
+                                         ("batch_x_reversed[0]", batch_x_reversed[0]),
+                                         ("batch_y[0]", batch_y[0]),
+                                         ("batch_y_original[0]", batch_y_original[0]),
+                                         ("batch_y_reversed[0]", batch_y_reversed[0])])
+                '''
+
+                # Finally, yield x and y, as this function is a generator
+                yield batch_y, batch_x
+
+
 def my_train_datagen(epoch_iter=2000,
                      num_epochs=5,
                      batch_size=128,
@@ -271,9 +384,7 @@ def my_train_datagen(epoch_iter=2000,
 
     :return: Yields a training example x and noisy image y
     """
-    # Loop the following indefinitely...
     while True:
-        # Set a counter variable
         counter = 0
 
         # If this is the first iteration...
@@ -711,9 +822,44 @@ def train_3d():
                         callbacks=get_callbacks())
 
 
+def train_cleanup_model():
+    """
+    Trains a model which takes entire patchwise-denoised images as input and outputs denoised image.
+
+    Returns
+    -------
+    None
+    """
+
+    '''Get save dir for the model'''
+    cleanup_save_dir = os.path.join(args.result_dir, args.model + '_' + 'cleanup')
+
+    '''Load and initialize model'''
+    model = model_functions.My3dDenoiser(depth=17, num_filters=64, use_batchnorm=True)
+    # Print a summary of the model to the console
+    model.summary()
+    # Load the last model
+    initial_epoch = model_functions.findLastCheckpoint(save_dir=cleanup_save_dir)
+    if initial_epoch > 0:
+        print('resuming by loading epoch %03d' % initial_epoch)
+        model = load_model(os.path.join(cleanup_save_dir, 'model_%03d.hdf5' % initial_epoch), compile=False)
+    # Compile the model
+    model.compile(optimizer=Adam(0.001), loss=sum_squared_error)
+
+    '''Train model'''
+    history = model.fit(my_cleanup_train_datagen(batch_size=args.batch_size,
+                                                 data_dir=args.train_data),
+                        steps_per_epoch=2000,
+                        epochs=args.epoch,
+                        initial_epoch=initial_epoch,
+                        callbacks=get_callbacks())
+
+
 if __name__ == '__main__':
     # Run the main function
     if args.is_3d:
         train_3d()
+    elif args.is_cleanup:
+        train_cleanup_model()
     else:
         train()

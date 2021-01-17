@@ -551,6 +551,63 @@ def pair_3d_data_generator(root_dirs: str = join('data', 'Volume1', 'train'),
     return all_clear_volume_patches, all_blurry_volume_patches
 
 
+def cleanup_data_generator(root_dir: str = join('data', 'subj1', 'train'),
+                           image_format = ImageFormat.PNG) -> Tuple[np.ndarray, np.ndarray]:
+    """
+
+    Parameters
+    ----------
+    root_dir: The directory under which data is found
+    image_format: The type of image format used (PNG, JPG, etc.)
+
+    Return
+    ------
+    (clear_data, blurry_data)
+    """
+    # Get the directory name for the Clear and Blurry Images
+    clear_image_dir = join(root_dir, 'ClearImages')
+    blurry_image_dir = join(root_dir, 'CoregisteredBlurryImages')
+
+    # initialize clear_data and clurry_data lists
+    clear_data = []
+    blurry_data = []
+
+    # Iterate over the entire list of images
+    for i, file_name in enumerate(os.listdir(clear_image_dir)):
+        if file_name.endswith('.jpg') or file_name.endswith('.png'):
+            # Read the Clear and Blurry Images as numpy arrays
+            clear_image = cv2.imread(os.path.join(clear_image_dir, file_name), 0)
+            blurry_image = cv2.imread(os.path.join(blurry_image_dir, file_name), 0)
+
+            # Histogram equalize the blurry image px distribution to match the clear image px distribution
+            blurry_image = image_utils.hist_match(blurry_image, clear_image).astype('uint8')
+
+            # Append the images to full lists of data
+            clear_data.append(clear_image)
+            blurry_data.append(blurry_image)
+
+            ''' Just logging 
+            # Show the blurry image (Pre-Histogram Equalization), clear image, and
+            # blurry image (Post-Histogram Equalization)
+            logger.show_images([(f'CoregisteredBlurryImage (Pre-Histogram Equalization)', image),
+                                (f'Matching Clear Image', clear_image),
+                                ('CoregisteredBlurryImage (Post-Histogram Equalization)', equalized_image)])
+            '''
+
+    # Convert clear_data and blurry_data to numpy arrays of ints
+    clear_data = np.array(clear_data, dtype='uint8')
+    blurry_data = np.array(blurry_data, dtype='uint8')
+
+    # Extend the dimensionality of the images by adding a new dimension
+    clear_data = clear_data[..., np.newaxis]
+    blurry_data = blurry_data[..., np.newaxis]
+
+    # Make sure that clear_data and blurry_data have the same length
+    assert (len(blurry_data) == len(clear_data))
+
+    return clear_data, blurry_data
+
+
 def pair_data_generator(root_dir: str = join('data', 'Volume1', 'train'), image_format: ImageFormat = ImageFormat.PNG,
                         patch_size: int = 40, stride: int = 10,
                         scales: List[float] = [1, 0.9, 0.8, 0.7]) -> Tuple[np.ndarray, np.ndarray]:
