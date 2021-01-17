@@ -415,8 +415,8 @@ def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], plot_type
                      bins=int(20), color='blue')
         # Add labels
         plt.title('Histogram of PSNR Prediction error')
-        plt.xlabel('Residual Standard Deviation')
-        plt.ylabel('Patches')
+        plt.xlabel('(True PSNR - Predicted PSNR)')
+        plt.ylabel('Percentage of total patches')
         # Optionally save the plot
         if save_dir is not None and not os.path.exists(os.path.join(save_dir, f'{test_data_name}test_{reference_data_name}ref_psnr_error_distribution.png')):
             plt.savefig(os.path.join(save_dir, f'{test_data_name}test_{reference_data_name}ref_psnr_error_distribution.png'))
