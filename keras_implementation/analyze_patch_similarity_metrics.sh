@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+
 # Used to run scripts/analyze_patch_similarity_metrics.py automatically (for cross validation study)
 
 analyze_test_subj1 () {
@@ -50,11 +50,11 @@ analyze_test_subj6 () {
 }
 
 # Run the functions, analyze the data!
-print "Analyzing subjects...\n"
+printf "Analyzing subjects...\n"
 analyze_test_subj1
 analyze_test_subj2
 analyze_test_subj3
 analyze_test_subj4
 analyze_test_subj5
 analyze_test_subj6
-print "All done!\n"
+printf "All done!\n"

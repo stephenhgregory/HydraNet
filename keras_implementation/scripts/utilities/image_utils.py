@@ -402,7 +402,7 @@ def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], plot_type
         plt.xlabel(f'True PSNRs ({test_data_name})')
         plt.ylabel(f'Predicted PSNRs ({reference_data_name})')
         # Optionally save the plot
-        if save_dir is not None:
+        if save_dir is not None and not os.path.exists(os.path.join(save_dir, f'{test_data_name}test_{reference_data_name}ref_psnr_estimation.png')):
             plt.savefig(os.path.join(save_dir, f'{test_data_name}test_{reference_data_name}ref_psnr_estimation.png'))
         # Show the plot
         if show_plot:
@@ -411,15 +411,14 @@ def plot_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], plot_type
     # IF we wish to show a histogram of errors in PSNR estimations
     elif plot_type == "histogram":
         # seaborn histogram
-        sns.histplot(psnr_differences, hist=True, kde=False, stat="probability",
-                     bins=int(20), color='blue',
-                     hist_kws={'edgecolor': 'black'})
+        sns.histplot(data=psnr_differences, kde=False, stat="probability",
+                     bins=int(20), color='blue')
         # Add labels
         plt.title('Histogram of PSNR Prediction error')
         plt.xlabel('Residual Standard Deviation')
         plt.ylabel('Patches')
         # Optionally save the plot
-        if save_dir is not None:
+        if save_dir is not None and not os.path.exists(os.path.join(save_dir, f'{test_data_name}test_{reference_data_name}ref_psnr_error_distribution.png')):
             plt.savefig(os.path.join(save_dir, f'{test_data_name}test_{reference_data_name}ref_psnr_error_distribution.png'))
         # Show the plot
         if show_plot:

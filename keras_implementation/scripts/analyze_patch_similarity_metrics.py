@@ -205,15 +205,24 @@ def pickle_psnr_comparisons(psnr_comparisons: List[Tuple[float, float]], test_da
     -------
     None
     """
-    with open(os.path.join(save_dir, f'{test_data_name}test_{reference_data_name}ref_psnr_comparisons'), 'wb') as pickle_file:
+    with open(os.path.join(save_dir, f'{test_data_name}test_{reference_data_name}ref_psnr_comparisons.pickle'), 'wb') as pickle_file:
         pickle.dump(psnr_comparisons, pickle_file)
 
 
 def main():
     reference_data = f"/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/subj1_coregistered_data/{args.reference_data_subj}/train"
     test_data = f"/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/subj1_coregistered_data/{args.test_data_subj}/train"
+    save_dir = "/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/resources/psnr_estimation"
     lower_psnr_threshold = 20.
     upper_psnr_threshold = 35.
+
+    # First, check to make sure we haven't already analyzed this reference and test subject combination
+    if os.path.exists(
+            os.path.join(save_dir, f'{args.test_data_subj}test_{args.reference_data_subj}ref_psnr_estimation.png')) and os.path.exists(
+            os.path.join(save_dir, f'{args.test_data_subj}test_{args.reference_data_subj}ref_psnr_error_distribution.png')) and os.path.exists(
+            os.path.join(save_dir, f'{args.test_data_subj}test_{args.reference_data_subj}ref_psnr_comparisons.pickle')):
+        print('--Skipping analysis (already run!)--\n\n')
+        return
 
     # Get our training data to use for determining which denoising network to send each patch through
     training_patches = data_generator.retrieve_train_data(reference_data,
@@ -223,48 +232,51 @@ def main():
                                                           patch_size=40,
                                                           stride=20, scales=[1])
 
-    psnr_comparisons = []
+    # If we have already saved/pickled the psnr_comparisons object, load from that pickle file.
+    if os.path.exists(
+            os.path.join(save_dir, f'{args.test_data_subj}test_{args.reference_data_subj}ref_psnr_comparisons.pickle')):
+        psnr_comparison_file = open(os.path.join(save_dir, f'{args.test_data_subj}test_{args.reference_data_subj}ref_psnr_comparisons.pickle'), 'rb')
+        psnr_comparisons = pickle.load(psnr_comparison_file)
+    # Else, compute and calculate the psnr_comparisons
+    else:
+        psnr_comparisons = []
+        # Iterate over all of the test images from test_data
+        image_names = os.listdir(os.path.join(test_data, 'CoregisteredBlurryImages'))
+        for image_name in tqdm(image_names):
+            if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
+                # 1. Load the Clear Image x (as grayscale), and standardize the pixel values, and..
+                # 2. Save the original mean and standard deviation of x
+                x, x_orig_mean, x_orig_std = image_utils.standardize(imread(os.path.join(test_data,
+                                                                                         'ClearImages',
+                                                                                         str(image_name))))
 
-    # Iterate over all of the test images from test_data
-    image_names = os.listdir(os.path.join(test_data, 'CoregisteredBlurryImages'))
-    for image_name in tqdm(image_names):
-        if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
-            # 1. Load the Clear Image x (as grayscale), and standardize the pixel values, and..
-            # 2. Save the original mean and standard deviation of x
-            x, x_orig_mean, x_orig_std = image_utils.standardize(imread(os.path.join(test_data,
-                                                                                     'ClearImages',
-                                                                                     str(image_name))))
+                # Load the Coregistered Blurry Image y (as grayscale), and standardize the pixel values, and...
+                # 2. Save the original mean and standard deviation of y
+                y, y_orig_mean, y_orig_std = image_utils.standardize(imread(os.path.join(test_data,
+                                                                                         'CoregisteredBlurryImages',
+                                                                                         str(image_name))))
 
-            # Load the Coregistered Blurry Image y (as grayscale), and standardize the pixel values, and...
-            # 2. Save the original mean and standard deviation of y
-            y, y_orig_mean, y_orig_std = image_utils.standardize(imread(os.path.join(test_data,
-                                                                                     'CoregisteredBlurryImages',
-                                                                                     str(image_name))))
+                psnr_comparisons.extend(estimate_noise_statistics_by_patches(y=y, x=x, x_original_mean=x_orig_mean,
+                                                                             x_original_std=x_orig_std,
+                                                                             y_original_mean=y_orig_mean,
+                                                                             y_original_std=y_orig_std,
+                                                                             training_patches=training_patches))
 
-            psnr_comparisons.extend(estimate_noise_statistics_by_patches(y=y, x=x, x_original_mean=x_orig_mean,
-                                                                         x_original_std=x_orig_std,
-                                                                         y_original_mean=y_orig_mean,
-                                                                         y_original_std=y_orig_std,
-                                                                         training_patches=training_patches))
+        # Save the PSNR comparisons by pickling them to a binary file
+        pickle_psnr_comparisons(psnr_comparisons, test_data_name=args.test_data_subj,
+                                reference_data_name=args.reference_data_subj,
+                                save_dir=save_dir)
 
-    # Save the PSNR comparisons by pickling them to a binary file
-    pickle_psnr_comparisons(psnr_comparisons, test_data_name=args.test_data_subj,
-                            reference_data_name=args.reference_data_subj,
-                            save_dir="/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/resources"
-                                     "/psnr_estimation")
-
-    # Plot/save a scatterplot of predicted vs. actual PSNR
-    plot_psnr_comparisons(psnr_comparisons, plot_type="scatterplot",
-                          test_data_name=args.test_data_subj, reference_data_name=args.reference_data_subj,
-                          save_dir="/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/resources"
-                                   "/psnr_estimation",
-                          show_plot=False)
+    # # Plot/save a scatterplot of predicted vs. actual PSNR
+    # plot_psnr_comparisons(psnr_comparisons, plot_type="scatterplot",
+    #                       test_data_name=args.test_data_subj, reference_data_name=args.reference_data_subj,
+    #                       save_dir=save_dir,
+    #                       show_plot=False)
 
     # Plot/save a histogram of PSNR prediction error
     plot_psnr_comparisons(psnr_comparisons, plot_type="histogram",
                           test_data_name=args.test_data_subj, reference_data_name=args.reference_data_subj,
-                          save_dir="/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/resources"
-                                   "/psnr_estimation",
+                          save_dir=save_dir,
                           show_plot=False)
 
 
