@@ -6,9 +6,8 @@ printf "Training AllButsubj1TrainedCleanup model...\n"
 python scripts/train.py \
     --blurry_data="psnr_results/subj2_results/train" --blurry_data="psnr_results/subj3_results/train" \
     --blurry_data="psnr_results/subj4_results/train" --blurry_data="psnr_results/subj5_results/train" \
-    --blurry_data="psnr_results/subj6_results/train" \
-    --clear_data="data/subj2/train/ClearImages" --clear_data="data/subj3/train/ClearImages" --clear_data="data/subj4/train/ClearImages" \
-    --clear_data="data/subj5/train/ClearImages" --clear_data="data/subj6/train/ClearImages" \
+    --clear_data="data/subj2/train/ClearImages" --clear_data="data/subj3/train/ClearImages" \
+    --clear_data="data/subj4/train/ClearImages" --clear_data="data/subj5/train/ClearImages" \
     --val_data="psnr_results/subj1_results/train" --result_dir="psnr_noise_estimated_models/AllButsubj1Trained" --is_cleanup=True
 #python scripts/train.py \
 #    --train_data="data/subj2/train" --train_data="data/subj3/train" --train_data="data/subj4/train" \

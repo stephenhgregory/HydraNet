@@ -139,19 +139,19 @@
 
 
 ### SUBJ6 ###
-printf "Training AllButsubj6Trained model...\n"
+#printf "Training AllButsubj6Trained model...\n"
 #python scripts/train.py --noise_level="low" \
 #    --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj3/train" \
 #    --train_data="data/subj4/train" --train_data="data/subj5/train" \
 #    --val_data="data/subj4/train" --result_dir="psnr_noise_estimated_models/AllButsubj6Trained"
-python scripts/train.py --noise_level="medium" \
-    --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj3/train" \
-    --train_data="data/subj4/train" --train_data="data/subj5/train" \
-    --val_data="data/subj4/train" --result_dir="psnr_noise_estimated_models/AllButsubj6Trained"
-python scripts/train.py --noise_level="high" \
-    --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj3/train" \
-    --train_data="data/subj4/train" --train_data="data/subj5/train" \
-    --val_data="data/subj4/train" --result_dir="psnr_noise_estimated_models/AllButsubj6Trained"
+#python scripts/train.py --noise_level="medium" \
+#    --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj3/train" \
+#    --train_data="data/subj4/train" --train_data="data/subj5/train" \
+#    --val_data="data/subj4/train" --result_dir="psnr_noise_estimated_models/AllButsubj6Trained"
+#python scripts/train.py --noise_level="high" \
+#    --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj3/train" \
+#    --train_data="data/subj4/train" --train_data="data/subj5/train" \
+#    --val_data="data/subj4/train" --result_dir="psnr_noise_estimated_models/AllButsubj6Trained"
 # Run inference for subj6
 printf "Calling test.py for model trained on all but subj6...\n"
 python scripts/inference.py \

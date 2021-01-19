@@ -325,7 +325,7 @@ def main(args):
 
     if not args.single_denoiser:
         # Get our training data to use for determining which denoising network to send each patch through
-        training_patches = data_generator.retrieve_train_data(args.train_data, low_noise_threshold=20.0,
+        training_patches = data_generator.retrieve_train_data([args.train_data], low_noise_threshold=20.0,
                                                               high_noise_threshold=40.0, skip_every=3, patch_size=40,
                                                               stride=20, scales=[1])
 

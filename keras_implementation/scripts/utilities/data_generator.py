@@ -551,14 +551,14 @@ def pair_3d_data_generator(root_dirs: str = join('data', 'Volume1', 'train'),
     return all_clear_volume_patches, all_blurry_volume_patches
 
 
-def cleanup_data_generator(clean_image_dirs: List[str] = join('data', 'subj1', 'train'),
-                           blurry_image_dirs: List[str] = join('psnr_results', 'subj1_results', 'train'),
+def cleanup_data_generator(clear_image_dirs: List[str] = [join('data', 'subj1', 'train')],
+                           blurry_image_dirs: List[str] = [join('psnr_results', 'subj1_results', 'train')],
                            image_format: ImageFormat = ImageFormat.PNG) -> Tuple[np.ndarray, np.ndarray]:
     """
 
     Parameters
     ----------
-    clean_image_dirs: The directories under which clean images (x) are found
+    clear_image_dirs: The directories under which clean images (x) are found
     blurry_image_dirs: The directories under which blurry images (y) are found
     image_format: The type of image format used (PNG, JPG, etc.)
 
@@ -567,13 +567,13 @@ def cleanup_data_generator(clean_image_dirs: List[str] = join('data', 'subj1', '
     (clear_data, blurry_data)
     """
     # Sort the image directories by their subject number
-    clean_image_dirs.sort(key=lambda clean_image_dir: int(''.join(filter(str.isdigit, clean_image_dir))))
+    clear_image_dirs.sort(key=lambda clear_image_dir: int(''.join(filter(str.isdigit, clear_image_dir))))
     blurry_image_dirs.sort(key=lambda blurry_image_dir: int(''.join(filter(str.isdigit, blurry_image_dir))))
 
     clear_data = []
     blurry_data = []
 
-    for clear_image_dir, blurry_image_dir in zip(clean_image_dirs, blurry_image_dirs):
+    for clear_image_dir, blurry_image_dir in zip(clear_image_dirs, blurry_image_dirs):
 
         # Iterate over the entire list of images
         for i, file_name in enumerate(os.listdir(clear_image_dir)):
@@ -581,9 +581,14 @@ def cleanup_data_generator(clean_image_dirs: List[str] = join('data', 'subj1', '
                 # Read the Clear and Blurry Images as numpy arrays
                 clear_image = cv2.imread(os.path.join(clear_image_dir, file_name), 0)
                 blurry_image = cv2.imread(os.path.join(blurry_image_dir, file_name), 0)
+                if clear_image is None:
+                    print(f'{os.path.join(clear_image_dir, file_name)} is returning none for clear_image')
+                if blurry_image is None:
+                    print(f'{os.path.join(blurry_image_dir, file_name)} is returning none for blurry_image')
+                assert clear_image is not None and blurry_image is not None
 
                 # Histogram equalize the blurry image px distribution to match the clear image px distribution
-                blurry_image = image_utils.hist_match(blurry_image, clear_image).astype('uint8')
+                blurry_image = image_utils.hist_match(np.array(blurry_image), np.array(clear_image)).astype('uint8')
 
                 # Append the images to full lists of data
                 clear_data.extend(clear_image)
@@ -611,14 +616,14 @@ def cleanup_data_generator(clean_image_dirs: List[str] = join('data', 'subj1', '
     return clear_data, blurry_data
 
 
-def pair_data_generator(root_dir: str = join('data', 'Volume1', 'train'), image_format: ImageFormat = ImageFormat.PNG,
+def pair_data_generator(root_dirs: str = join('data', 'Volume1', 'train'), image_format: ImageFormat = ImageFormat.PNG,
                         patch_size: int = 40, stride: int = 10,
                         scales: List[float] = [1, 0.9, 0.8, 0.7]) -> Tuple[np.ndarray, np.ndarray]:
     """
     Provides a numpy array of training examples, given a path to a training directory
 
     :param image_format: The format of image that our training data is (JPG or PNG)
-    :param root_dir: The path of the training data directory
+    :param root_dirs: The path of the training data directories
     :param patch_size: The size of each patches in pixels -> (patch_size, patch_size)
     :param stride: The stride with which to slide the patch-taking window
     :param scales: A list of scales at which we want to create image patches.
@@ -627,82 +632,60 @@ def pair_data_generator(root_dir: str = join('data', 'Volume1', 'train'), image_
     :return: (clear_data, blurry_data)
     :rtype: numpy.array
     """
-
-    # Get the directory name for the Clear and Blurry Images
-    clear_image_dir = join(root_dir, 'ClearImages')
-    blurry_image_dir = join(root_dir, 'CoregisteredBlurryImages')
-
-    # If data is PNGs, get the list of all .png files
-    if image_format == ImageFormat.PNG:
-        file_list = sorted(glob.glob(clear_image_dir + '/*.png'))
-    # Else if data is JPGs, get the list of all .jpg files
-    elif image_format == ImageFormat.JPG:
-        file_list = sorted(glob.glob(clear_image_dir + '/*.jpg'))
-
     # initialize clear_data and clurry_data lists
     clear_data = []
     blurry_data = []
 
-    # Iterate over the entire list of images
-    for i, file_name in enumerate(os.listdir(clear_image_dir)):
-        if file_name.endswith('.jpg') or file_name.endswith('.png'):
-            # Read the Clear and Blurry Images as numpy arrays
-            clear_image = cv2.imread(os.path.join(clear_image_dir, file_name), 0)
-            blurry_image = cv2.imread(os.path.join(blurry_image_dir, file_name), 0)
+    for root_dir in root_dirs:
 
-            # Histogram equalize the blurry image px distribution to match the clear image px distribution
-            blurry_image = image_utils.hist_match(blurry_image, clear_image).astype('uint8')
+        # Get the directory name for the Clear and Blurry Images
+        clear_image_dir = join(root_dir, 'ClearImages')
+        blurry_image_dir = join(root_dir, 'CoregisteredBlurryImages')
 
-            ''' Just logging 
-            # Show the blurry image (Pre-Histogram Equalization), clear image, and
-            # blurry image (Post-Histogram Equalization)
-            logger.show_images([(f'CoregisteredBlurryImage (Pre-Histogram Equalization)', image),
-                                (f'Matching Clear Image', clear_image),
-                                ('CoregisteredBlurryImage (Post-Histogram Equalization)', equalized_image)])
-            '''
+        # Iterate over the entire list of images
+        for i, file_name in enumerate(os.listdir(clear_image_dir)):
+            if file_name.endswith('.jpg') or file_name.endswith('.png'):
+                # Read the Clear and Blurry Images as numpy arrays
+                clear_image = cv2.imread(os.path.join(clear_image_dir, file_name), 0)
+                blurry_image = cv2.imread(os.path.join(blurry_image_dir, file_name), 0)
 
-            # Generate clear and blurry patches from the clear and blurry images, respectively...
-            clear_patches, blurry_patches = generate_patch_pairs(clear_image=clear_image,
-                                                                 blurry_image=blurry_image,
-                                                                 patch_size=patch_size,
-                                                                 stride=stride,
-                                                                 scales=scales)
+                # Histogram equalize the blurry image px distribution to match the clear image px distribution
+                blurry_image = image_utils.hist_match(blurry_image, clear_image).astype('uint8')
 
-            # Append the patches to clear_data and blurry_data
-            clear_data.append(clear_patches)
-            blurry_data.append(blurry_patches)
+                ''' Just logging 
+                # Show the blurry image (Pre-Histogram Equalization), clear image, and
+                # blurry image (Post-Histogram Equalization)
+                logger.show_images([(f'CoregisteredBlurryImage (Pre-Histogram Equalization)', image),
+                                    (f'Matching Clear Image', clear_image),
+                                    ('CoregisteredBlurryImage (Post-Histogram Equalization)', equalized_image)])
+                '''
+
+                # Generate clear and blurry patches from the clear and blurry images, respectively...
+                clear_patches, blurry_patches = generate_patch_pairs(clear_image=clear_image,
+                                                                     blurry_image=blurry_image,
+                                                                     patch_size=patch_size,
+                                                                     stride=stride,
+                                                                     scales=scales)
+
+                # Add the images to the full lists of data
+                clear_data.extend(clear_patches)
+                blurry_data.extend(blurry_patches)
 
     # Convert clear_data and blurry_data to numpy arrays of ints
     clear_data = np.array(clear_data, dtype='uint8')
     blurry_data = np.array(blurry_data, dtype='uint8')
 
     # Reshape clear_data, blurry_data, and std_data
-    clear_data = clear_data.reshape((clear_data.shape[0] * clear_data.shape[1],
-                                     clear_data.shape[2],
-                                     clear_data.shape[3],
-                                     1
-                                     ))
-    blurry_data = blurry_data.reshape((blurry_data.shape[0] * blurry_data.shape[1],
-                                       blurry_data.shape[2],
-                                       blurry_data.shape[3],
-                                       1
-                                       ))
+    clear_data = clear_data[..., np.newaxis]
+    blurry_data = blurry_data[..., np.newaxis]
 
     # Make sure that clear_data and blurry_data have the same length
     assert (len(blurry_data) == len(clear_data))
 
-    ''' Commenting this out, as it will be done in train_datagen
-    # Get the number of elements to discard
-    num_elements_to_discard = len(clear_data) - len(clear_data) // batch_size * batch_size
-    # Remove "num_elements_to_discard" elements from from clear_data and blurry_data
-    clear_data = np.delete(clear_data, range(num_elements_to_discard), axis=0)
-    blurry_data = np.delete(blurry_data, range(num_elements_to_discard), axis=0)
-    '''
-
     return clear_data, blurry_data
 
 
-def retrieve_train_data(train_data_dir: str, low_noise_threshold: float = 0.03, high_noise_threshold: float = 0.15,
+def retrieve_train_data(train_data_dir: List[str], low_noise_threshold: float = 0.03, high_noise_threshold: float = 0.15,
                         skip_every: int = 3, patch_size: int = 40, stride: int = 10, scales: List = [1],
                         similarity_metric: str = 'psnr') -> Dict:
     """
@@ -858,6 +841,8 @@ if __name__ == '__main__':
     # data = pair_data_generator_multiple_data_dirs(root_dirs=['../data/subj1/train', '../data/subj2/train'])
     # data = pair_data_generator(root_dir='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train')
     # data = pair_3d_data_generator(root_dir='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train')
-    data = pair_3d_data_generator(
-        root_dirs=['/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train',
-                   '/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj2/train'])
+    # data = pair_3d_data_generator(
+    #     root_dirs=['/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train',
+    #                '/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj2/train'])
+    data = cleanup_data_generator(clear_image_dirs=['/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train/ClearImages'],
+                                  blurry_image_dirs=['/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/psnr_results/subj1_results/train'])
