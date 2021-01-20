@@ -1,0 +1,4 @@
+Average PSNR = 27.26dB, Average SSIM = 0.9397
+total low-noise patches: 3108
+total medium-noise patches: 1734
+total high-noise patches: 126
