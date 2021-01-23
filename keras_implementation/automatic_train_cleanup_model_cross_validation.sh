@@ -151,15 +151,15 @@ train_residual_std_estimated_cleanup_models () {
 
 train_single_denoiser_cleanup_models () {
   ### SUBJ1 ###
-  printf "Training AllButsubj1TrainedCleanup model...\n"
-  python scripts/train.py \
-    --blurry_data="results/subj2_results_single_denoiser/train" --blurry_data="results/subj3_results_single_denoiser/train" \
-    --blurry_data="results/subj4_results_single_denoiser/train" --blurry_data="results/subj5_results_single_denoiser/train" \
-    --blurry_data="results/subj6_results_single_denoiser/train" \
-    --clear_data="data/subj2/train/ClearImages" --clear_data="data/subj3/train/ClearImages" \
-    --clear_data="data/subj4/train/ClearImages" --clear_data="data/subj5/train/ClearImages" \
-    --clear_data="data/subj6/train/ClearImages" \
-    --val_data="results/subj1_results/train" --result_dir="models/AllButsubj1Trained/single_denoiser" --is_cleanup=True
+#  printf "Training AllButsubj1TrainedCleanup model...\n"
+#  python scripts/train.py \
+#    --blurry_data="results/subj2_results_single_denoiser/train" --blurry_data="results/subj3_results_single_denoiser/train" \
+#    --blurry_data="results/subj4_results_single_denoiser/train" --blurry_data="results/subj5_results_single_denoiser/train" \
+#    --blurry_data="results/subj6_results_single_denoiser/train" \
+#    --clear_data="data/subj2/train/ClearImages" --clear_data="data/subj3/train/ClearImages" \
+#    --clear_data="data/subj4/train/ClearImages" --clear_data="data/subj5/train/ClearImages" \
+#    --clear_data="data/subj6/train/ClearImages" \
+#    --val_data="results/subj1_results/train" --result_dir="models/AllButsubj1Trained/single_denoiser" --is_cleanup=True
   #############
 
   ### SUBJ2 ###
@@ -224,6 +224,6 @@ train_single_denoiser_cleanup_models () {
 }
 
 #train_psnr_estimated_cleanup_models
-train_residual_std_estimated_cleanup_models
+#train_residual_std_estimated_cleanup_models
 train_single_denoiser_cleanup_models
 

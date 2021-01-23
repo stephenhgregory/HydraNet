@@ -4,6 +4,8 @@ Main script used to run inference with HydraNet and test the results
 
 import argparse
 import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow logging (1)
 import time
 import datetime
 import numpy as np
@@ -278,6 +280,8 @@ def compare_to_closest_training_patch(patch: np.ndarray, training_patches: np.nd
 def main(args):
     """The main function of the program"""
 
+    print('\n\n\nInside of the main function of inference.py\n\n\n')
+
     # Get the latest epoch numbers
     # latest_epoch_original = model_functions.findLastCheckpoint(save_dir=args.model_dir_original)
     latest_epoch_all_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_all_noise)
@@ -304,11 +308,10 @@ def main(args):
         # model_dict["original"] = load_model(
         #     os.path.join(args.model_dir_original, 'model_%03d.hdf5' % latest_epoch_original),
         #     compile=False)
-        ''' TODO: Uncomment this
+        ''' TODO: Uncomment this '''
         model_dict["all"] = load_model(
             os.path.join(args.model_dir_all_noise, 'model_%03d.hdf5' % latest_epoch_all_noise),
             compile=False)
-        '''
         model_dict["low"] = load_model(
             os.path.join(args.model_dir_low_noise, 'model_%03d.hdf5' % latest_epoch_low_noise),
             compile=False)

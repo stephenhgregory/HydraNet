@@ -17,7 +17,7 @@ read -r MODEL_NUM
 printf "Single Denoiser?\n[y/n]: "
 read -r SINGLE_DENOISER
 
-# Set model to retrain with and train data
+# Set model to perform inference with and train data
 if [ "$MODEL_NUM" == 1 ]
 then
   DATA="subj1"
@@ -58,13 +58,36 @@ else
   ALL_NOISE=0
 fi
 
+#### PSNR Estimation #########################################################################
+## Set the name of the result directory based upon the training directory and whether we are
+## training a single, all-noise denoiser
+#if [ "$ALL_NOISE" == 1 ]
+#then
+#  RESULT_DIR="psnr_results/${DATA}_results_single_denoiser"
+#else
+#  RESULT_DIR="psnr_results/${DATA}_results"
+#fi
+#
+#printf "Calling test.py for model trained on %s...\n" "$TRAINED_DIR"
+#python scripts/inference.py \
+#    --single_denoiser="${ALL_NOISE}" \
+#    --set_dir="data/${DATA}" \
+#    --train_data="data/${TRAIN_DATA_DIR}/train" \
+#    --result_dir="${RESULT_DIR}" \
+#    --model_dir_all_noise="psnr_noise_estimated_models/${TRAINED_DIR}Trained/MyDnCNN_all_noise" \
+#    --model_dir_low_noise="psnr_noise_estimated_models/${TRAINED_DIR}Trained/MyDnCNN_low_noise" \
+#    --model_dir_medium_noise="psnr_noise_estimated_models/${TRAINED_DIR}Trained/MyDnCNN_medium_noise" \
+#    --model_dir_high_noise="psnr_noise_estimated_models/${TRAINED_DIR}Trained/MyDnCNN_high_noise"
+##############################################################################################
+
+### Residual Standard Deviation Estimation ###################################################
 # Set the name of the result directory based upon the training directory and whether we are
 # training a single, all-noise denoiser
 if [ "$ALL_NOISE" == 1 ]
 then
-  RESULT_DIR="psnr_results/${DATA}_results_single_denoiser"
+  RESULT_DIR="results/${DATA}_results_single_denoiser"
 else
-  RESULT_DIR="psnr_results/${DATA}_results"
+  RESULT_DIR="results/${DATA}_results"
 fi
 
 printf "Calling test.py for model trained on %s...\n" "$TRAINED_DIR"
@@ -73,7 +96,8 @@ python scripts/inference.py \
     --set_dir="data/${DATA}" \
     --train_data="data/${TRAIN_DATA_DIR}/train" \
     --result_dir="${RESULT_DIR}" \
-    --model_dir_all_noise="psnr_noise_estimated_models/${TRAINED_DIR}Trained/MyDnCNN_all_noise" \
-    --model_dir_low_noise="psnr_noise_estimated_models/${TRAINED_DIR}Trained/MyDnCNN_low_noise" \
-    --model_dir_medium_noise="psnr_noise_estimated_models/${TRAINED_DIR}Trained/MyDnCNN_medium_noise" \
-    --model_dir_high_noise="psnr_noise_estimated_models/${TRAINED_DIR}Trained/MyDnCNN_high_noise"
+    --model_dir_all_noise="models/${TRAINED_DIR}Trained/MyDnCNN_all_noise" \
+    --model_dir_low_noise="models/${TRAINED_DIR}Trained/MyDnCNN_low_noise" \
+    --model_dir_medium_noise="models/${TRAINED_DIR}Trained/MyDnCNN_medium_noise" \
+    --model_dir_high_noise="models/${TRAINED_DIR}Trained/MyDnCNN_high_noise"
+##############################################################################################
