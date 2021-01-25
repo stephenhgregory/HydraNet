@@ -43,12 +43,16 @@ parser.add_argument('--batch_size', default=128, type=int, help='batch size')
 parser.add_argument('--train_data', action='append', default=[], type=str, help='path of train data')
 parser.add_argument('--val_data', default='data/subj5/val', type=str, help='path of val data')
 parser.add_argument('--noise_level', default='all', type=str, help='Noise Level: Can be low, medium, high, or all')
+parser.add_argument('--id_portion', default='low', type=str, help='Image ID Portion: Can be low, middle, or high')
 parser.add_argument('--epoch', default=80, type=int, help='number of train epochs')
 parser.add_argument('--lr', default=2e-3, type=float, help='initial learning rate for Adam')
 parser.add_argument('--save_every', default=1, type=int, help='save model every x # of epochs')
 parser.add_argument('--result_dir', default='', type=str, help='save directory for resultant model .hdf5 files')
 parser.add_argument('--is_3d', default=False, type=bool, help='True if we wish to retrain a 3d denoiser')
 parser.add_argument('--is_cleanup', default=False, type=bool, help='True if we wish to retrain a cleanup denoiser')
+parser.add_argument('--is_left_middle_right', default=False, type=bool, help='True if we wish to retrain denoisers'
+                                                                             'on left, middle, and right brain'
+                                                                             'portions')
 parser.add_argument('--clear_data', action='append', default=[], type=str, help='Clear data directories (only used '
                                                                                 'when is_cleanup == True')
 parser.add_argument('--blurry_data', action='append', default=[], type=str, help='Blurry data directories (only used '
@@ -70,6 +74,8 @@ else:
 # Set the save directory of the trained model hdf5 file
 if args.is_cleanup:
     save_dir = os.path.join(args.result_dir, args.model + '_' + 'cleanup')
+elif args.is_left_middle_right:
+    save_dir = os.path.join(args.result_dir, args.model + '_' + args.id_portion + '_id')
 else:
     save_dir = os.path.join(args.result_dir, args.model + '_' + args.noise_level + '_noise')
 
@@ -590,6 +596,102 @@ def my_train_datagen(epoch_iter=2000,
                 yield batch_y, batch_x
 
 
+def my_train_datagen_left_middle_right(num_epochs=5,
+                                       batch_size=128,
+                                       data_dir=args.train_data,
+                                       low_image_id: int = 34,
+                                       high_image_id: int = 100):
+    """
+    Generator function that yields training data samples from a specified data directory.
+
+    Only returns images with an image id between low_image_id and high_image_id
+
+    Parameters
+    ----------
+    num_epochs: The total number of epochs
+    batch_size: The number of training examples for each training iteration
+    data_dir: The directory in which training examples are stored
+    low_image_id: The lower id threshold for returning images
+    high_image_id: The upper id threshold for returning images
+
+    Returns
+    -------
+    Yields a training example x and noisy image y
+    """
+    # Loop the following indefinitely...
+    while True:
+        counter = 0
+
+        # If this is the first iteration...
+        if counter == 0:
+            print(f'Accessing training data in: {data_dir}')
+
+            # Get our train data
+            x_original, y_original = data_generator.pair_data_generator(data_dir, use_image_id_range=True,
+                                                                        low_image_id=low_image_id,
+                                                                        high_image_id=high_image_id)
+
+            x_filtered = []
+            y_filtered = []
+
+            # Remove pure black patches
+            for x_patch, y_patch in zip(x_original, y_original):
+                if np.max(x_patch) < 10:
+                    continue
+                x_patch = x_patch.reshape(x_patch.shape[0], x_patch.shape[1])
+                y_patch = y_patch.reshape(y_patch.shape[0], y_patch.shape[1])
+                x_filtered.append(x_patch)
+                y_filtered.append(y_patch)
+
+            # Convert image patches and stds into numpy arrays
+            x_filtered = np.array(x_filtered, dtype='uint8')
+            y_filtered = np.array(y_filtered, dtype='uint8')
+
+            # Remove elements from x_filtered and y_filtered so that they have the right number of patches
+            discard_n = len(x_filtered) - len(x_filtered) // batch_size * batch_size
+            print(f'discard_n = {discard_n}')
+            x_filtered = np.delete(x_filtered, range(discard_n), axis=0)
+            y_filtered = np.delete(y_filtered, range(discard_n), axis=0)
+
+            print(f'The length of x_filtered: {len(x_filtered)}')
+            print(f'The length of y_filtered: {len(y_filtered)}')
+
+            # Assert that the last iteration has a full batch size
+            assert len(x_filtered) % args.batch_size == 0, \
+                logger.log(
+                    'make sure the last iteration has a full batchsize, '
+                    'this is important if you use batch normalization!')
+            assert len(y_filtered) % args.batch_size == 0, \
+                logger.log(
+                    'make sure the last iteration has a full batchsize, '
+                    'this is important if you use batch normalization!')
+            assert len(x_filtered) == len(y_filtered), logger.log('Make sure x and y are paired up properly!')
+
+            # Standardize x and y to have a mean of 0 and standard deviation of 1
+            x, x_orig_mean, x_orig_std = image_utils.standardize(x_filtered)
+            y, y_orig_mean, y_orig_std = image_utils.standardize(y_filtered)
+
+            # Get a list of indices, from 0 to the total number of training examples
+            indices = list(range(x.shape[0]))
+
+            counter += 1
+
+        # Iterate over the number of epochs
+        for _ in range(num_epochs):
+
+            # Shuffle the indices of the training examples
+            np.random.shuffle(indices)
+
+            # Iterate over the entire training set, skipping "batch_size" at a time
+            for i in range(0, len(indices), batch_size):
+                # Get the batch_x (clear) and batch_y (blurry)
+                batch_x = x[indices[i:i + batch_size]]
+                batch_y = y[indices[i:i + batch_size]]
+
+                # Finally, yield x and y, as this function is a generator
+                yield batch_y, batch_x
+
+
 def my_train_datagen_estimated_with_psnr(num_epochs=5,
                                          batch_size=128,
                                          data_dir=args.train_data,
@@ -806,6 +908,72 @@ def train():
                             callbacks=get_callbacks())
 
 
+def train_left_middle_right():
+    """
+    Creates and trains the MyDenoiser Keras model.
+
+    Trains separate models for each of the left, middle, and right parts of the brain.
+
+    If no checkpoints exist, we will start from scratch.
+    Otherwise, training will resume from previous checkpoints.
+
+    Returns
+    -------
+    None
+    """
+
+    # Select the type of model to use
+    if args.model == 'MyDnCNN':
+        # Create a MyDnCNN model
+        model = model_functions.MyDnCNN(depth=17, filters=64, image_channels=1, use_batchnorm=True)
+    elif args.model == 'MyDenoiser':
+        # Create a MyDenoiser model
+        model = model_functions.MyDenoiser()
+
+    # Print a summary of the model
+    model.summary()
+
+    # Load the last model
+    initial_epoch = model_functions.findLastCheckpoint(save_dir=save_dir)
+    if initial_epoch > 0:
+        print('resuming by loading epoch %03d' % initial_epoch)
+        model = load_model(os.path.join(save_dir, 'model_%03d.hdf5' % initial_epoch), compile=False)
+
+    # Compile the model
+    model.compile(optimizer=Adam(0.001), loss=sum_squared_error)
+
+    if args.id_portion == "low":
+        # Train the model on the individual noise level
+        history = model.fit(my_train_datagen_left_middle_right(batch_size=args.batch_size,
+                                                               data_dir=args.train_data,
+                                                               low_image_id=30,
+                                                               high_image_id=100),
+                            steps_per_epoch=2000,
+                            epochs=args.epoch,
+                            initial_epoch=initial_epoch,
+                            callbacks=get_callbacks())
+    elif args.id_portion == "middle":
+        # Train the model on the individual noise level
+        history = model.fit(my_train_datagen_left_middle_right(batch_size=args.batch_size,
+                                                               data_dir=args.train_data,
+                                                               low_image_id=60,
+                                                               high_image_id=122),
+                            steps_per_epoch=2000,
+                            epochs=args.epoch,
+                            initial_epoch=initial_epoch,
+                            callbacks=get_callbacks())
+    elif args.id_portion == "high":
+        # Train the model on the individual noise level
+        history = model.fit(my_train_datagen_left_middle_right(batch_size=args.batch_size,
+                                                               data_dir=args.train_data,
+                                                               low_image_id=60,
+                                                               high_image_id=122),
+                            steps_per_epoch=2000,
+                            epochs=args.epoch,
+                            initial_epoch=initial_epoch,
+                            callbacks=get_callbacks())
+
+
 def train_3d():
     """
     Creates and trains the My3dDenoiser TensorFlow model, a 3-dimensional Convolutional Denoiser.
@@ -871,8 +1039,9 @@ if __name__ == '__main__':
     # Run the main function
     if args.is_3d:
         train_3d()
+    elif args.is_left_middle_right:
+        train_left_middle_right()
     elif args.is_cleanup:
         train_cleanup_model()
     else:
-        print('training regular model')
         train()

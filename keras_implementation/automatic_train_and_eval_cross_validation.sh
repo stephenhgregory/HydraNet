@@ -43,13 +43,13 @@
 #    --train_data="data/subj1/train" --train_data="data/subj3/train" --train_data="data/subj4/train" \
 #    --train_data="data/subj5/train" --train_data="data/subj6/train" \
 #    --val_data="data/subj3/train" --result_dir="psnr_noise_estimated_models/AllButsubj2Trained"
-# Run inference for subj2
+## Run inference for subj2
 #printf "Calling test.py for model trained on all but subj2...\n"
 #python scripts/inference.py \
 #    --single_denoiser=0 \
 #    --set_dir="data/subj2" \
-#    --train_data="data/subj3/train" \
-#    --result_dir="psnr_results/subj2_results" \
+#    --train_data="data/subj4/train" \
+#    --result_dir="psnr_results/subj2test_subj4ref_results" \
 #    --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj2Trained/MyDnCNN_all_noise" \
 #    --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj2Trained/MyDnCNN_low_noise" \
 #    --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj2Trained/MyDnCNN_medium_noise" \
@@ -102,8 +102,8 @@
 #python scripts/inference.py \
 #    --single_denoiser=0 \
 #    --set_dir="data/subj4" \
-#    --train_data="data/subj5/train" \
-#    --result_dir="psnr_results/subj4_results" \
+#    --train_data="data/subj2/train" \
+#    --result_dir="psnr_results/subj4test_subj2ref_results" \
 #    --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj4Trained/MyDnCNN_all_noise" \
 #    --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj4Trained/MyDnCNN_low_noise" \
 #    --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj4Trained/MyDnCNN_medium_noise" \
@@ -129,8 +129,8 @@
 #python scripts/inference.py \
 #    --single_denoiser=0 \
 #    --set_dir="data/subj5" \
-#    --train_data="data/subj6/train" \
-#    --result_dir="psnr_results/subj5_results" \
+#    --train_data="data/subj3/train" \
+#    --result_dir="psnr_results/subj5test_subj3ref_results" \
 #    --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj5Trained/MyDnCNN_all_noise" \
 #    --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj5Trained/MyDnCNN_low_noise" \
 #    --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj5Trained/MyDnCNN_medium_noise" \
@@ -152,17 +152,17 @@
 #    --train_data="data/subj1/train" --train_data="data/subj2/train" --train_data="data/subj3/train" \
 #    --train_data="data/subj4/train" --train_data="data/subj5/train" \
 #    --val_data="data/subj4/train" --result_dir="psnr_noise_estimated_models/AllButsubj6Trained"
-# Run inference for subj6
-printf "Calling test.py for model trained on all but subj6...\n"
-python scripts/inference.py \
-    --single_denoiser=0 \
-    --set_dir="data/subj6" \
-    --train_data="data/subj4/train" \
-    --result_dir="psnr_results/subj6_results" \
-    --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj6Trained/MyDnCNN_all_noise" \
-    --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj6Trained/MyDnCNN_low_noise" \
-    --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj6Trained/MyDnCNN_medium_noise" \
-    --model_dir_high_noise="psnr_noise_estimated_models/AllButsubj6Trained/MyDnCNN_high_noise"
+## Run inference for subj6
+#printf "Calling test.py for model trained on all but subj6...\n"
+#python scripts/inference.py \
+#    --single_denoiser=0 \
+#    --set_dir="data/subj6" \
+#    --train_data="data/subj3/train" \
+#    --result_dir="psnr_results/subj6test_subj3ref_results" \
+#    --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj6Trained/MyDnCNN_all_noise" \
+#    --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj6Trained/MyDnCNN_low_noise" \
+#    --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj6Trained/MyDnCNN_medium_noise" \
+#    --model_dir_high_noise="psnr_noise_estimated_models/AllButsubj6Trained/MyDnCNN_high_noise"
 
 
 

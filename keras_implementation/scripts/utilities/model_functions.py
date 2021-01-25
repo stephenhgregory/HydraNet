@@ -3,8 +3,9 @@
 from tensorflow.keras.layers import Input, Conv2D, Conv3D, BatchNormalization, Activation, Subtract
 
 from tensorflow.keras.models import Model, load_model
-from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler, EarlyStopping
-from tensorflow.keras.optimizers import Adam
+from tensor2tensor.utils import expert_utils
+from tensor2tensor.utils import hparam
+
 import glob
 import os
 import re
@@ -55,7 +56,7 @@ def My3dDenoiser(depth, num_filters=64, use_batchnorm=True):
     x = Activation('relu', name=f'ReLU1')(x)
 
     # Layer 2 through Layer (depth - 1)
-    for i in range(depth-2):
+    for i in range(depth - 2):
         # Layer N - Convolutional Layer + (Optionally) BatchNorm + ReLU Activation
         x = Conv3D(filters=num_filters, kernel_size=(3, 3, 3), strides=(1, 1, 1), kernel_initializer='Orthogonal',
                    padding='same', use_bias=False, name=f'Conv{layer_index}')(x)
@@ -101,7 +102,6 @@ def MyDnCNN(depth, filters=64, image_channels=1, use_batchnorm=True):
     # Define Layer 1 -- Convolutional Layer + ReLU activation function, and increment layer_index
     x = Conv2D(filters=filters, kernel_size=(3, 3), strides=(1, 1), kernel_initializer='Orthogonal', padding='same',
                name='Conv' + str(layer_index))(input_layer)
-    layer_index += 1
     x = Activation('relu', name='ReLU' + str(layer_index))(x)
 
     # Iterate through the rest of the (depth - 2) layers -- Convolutional Layer + (Maybe) BatchNorm layer + ReLU
@@ -114,11 +114,9 @@ def MyDnCNN(depth, filters=64, image_channels=1, use_batchnorm=True):
 
         # (Optionally) Define BatchNormalization layer
         if use_batchnorm:
-            layer_index += 1
             x = BatchNormalization(axis=3, momentum=0.0, epsilon=0.0001, name='BatchNorm' + str(layer_index))(x)
 
         # Define ReLU Activation Layer
-        layer_index += 1
         x = Activation('relu', name='ReLU' + str(layer_index))(x)
 
     # Define last layer -- Convolutional Layer and Subtraction Layer (input - noise)
@@ -126,13 +124,47 @@ def MyDnCNN(depth, filters=64, image_channels=1, use_batchnorm=True):
     x = Conv2D(filters=image_channels, kernel_size=(3, 3), strides=(1, 1), kernel_initializer='Orthogonal',
                padding='same',
                use_bias=False, name='Conv' + str(layer_index))(x)
-    layer_index += 1
     x = Subtract(name='Subtract' + str(layer_index))([input_layer, x])
 
     # Finally, define the model
     model = Model(inputs=input_layer, outputs=x)
 
     return model
+
+
+def MyAttentionDnCNN(image_channels=1):
+    """
+    This function utilizes attention to select amongst an ensemble of experts (Denoisers)
+
+    Parameters
+    ----------
+    image_channels: The depth of each image
+
+    Returns
+    -------
+    An instance of HydraNet
+    """
+    # Set hyperparameters for VQ Gating
+    hparams = hparam.HParams()
+    expert_utils.update_hparams_for_vq_gating(hparams)
+    hparams.hidden_size = 40
+    hparams.moe_num_experts = 16
+    hparams.filter_size = 4
+
+    print(hparams)
+
+    input_layer = Input(shape=(None, None, image_channels))
+    y, extra_training_loss = expert_utils.local_moe(x=input_layer,
+                                                    train=True,
+                                                    expert_fn=MyDnCNN,
+                                                    num_experts=hparams.moe_num_experts,
+                                                    hparams=hparams)
+
+    # Finally, define the model
+    model = Model(inputs=input_layer, outputs=y)
+    return model
+
+
 
 
 def MyDenoiser(image_channels=1, num_blocks=15):

@@ -8,6 +8,7 @@ from typing import List, Tuple, Dict
 from utilities import image_utils
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 from scipy.ndimage import zoom
+import re
 
 # Global variable definitions
 aug_times = 1
@@ -618,19 +619,27 @@ def cleanup_data_generator(clear_image_dirs: List[str] = [join('data', 'subj1', 
 
 def pair_data_generator(root_dirs: str = join('data', 'Volume1', 'train'), image_format: ImageFormat = ImageFormat.PNG,
                         patch_size: int = 40, stride: int = 10,
-                        scales: List[float] = [1, 0.9, 0.8, 0.7]) -> Tuple[np.ndarray, np.ndarray]:
+                        scales: List[float] = [1, 0.9, 0.8, 0.7], use_image_id_range: bool = False,
+                        low_image_id: int = 34, high_image_id: int = 100) -> Tuple[np.ndarray, np.ndarray]:
     """
     Provides a numpy array of training examples, given a path to a training directory
 
-    :param image_format: The format of image that our training data is (JPG or PNG)
-    :param root_dirs: The path of the training data directories
-    :param patch_size: The size of each patches in pixels -> (patch_size, patch_size)
-    :param stride: The stride with which to slide the patch-taking window
-    :param scales: A list of scales at which we want to create image patches.
+    Parameters
+    ----------
+    image_format: The format of image that our training data is (JPG or PNG)
+    root_dirs: The path of the training data directories
+    patch_size: The size of each patches in pixels -> (patch_size, patch_size)
+    stride: The stride with which to slide the patch-taking window
+    scales: A list of scales at which we want to create image patches.
         If None, this function simply performs no rescaling of the image to create patches
+    use_image_id_range: True if we wish to only return image patches between low_image_id
+        and high_image_id.
+    low_image_id: The lower image id for the range of images to return (only used when use_image_id_range == True)
+    high_image_id: The upper image id for the range of images to return (only used when use_image_id_range == True)
 
-    :return: (clear_data, blurry_data)
-    :rtype: numpy.array
+    Returns
+    -------
+    (clear_data, blurry_data)
     """
     # initialize clear_data and clurry_data lists
     clear_data = []
@@ -645,20 +654,20 @@ def pair_data_generator(root_dirs: str = join('data', 'Volume1', 'train'), image
         # Iterate over the entire list of images
         for i, file_name in enumerate(os.listdir(clear_image_dir)):
             if file_name.endswith('.jpg') or file_name.endswith('.png'):
+
+                # If we wish to use the image_id range, skip this image if it isn't between low and high image_id
+                if use_image_id_range:
+                    # Extract the id from the image name
+                    file_id = int(re.findall('\d+', file_name)[0])
+                    if not low_image_id < file_id < high_image_id:
+                        continue
+
                 # Read the Clear and Blurry Images as numpy arrays
                 clear_image = cv2.imread(os.path.join(clear_image_dir, file_name), 0)
                 blurry_image = cv2.imread(os.path.join(blurry_image_dir, file_name), 0)
 
                 # Histogram equalize the blurry image px distribution to match the clear image px distribution
                 blurry_image = image_utils.hist_match(blurry_image, clear_image).astype('uint8')
-
-                ''' Just logging 
-                # Show the blurry image (Pre-Histogram Equalization), clear image, and
-                # blurry image (Post-Histogram Equalization)
-                logger.show_images([(f'CoregisteredBlurryImage (Pre-Histogram Equalization)', image),
-                                    (f'Matching Clear Image', clear_image),
-                                    ('CoregisteredBlurryImage (Post-Histogram Equalization)', equalized_image)])
-                '''
 
                 # Generate clear and blurry patches from the clear and blurry images, respectively...
                 clear_patches, blurry_patches = generate_patch_pairs(clear_image=clear_image,
@@ -685,7 +694,8 @@ def pair_data_generator(root_dirs: str = join('data', 'Volume1', 'train'), image
     return clear_data, blurry_data
 
 
-def retrieve_train_data(train_data_dir: List[str], low_noise_threshold: float = 0.03, high_noise_threshold: float = 0.15,
+def retrieve_train_data(train_data_dir: List[str], low_noise_threshold: float = 0.03,
+                        high_noise_threshold: float = 0.15,
                         skip_every: int = 3, patch_size: int = 40, stride: int = 10, scales: List = [1],
                         similarity_metric: str = 'psnr') -> Dict:
     """
@@ -844,5 +854,7 @@ if __name__ == '__main__':
     # data = pair_3d_data_generator(
     #     root_dirs=['/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train',
     #                '/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj2/train'])
-    data = cleanup_data_generator(clear_image_dirs=['/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train/ClearImages'],
-                                  blurry_image_dirs=['/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/psnr_results/subj1_results/train'])
+    data = cleanup_data_generator(
+        clear_image_dirs=['/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/data/subj1/train/ClearImages'],
+        blurry_image_dirs=[
+            '/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/psnr_results/subj1_results/train'])
