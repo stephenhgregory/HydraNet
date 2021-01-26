@@ -68,7 +68,7 @@ def parse_args():
                         default=os.path.join('models', 'AllButsubj1Trained', 'MyDnCNN_cleanup'),
                         type=str,
                         help='directory of the cleanup denoising model')
-    parser.add_argument('--result_dir', default='results/subj1_results/', type=str,
+    parser.add_argument('--result_dir', default='', type=str,
                         help='directory of results')
     parser.add_argument('--cleanup_result_dir', default='results/subj1_cleanup_results/', type=str,
                         help='directory of cleanup results')
@@ -480,10 +480,6 @@ def main(args):
                                                               high_noise_threshold=40.0, skip_every=3, patch_size=40,
                                                               stride=20, scales=[1])
 
-    # If the result directory doesn't exist already, just create it
-    if not os.path.exists(args.result_dir):
-        os.mkdir(args.result_dir)
-
     # For each dataset that we wish to test on...
     for set_name in args.set_names:
 
@@ -532,7 +528,7 @@ def main(args):
                 # Record the inference time
                 print('%10s : %10s : %2.4f second' % (set_name, image_name, time.time() - start_time))
 
-                ''' Just logging
+                ''' Just logging '''
                 # Reverse the standardization
                 x_pred_reversed = image_utils.reverse_standardize(x_pred,
                                                                   original_mean=x_orig_mean,
@@ -550,7 +546,6 @@ def main(args):
                                     ("x_pred_reversed", x_pred_reversed),
                                     ("y", y),
                                     ("y_reversed", y_reversed)])
-                '''
 
                 # Reverse the standardization of x and x_pred (we actually don't need y at this point, only for logging)
                 x = image_utils.reverse_standardize(x, original_mean=x_orig_mean, original_std=x_orig_std)
@@ -715,7 +710,7 @@ if __name__ == '__main__':
     args = parse_args()
 
     # If the result directory doesn't exist already, just create it
-    if not os.path.exists(args.result_dir):
+    if args.save_result and not os.path.exists(args.result_dir):
         os.makedirs(args.result_dir)
 
     # Run (patch-based) denoising
