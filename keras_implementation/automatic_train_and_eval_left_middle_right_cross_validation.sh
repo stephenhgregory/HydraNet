@@ -1,63 +1,57 @@
 #!/usr/bin/env bash
 # Used to run inference on all subj1-subj6
 
-### SUBJ1 ###
-# Train AllButsubj1
-printf "Training AllButsubj1Trained model...\n"
-python scripts/train.py --is_left_middle_right=true --id_portion="low" \
-    --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" --train_data="subj1_coregistered_data/subj4/train" \
-    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj2/train" --result_dir="left_middle_right_models/AllButsubj1Trained"
-python scripts/train.py --is_left_middle_right=true --id_portion="middle" \
-    --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" --train_data="subj1_coregistered_data/subj4/train" \
-    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj2/train" --result_dir="left_middle_right_models/AllButsubj1Trained"
-python scripts/train.py --is_left_middle_right=true --id_portion="high" \
-    --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" --train_data="subj1_coregistered_data/subj4/train" \
-    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj2/train" --result_dir="left_middle_right_models/AllButsubj1Trained"
+#### SUBJ1 ###
+## Train AllButsubj1
+#printf "Training AllButsubj1Trained model...\n"
+#python scripts/train.py --is_left_middle_right=true --id_portion="low" \
+#    --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" --train_data="subj1_coregistered_data/subj4/train" \
+#    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj2/train" --result_dir="left_middle_right_models/AllButsubj1Trained"
+#python scripts/train.py --is_left_middle_right=true --id_portion="middle" \
+#    --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" --train_data="subj1_coregistered_data/subj4/train" \
+#    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj2/train" --result_dir="left_middle_right_models/AllButsubj1Trained"
+#python scripts/train.py --is_left_middle_right=true --id_portion="high" \
+#    --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" --train_data="subj1_coregistered_data/subj4/train" \
+#    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj2/train" --result_dir="left_middle_right_models/AllButsubj1Trained"
 ## Run inference for subj1
-#printf "Calling test.py for model trained on all but subj1...\n"
-#python scripts/inference.py \
-#    --single_denoiser=0 \
-#    --set_dir="data/subj1" \
-#    --train_data="data/subj2/train" \
-#    --result_dir="psnr_results/subj1_results" \
-#    --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj1Trained/MyDnCNN_all_noise" \
-#    --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj1Trained/MyDnCNN_low_noise" \
-#    --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj1Trained/MyDnCNN_medium_noise" \
-#    --model_dir_high_noise="psnr_noise_estimated_models/AllButsubj1Trained/MyDnCNN_high_noise"
+#printf "Calling inference_left_middle_right.py for model trained on all but subj1...\n"
+#python scripts/inference_left_middle_right.py \
+#    --set_dir="subj1_coregistered_data/subj1" \
+#    --result_dir="left_middle_right_results/subj1_results" \
+#    --model_dir_left="left_middle_right_models/AllButsubj1Trained/MyDnCNN_low_id" \
+#    --model_dir_middle="left_middle_right_models/AllButsubj1Trained/MyDnCNN_middle_id" \
+#    --model_dir_right="left_middle_right_models/AllButsubj1Trained/MyDnCNN_high_id"
 #############
 
 ### SUBJ2 ###
-printf "Training AllButsubj2Trained model...\n"
-python scripts/train.py --is_left_middle_right=true --id_portion="low" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj3/train" --train_data="subj1_coregistered_data/subj4/train" \
-    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj2Trained"
-python scripts/train.py --is_left_middle_right=true --id_portion="middle" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj3/train" --train_data="subj1_coregistered_data/subj4/train" \
-    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj2Trained"
-python scripts/train.py --is_left_middle_right=true --id_portion="high" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj3/train" --train_data="subj1_coregistered_data/subj4/train" \
-    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj2Trained"
-## Run inference for subj2
-#printf "Calling test.py for model trained on all but subj2...\n"
-#python scripts/inference.py \
-#    --single_denoiser=0 \
-#    --set_dir="data/subj2" \
-#    --train_data="data/subj4/train" \
-#    --result_dir="psnr_results/subj2test_subj4ref_results" \
-#    --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj2Trained/MyDnCNN_all_noise" \
-#    --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj2Trained/MyDnCNN_low_noise" \
-#    --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj2Trained/MyDnCNN_medium_noise" \
-#    --model_dir_high_noise="psnr_noise_estimated_models/AllButsubj2Trained/MyDnCNN_high_noise"
+#printf "Training AllButsubj2Trained model...\n"
+#python scripts/train.py --is_left_middle_right=true --id_portion="low" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj3/train" --train_data="subj1_coregistered_data/subj4/train" \
+#    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj2Trained"
+#python scripts/train.py --is_left_middle_right=true --id_portion="middle" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj3/train" --train_data="subj1_coregistered_data/subj4/train" \
+#    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj2Trained"
+#python scripts/train.py --is_left_middle_right=true --id_portion="high" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj3/train" --train_data="subj1_coregistered_data/subj4/train" \
+#    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj2Trained"
+# Run inference for subj2
+printf "Calling inference_left_middle_right.py for model trained on all but subj2...\n"
+python scripts/inference_left_middle_right.py \
+    --set_dir="subj1_coregistered_data/subj2" \
+    --result_dir="left_middle_right_results/subj2_results" \
+    --model_dir_left="left_middle_right_models/AllButsubj2Trained/MyDnCNN_low_id" \
+    --model_dir_middle="left_middle_right_models/AllButsub2Trained/MyDnCNN_middle_id" \
+    --model_dir_right="left_middle_right_models/AllButsubj2Trained/MyDnCNN_high_id"
 #############
 
 ### SUBJ3 ###
-printf "Training AllButsubj3Trained model...\n"
+#printf "Training AllButsubj3Trained model...\n"
 python scripts/train.py --is_left_middle_right=true --id_portion="low" \
     --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj4/train" \
     --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
@@ -71,16 +65,13 @@ python scripts/train.py --is_left_middle_right=true --id_portion="high" \
     --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
     --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj3Trained"
 ## Run inference for subj3
-#printf "Calling test.py for model trained on all but subj3...\n"
-#python scripts/inference.py \
-#    --single_denoiser=0 \
-#    --set_dir="data/subj3" \
-#    --train_data="data/subj4/train" \
-#    --result_dir="psnr_results/subj3_results" \
-#    --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj3Trained/MyDnCNN_all_noise" \
-#    --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj3Trained/MyDnCNN_low_noise" \
-#    --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj3Trained/MyDnCNN_medium_noise" \
-#    --model_dir_high_noise="psnr_noise_estimated_models/AllButsubj3Trained/MyDnCNN_high_noise"
+#printf "Calling inference_left_middle_right.py for model trained on all but subj3...\n"
+#python scripts/inference_left_middle_right.py \
+#    --set_dir="subj1_coregistered_data/subj3" \
+#    --result_dir="left_middle_right_results/subj3_results" \
+#    --model_dir_left="left_middle_right_models/AllButsubj3Trained/MyDnCNN_low_id" \
+#    --model_dir_middle="left_middle_right_models/AllButsub3Trained/MyDnCNN_middle_id" \
+#    --model_dir_right="left_middle_right_models/AllButsubj3Trained/MyDnCNN_high_id"
 #############
 
 ### SUBJ4 ###
@@ -98,16 +89,13 @@ python scripts/train.py --is_left_middle_right=true --id_portion="high" \
     --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
     --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj4Trained"
 ## Run inference for subj4
-#printf "Calling test.py for model trained on all but subj4...\n"
-#python scripts/inference.py \
-#    --single_denoiser=0 \
-#    --set_dir="data/subj4" \
-#    --train_data="data/subj2/train" \
-#    --result_dir="psnr_results/subj4test_subj2ref_results" \
-#    --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj4Trained/MyDnCNN_all_noise" \
-#    --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj4Trained/MyDnCNN_low_noise" \
-#    --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj4Trained/MyDnCNN_medium_noise" \
-#    --model_dir_high_noise="psnr_noise_estimated_models/AllButsubj4Trained/MyDnCNN_high_noise"
+#printf "Calling inference_left_middle_right.py for model trained on all but subj4...\n"
+#python scripts/inference_left_middle_right.py \
+#    --set_dir="subj1_coregistered_data/subj4" \
+#    --result_dir="left_middle_right_results/subj4_results" \
+#    --model_dir_left="left_middle_right_models/AllButsubj4Trained/MyDnCNN_low_id" \
+#    --model_dir_middle="left_middle_right_models/AllButsubj4Trained/MyDnCNN_middle_id" \
+#    --model_dir_right="left_middle_right_models/AllButsubj4Trained/MyDnCNN_high_id"
 #############
 
 ### SUBJ5 ###
@@ -124,17 +112,14 @@ python scripts/train.py --is_left_middle_right=true --id_portion="high" \
     --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
     --train_data="subj1_coregistered_data/subj4/train" --train_data="subj1_coregistered_data/subj6/train" \
     --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj5Trained"
-## Run inference for subj5
-#printf "Calling test.py for model trained on all but subj5...\n"
-#python scripts/inference.py \
-#    --single_denoiser=0 \
-#    --set_dir="data/subj5" \
-#    --train_data="data/subj3/train" \
-#    --result_dir="psnr_results/subj5test_subj3ref_results" \
-#    --model_dir_all_noise="psnr_noise_estimated_models/AllButsubj5Trained/MyDnCNN_all_noise" \
-#    --model_dir_low_noise="psnr_noise_estimated_models/AllButsubj5Trained/MyDnCNN_low_noise" \
-#    --model_dir_medium_noise="psnr_noise_estimated_models/AllButsubj5Trained/MyDnCNN_medium_noise" \
-#    --model_dir_high_noise="psnr_noise_estimated_models/AllButsubj5Trained/MyDnCNN_high_noise"
+# Run inference for subj5
+printf "Calling inference_left_middle_right.py for model trained on all but subj5...\n"
+python scripts/inference_left_middle_right.py \
+    --set_dir="subj1_coregistered_data/subj5" \
+    --result_dir="left_middle_right_results/subj5_results" \
+    --model_dir_left="left_middle_right_models/AllButsubj5Trained/MyDnCNN_low_id" \
+    --model_dir_middle="left_middle_right_models/AllButsub5Trained/MyDnCNN_middle_id" \
+    --model_dir_right="left_middle_right_models/AllButsubj5Trained/MyDnCNN_high_id"
 #############
 
 

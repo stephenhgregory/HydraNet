@@ -9,13 +9,14 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow logging (1)
 import time
 import datetime
 import numpy as np
-from tensorflow.keras.models import load_model, model_from_json
+from tensorflow.keras.models import load_model
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 from skimage.io import imread, imsave
 import tensorflow as tf
 import cv2
 import copy
 from typing import List, Tuple, Dict
+import re
 
 # This is for running normally, where the root directory is MyDenoiser/keras_implementation
 from utilities import image_utils, logger, data_generator, model_functions
@@ -46,60 +47,40 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--set_dir', default='data/subj1', type=str, help='parent directory of test dataset')
     parser.add_argument('--set_names', default=['train'], type=list, help='name of test dataset')
-    # parser.add_argument('--model_dir_original', default=os.path.join('models', 'Volume1Trained', 'MyDnCNN'), type=str,
-    #                     help='directory of the original, single-network denoising model')
-    parser.add_argument('--model_dir_all_noise',
-                        default=os.path.join('models', 'AllButsubj1Trained', 'MyDnCNN_all_noise'),
+    parser.add_argument('--model_dir_left',
+                        default=os.path.join('left_middle_right_models', 'AllButsubj1Trained', 'MyDnCNN_low_id'),
                         type=str,
-                        help='directory of the all-noise-denoising model')
-    parser.add_argument('--model_dir_low_noise',
-                        default=os.path.join('models', 'AllButsubj1Trained', 'MyDnCNN_low_noise'),
+                        help='directory of the left brain (low-id) denoising model')
+    parser.add_argument('--model_dir_middle',
+                        default=os.path.join('left_middle_right_models', 'AllButsubj1Trained', 'MyDnCNN_middle_id'),
                         type=str,
-                        help='directory of the low-noise-denoising model')
-    parser.add_argument('--model_dir_medium_noise',
-                        default=os.path.join('models', 'AllButsubj1Trained', 'MyDnCNN_medium_noise'),
+                        help='directory of the middle brain (middle-id) denoising model')
+    parser.add_argument('--model_dir_right',
+                        default=os.path.join('left_middle_right_models', 'AllButsubj1Trained', 'MyDnCNN_high_id'),
                         type=str,
-                        help='directory of the medium-noise-denoising model')
-    parser.add_argument('--model_dir_high_noise',
-                        default=os.path.join('models', 'AllButsubj1Trained', 'MyDnCNN_high_noise'),
-                        type=str,
-                        help='directory of the high-noise-denoising model')
+                        help='directory of the right brain (high-id) denoising model')
     parser.add_argument('--model_dir_cleanup',
                         default=os.path.join('models', 'AllButsubj1Trained', 'MyDnCNN_cleanup'),
                         type=str,
                         help='directory of the cleanup denoising model')
-    parser.add_argument('--result_dir', default='', type=str,
+    parser.add_argument('--result_dir', default='left_middle_right_results/subj1_results', type=str,
                         help='directory of results')
-    parser.add_argument('--cleanup_result_dir', default='results/subj1_cleanup_results/', type=str,
+    parser.add_argument('--cleanup_result_dir', default='left_middle_right_results/subj1_cleanup_results/', type=str,
                         help='directory of cleanup results')
     parser.add_argument('--reanalyze_data', default=False, type=bool, help='True if we want to simply reanalyze '
                                                                            'results that have already been produced '
                                                                            'and saved')
-    parser.add_argument('--train_data', default='data/subj1/train', type=str, help='path of train data')
     parser.add_argument('--save_result', default=1, type=int, help='save the denoised image, 1 for yes or 0 for no')
-    parser.add_argument('--single_denoiser', default=1, type=int, help='Use a single denoiser for all noise ranges, '
-                                                                       '1 for yes or 0 for no')
+    parser.add_argument('--low_image_id', default=73, type=int, help='The lower threshold for sending images to '
+                                                                     'left-brain denoiser')
+    parser.add_argument('--high_image_id', default=120, type=int, help='The upper threshold for sending images to '
+                                                                     'right-brain denoiser')
     parser.add_argument('--skip_patch_denoise', default=False, type=bool, help='True if we wish to NOT run '
                                                                                'patch-based denoising')
     parser.add_argument('--cleanup_denoise', default=False, type=bool,
                         help='True if we wish to run cleanup denoising after '
                              'patch-based denoising')
     return parser.parse_args()
-
-
-# TODO: Delete this function
-# def to_tensor(image):
-#     """ Converts an input image (numpy array) into a tensor """
-#
-#     if image.ndim == 2:
-#         return image[np.newaxis, ..., np.newaxis]
-#     elif image.ndim == 3:
-#         return np.moveaxis(image, 2, 0)[..., np.newaxis]
-
-# TODO: Delete this function
-# def from_tensor(img):
-#     """ Converts an image tensor into an image (numpy array) """
-#     return np.squeeze(np.moveaxis(img[..., 0], 0, -1))
 
 
 def log(*args, **kwargs):
@@ -436,53 +417,20 @@ def main(args):
 
     # Get the latest epoch numbers
     # latest_epoch_original = model_functions.findLastCheckpoint(save_dir=args.model_dir_original)
-    latest_epoch_all_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_all_noise)
-    latest_epoch_low_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_low_noise)
-    latest_epoch_medium_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_medium_noise)
-    latest_epoch_high_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_high_noise)
+    latest_epoch_left = model_functions.findLastCheckpoint(save_dir=args.model_dir_left)
+    latest_epoch_middle = model_functions.findLastCheckpoint(save_dir=args.model_dir_middle)
+    latest_epoch_right = model_functions.findLastCheckpoint(save_dir=args.model_dir_right)
 
-    # Create dictionaries to store models and training patches
-    model_dict = {}
-    training_patches = {}
-
-    # If we are denoising with a single denoiser...
-    if args.single_denoiser:
-        # Load our single all-noise denoising model
-        model_dict["all"] = load_model(os.path.join(args.model_dir_all_noise,
-                                                    'model_%03d.hdf5' % latest_epoch_all_noise),
-                                       compile=False)
-        log(f'Loaded single all-noise model: '
-            f'{os.path.join(args.model_dir_all_noise, "model_%03d.hdf5" % latest_epoch_all_noise)}. ')
-
-    # Otherwise...
-    else:
-        # Load our 3 denoising models
-        # model_dict["original"] = load_model(
-        #     os.path.join(args.model_dir_original, 'model_%03d.hdf5' % latest_epoch_original),
-        #     compile=False)
-        ''' TODO: Uncomment this '''
-        # model_dict["all"] = load_model(
-        #     os.path.join(args.model_dir_all_noise, 'model_%03d.hdf5' % latest_epoch_all_noise),
-        #     compile=False)
-        model_dict["low"] = load_model(
-            os.path.join(args.model_dir_low_noise, 'model_%03d.hdf5' % latest_epoch_low_noise),
-            compile=False)
-        model_dict["medium"] = load_model(
-            os.path.join(args.model_dir_medium_noise, 'model_%03d.hdf5' % latest_epoch_medium_noise),
-            compile=False)
-        model_dict["high"] = load_model(
-            os.path.join(args.model_dir_high_noise, 'model_%03d.hdf5' % latest_epoch_high_noise),
-            compile=False)
-        log(f'Loaded all 3 trained models: '
-            f'{os.path.join(args.model_dir_low_noise, "model_%03d.hdf5" % latest_epoch_low_noise)}, '
-            f'{os.path.join(args.model_dir_medium_noise, "model_%03d.hdf5" % latest_epoch_medium_noise)}, and '
-            f'{os.path.join(args.model_dir_high_noise, "model_%03d.hdf5" % latest_epoch_high_noise)}')
-
-    if not args.single_denoiser:
-        # Get our training data to use for determining which denoising network to send each patch through
-        training_patches = data_generator.retrieve_train_data([args.train_data], low_noise_threshold=20.0,
-                                                              high_noise_threshold=40.0, skip_every=3, patch_size=40,
-                                                              stride=20, scales=[1])
+    # Load our 3 denoising models
+    model_left = load_model(
+        os.path.join(args.model_dir_left, 'model_%03d.hdf5' % latest_epoch_left),
+        compile=False)
+    model_middle = load_model(
+        os.path.join(args.model_dir_middle, 'model_%03d.hdf5' % latest_epoch_middle),
+        compile=False)
+    model_right = load_model(
+        os.path.join(args.model_dir_right, 'model_%03d.hdf5' % latest_epoch_right),
+        compile=False)
 
     # For each dataset that we wish to test on...
     for set_name in args.set_names:
@@ -495,12 +443,25 @@ def main(args):
         psnrs = []
         ssims = []
 
+        # Create model dictionary (this will only contain a single denoiser under the key "all-noise"
+        model_dict = {}
+
         for image_name in os.listdir(os.path.join(args.set_dir, set_name, 'CoregisteredBlurryImages')):
             if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
 
                 # Skip this example if the result already exists
                 if os.path.exists(os.path.join(args.result_dir, set_name, image_name)):
                     continue
+
+                # Set the proper denoiser network based upon the id of the image
+                # Extract the id from the image name
+                file_id = int(re.findall('\d+', image_name)[0])
+                if file_id < args.low_image_id:
+                    model_dict["all"] = model_left
+                elif args.low_image_id < file_id < args.high_image_id:
+                    model_dict["all"] = model_middle
+                elif args.high_image_id < file_id:
+                    model_dict["all"] = model_right
 
                 # Get the image name minus the file extension
                 image_name_no_extension, _ = os.path.splitext(image_name)
@@ -526,13 +487,13 @@ def main(args):
                 x_pred = denoise_image_by_patches(y=y, file_name=str(image_name_no_extension), set_name=set_name,
                                                   original_mean=x_orig_mean, original_std=x_orig_std,
                                                   y_original_mean=y_orig_mean, y_original_std=y_orig_std,
-                                                  save_patches=False, single_denoiser=args.single_denoiser,
-                                                  model_dict=model_dict, training_patches=training_patches)
+                                                  save_patches=False, single_denoiser=True,
+                                                  model_dict=model_dict)
 
                 # Record the inference time
                 print('%10s : %10s : %2.4f second' % (set_name, image_name, time.time() - start_time))
 
-                ''' Just logging '''
+                ''' Just logging
                 # Reverse the standardization
                 x_pred_reversed = image_utils.reverse_standardize(x_pred,
                                                                   original_mean=x_orig_mean,
@@ -550,6 +511,7 @@ def main(args):
                                     ("x_pred_reversed", x_pred_reversed),
                                     ("y", y),
                                     ("y_reversed", y_reversed)])
+                '''
 
                 # Reverse the standardization of x and x_pred (we actually don't need y at this point, only for logging)
                 x = image_utils.reverse_standardize(x, original_mean=x_orig_mean, original_std=x_orig_std)
