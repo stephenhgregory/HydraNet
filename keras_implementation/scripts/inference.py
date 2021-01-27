@@ -410,7 +410,8 @@ def cleanup(args):
                     cv2.imwrite(filename=os.path.join(args.cleanup_result_dir, set_name, image_name), img=x_pred)
 
                 # Add the PSNR and SSIM to the lists of PSNRs and SSIMs, respectively
-                psnrs.append(psnr_x)
+                if psnr_x > 0:
+                    psnrs.append(psnr_x)
                 ssims.append(ssim_x)
 
         # Get the average PSNR and SSIM and add into their respective lists
@@ -578,7 +579,8 @@ def main(args):
                     cv2.imwrite(filename=os.path.join(args.result_dir, set_name, image_name), img=x_pred)
 
                 # Add the PSNR and SSIM to the lists of PSNRs and SSIMs, respectively
-                psnrs.append(psnr_x)
+                if psnr_x > 0:
+                    psnrs.append(psnr_x)
                 ssims.append(ssim_x)
 
         # Get the average PSNR and SSIM and add into their respective lists

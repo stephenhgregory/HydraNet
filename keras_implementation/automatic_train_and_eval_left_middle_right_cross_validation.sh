@@ -52,18 +52,18 @@ python scripts/inference_left_middle_right.py \
 
 ### SUBJ3 ###
 #printf "Training AllButsubj3Trained model...\n"
-python scripts/train.py --is_left_middle_right=true --id_portion="low" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj4/train" \
-    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj3Trained"
-python scripts/train.py --is_left_middle_right=true --id_portion="middle" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj4/train" \
-    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj3Trained"
-python scripts/train.py --is_left_middle_right=true --id_portion="high" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj4/train" \
-    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj3Trained"
+#python scripts/train.py --is_left_middle_right=true --id_portion="low" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj4/train" \
+#    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj3Trained"
+#python scripts/train.py --is_left_middle_right=true --id_portion="middle" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj4/train" \
+#    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj3Trained"
+#python scripts/train.py --is_left_middle_right=true --id_portion="high" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj4/train" \
+#    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj3Trained"
 ## Run inference for subj3
 #printf "Calling inference_left_middle_right.py for model trained on all but subj3...\n"
 #python scripts/inference_left_middle_right.py \
@@ -75,19 +75,19 @@ python scripts/train.py --is_left_middle_right=true --id_portion="high" \
 #############
 
 ### SUBJ4 ###
-printf "Training AllButsubj4Trained model...\n"
-python scripts/train.py --is_left_middle_right=true --id_portion="low" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
-    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj4Trained"
-python scripts/train.py --is_left_middle_right=true --id_portion="middle" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
-    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj4Trained"
-python scripts/train.py --is_left_middle_right=true --id_portion="high" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
-    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj4Trained"
+#printf "Training AllButsubj4Trained model...\n"
+#python scripts/train.py --is_left_middle_right=true --id_portion="low" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
+#    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj4Trained"
+#python scripts/train.py --is_left_middle_right=true --id_portion="middle" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
+#    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj4Trained"
+#python scripts/train.py --is_left_middle_right=true --id_portion="high" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
+#    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj4Trained"
 ## Run inference for subj4
 #printf "Calling inference_left_middle_right.py for model trained on all but subj4...\n"
 #python scripts/inference_left_middle_right.py \
@@ -99,19 +99,19 @@ python scripts/train.py --is_left_middle_right=true --id_portion="high" \
 #############
 
 ### SUBJ5 ###
-printf "Training AllButsubj5Trained model...\n"
-python scripts/train.py --is_left_middle_right=true --id_portion="low" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
-    --train_data="subj1_coregistered_data/subj4/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj5Trained"
-python scripts/train.py --is_left_middle_right=true --id_portion="middle" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
-    --train_data="subj1_coregistered_data/subj4/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj5Trained"
-python scripts/train.py --is_left_middle_right=true --id_portion="high" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
-    --train_data="subj1_coregistered_data/subj4/train" --train_data="subj1_coregistered_data/subj6/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj5Trained"
+#printf "Training AllButsubj5Trained model...\n"
+#python scripts/train.py --is_left_middle_right=true --id_portion="low" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
+#    --train_data="subj1_coregistered_data/subj4/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj5Trained"
+#python scripts/train.py --is_left_middle_right=true --id_portion="middle" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
+#    --train_data="subj1_coregistered_data/subj4/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj5Trained"
+#python scripts/train.py --is_left_middle_right=true --id_portion="high" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
+#    --train_data="subj1_coregistered_data/subj4/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj5Trained"
 ## Run inference for subj5
 #printf "Calling inference_left_middle_right.py for model trained on all but subj5...\n"
 #python scripts/inference_left_middle_right.py \
@@ -124,19 +124,19 @@ python scripts/train.py --is_left_middle_right=true --id_portion="high" \
 
 
 ### SUBJ6 ###
-printf "Training AllButsubj6Trained model...\n"
-python scripts/train.py --is_left_middle_right=true --id_portion="low" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
-    --train_data="subj1_coregistered_data/subj4/train" --train_data="subj1_coregistered_data/subj5/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj6Trained"
-python scripts/train.py --is_left_middle_right=true --id_portion="middle" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
-    --train_data="subj1_coregistered_data/subj4/train" --train_data="subj1_coregistered_data/subj5/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj5Trained"
-python scripts/train.py --is_left_middle_right=true --id_portion="high" \
-    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
-    --train_data="subj1_coregistered_data/subj4/train" --train_data="subj1_coregistered_data/subj5/train" \
-    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj5Trained"
+#printf "Training AllButsubj6Trained model...\n"
+#python scripts/train.py --is_left_middle_right=true --id_portion="low" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
+#    --train_data="subj1_coregistered_data/subj4/train" --train_data="subj1_coregistered_data/subj5/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj6Trained"
+#python scripts/train.py --is_left_middle_right=true --id_portion="middle" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
+#    --train_data="subj1_coregistered_data/subj4/train" --train_data="subj1_coregistered_data/subj5/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj5Trained"
+#python scripts/train.py --is_left_middle_right=true --id_portion="high" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
+#    --train_data="subj1_coregistered_data/subj4/train" --train_data="subj1_coregistered_data/subj5/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj5Trained"
 ## Run inference for subj6
 #printf "Calling inference_left_middle_right.py for model trained on all but subj6...\n"
 #python scripts/inference_left_middle_right.py \
