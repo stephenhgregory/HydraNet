@@ -1,5 +1,6 @@
-name: MRIDenoising
+name: MRIDenoisingUpgradedTF
 channels:
+  - pytorch
   - defaults
 dependencies:
   - _anaconda_depends=2020.02=py37_0
@@ -35,9 +36,9 @@ dependencies:
   - bottleneck=1.3.2=py37heb32a55_1
   - brotlipy=0.7.0=py37h7b6447c_1000
   - bzip2=1.0.8=h7b6447c_0
-  - ca-certificates=2020.1.1=0
+  - ca-certificates=2021.1.19=h06a4308_0
   - cairo=1.14.12=h8948797_3
-  - certifi=2020.6.20=py37_0
+  - certifi=2020.12.5=py37h06a4308_0
   - cffi=1.14.0=py37h2e261b9_0
   - chardet=3.0.4=py37_1003
   - click=7.1.2=py_0
@@ -48,6 +49,8 @@ dependencies:
   - conda-verify=3.4.2=py_1
   - contextlib2=0.6.0.post1=py_0
   - cryptography=2.9.2=py37h1ba5d50_0
+  - cudatoolkit=10.1.243=h6bb024c_0
+  - cudnn=7.6.4=cuda10.1_0
   - curl=7.69.1=hbc83047_0
   - cycler=0.10.0=py37_0
   - cython=0.29.20=py37he6710b0_0
@@ -137,6 +140,7 @@ dependencies:
   - libtiff=4.1.0=h2733197_1
   - libtool=2.4.6=h7b6447c_5
   - libuuid=1.0.3=h1bed415_2
+  - libuv=1.40.0=h7b6447c_0
   - libxcb=1.13=h1bed415_1
   - libxml2=2.9.10=he19cac6_1
   - libxslt=1.1.34=hc22bd24_0
@@ -166,15 +170,17 @@ dependencies:
   - nbformat=5.0.7=py_0
   - ncurses=6.2=he6710b0_1
   - networkx=2.4=py_0
+  - ninja=1.10.2=py37hff7bd54_0
   - nltk=3.5=py_0
   - nose=1.3.7=py37_2
   - notebook=6.0.3=py37_0
   - numba=0.49.1=py37h0573a6f_0
   - numexpr=2.7.1=py37h423224d_0
+  - numpy-base=1.18.5=py37hde5b4d6_0
   - numpydoc=1.0.0=py_0
   - olefile=0.46=py37_0
   - openpyxl=3.0.3=py_0
-  - openssl=1.1.1g=h7b6447c_0
+  - openssl=1.1.1i=h27cfd23_0
   - packaging=20.4=py_0
   - pandas=1.0.5=py37h0573a6f_0
   - pandoc=2.2.3.2=0
@@ -233,6 +239,7 @@ dependencies:
   - python-jsonrpc-server=0.3.4=py_0
   - python-language-server=0.31.10=py37_0
   - python-libarchive-c=2.9=py_0
+  - pytorch=1.7.1=py3.7_cuda10.1.243_cudnn7.6.3_0
   - pytz=2020.1=py_0
   - pywavelets=1.1.1=py37h7b6447c_0
   - pyxdg=0.26=py_0
@@ -252,7 +259,7 @@ dependencies:
   - ruamel_yaml=0.15.87=py37h7b6447c_0
   - scikit-image=0.16.2=py37h0573a6f_0
   - scikit-learn=0.23.1=py37h423224d_0
-  - seaborn=0.10.1=py_0
+  - seaborn=0.11.1=pyhd3eb1b0_0
   - secretstorage=3.1.2=py37_0
   - send2trash=1.5.0=py37_0
   - setuptools=47.3.1=py37_0
@@ -287,6 +294,8 @@ dependencies:
   - threadpoolctl=2.1.0=pyh5ca1d4c_0
   - tk=8.6.10=hbc83047_0
   - toolz=0.10.0=py_0
+  - torchaudio=0.7.2=py37
+  - torchvision=0.8.2=py37_cu101
   - tornado=6.0.4=py37h7b6447c_1
   - tqdm=4.46.1=py_0
   - traitlets=4.3.3=py37_0
@@ -317,38 +326,88 @@ dependencies:
   - zstd=1.4.4=h0b5b093_3
   - pip:
     - absl-py==0.9.0
+    - astor==0.8.1
     - astunparse==1.6.3
+    - bz2file==0.98
     - cachetools==4.1.0
+    - configparser==5.0.1
+    - deprecated==1.2.10
+    - dill==0.3.3
+    - docker-pycreds==0.4.0
+    - dopamine-rl==3.1.8
+    - flatbuffers==1.12
+    - flax==0.3.0
     - gast==0.3.3
+    - gin-config==0.4.0
+    - gitdb==4.0.5
+    - gitpython==3.1.9
+    - google-api-core==1.25.0
+    - google-api-python-client==1.12.8
     - google-auth==1.18.0
+    - google-auth-httplib2==0.0.4
     - google-auth-oauthlib==0.4.1
     - google-pasta==0.2.0
+    - googleapis-common-protos==1.52.0
     - grpcio==1.30.0
-    - keras==2.4.3
+    - gunicorn==20.0.4
+    - gym==0.18.0
+    - hparams==0.3.0
+    - httplib2==0.18.1
+    - importlib-resources==5.1.0
+    - jax==0.2.8
+    - jaxlib==0.1.59
+    - keras==2.3.1
+    - keras-applications==1.0.8
     - keras-preprocessing==1.1.2
+    - kfac==0.2.3
     - markdown==3.2.2
     - med2image==2.2.4
+    - mesh-tensorflow==0.1.18
     - nibabel==3.1.0
-    - numpy==1.19.0
+    - numpy==1.18.5
+    - oauth2client==4.1.3
     - oauthlib==3.1.0
     - opencv-python==4.2.0.34
     - opt-einsum==3.2.1
     - pfmisc==1.4.0
+    - promise==2.3
     - protobuf==3.12.2
     - pudb==2019.2
     - pyasn1==0.4.8
     - pyasn1-modules==0.2.8
     - pydicom==2.0.0
+    - pygame==2.0.1
+    - pyglet==1.5.0
+    - pypng==0.0.20
+    - pyqt5==5.15.1
+    - pyqt5-sip==12.8.1
     - requests-oauthlib==1.3.0
     - rsa==4.6
-    - scipy==1.5.1
+    - scipy==1.4.1
+    - sentry-sdk==0.19.0
+    - shortuuid==1.0.1
+    - simpleitk==2.0.1
+    - smmap==3.0.4
+    - subprocess32==3.5.4
     - tb-nightly==2.3.0a20200625
-    - tensorboard==2.2.2
+    - tensor2tensor==1.15.7
+    - tensorboard==2.3.0
     - tensorboard-plugin-wit==1.6.0.post3
-    - tensorflow-estimator==2.2.0
+    - tensorflow==2.3.0
+    - tensorflow-addons==0.12.0
+    - tensorflow-datasets==4.2.0
+    - tensorflow-estimator==2.3.0
+    - tensorflow-gan==2.0.0
+    - tensorflow-hub==0.11.0
+    - tensorflow-metadata==0.26.0
+    - tensorflow-probability==0.7.0
     - termcolor==1.1.0
     - tf-estimator-nightly==2.3.0.dev2020062501
     - tf-nightly==2.3.0.dev20200625
+    - tf-slim==1.1.0
+    - typeguard==2.10.0
+    - uritemplate==3.0.1
     - urwid==2.1.0
-prefix: /home/ubuntu/anaconda3/envs/MRIDenoising
-
+    - vtk==9.0.1
+    - wandb==0.10.7
+prefix: /home/ubuntu/anaconda3/envs/MRIDenoisingUpgradedTF
