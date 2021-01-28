@@ -17,19 +17,25 @@ import cv2
 import copy
 from typing import List, Tuple, Dict
 import re
-
-# This is for running normally, where the root directory is MyDenoiser/keras_implementation
 from utilities import image_utils, logger, data_generator, model_functions
 
-# Set Memory Growth to true to fix a small bug in Tensorflow
-physical_devices = tf.config.list_physical_devices('GPU')
-try:
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
-except (ValueError, RuntimeError) as err:
-    # Invalid device or cannot modify virtual devices once initialized.
-    print(f'tf.config.experimental.set_memory_growth(physical_devices[0], True) threw an error: ')
-    print(err)
-    pass
+'''GPU Settings for CUDA'''
+### Option A: ###
+# # Set specific memory limit for the GPU
+# gpus = tf.config.experimental.list_physical_devices('GPU')
+# if gpus:
+#     try:
+#         tf.config.experimental.set_virtual_device_configuration(gpus[0], [
+#             tf.config.experimental.VirtualDeviceConfiguration(memory_limit=4096)])
+#     except RuntimeError as e:
+#         print(e)
+#################
+### Option B: ###
+# Allow memory growth for CUDA in order to fix a Tensorflow bug
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
+for physical_device in physical_devices:
+    tf.config.experimental.set_memory_growth(physical_device, True)
+#################
 
 # Initialize global variable to keep track of # of patches per noise level
 total_patches_per_category = {
