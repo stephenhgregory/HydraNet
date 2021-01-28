@@ -10,7 +10,7 @@ import time
 import datetime
 import numpy as np
 from tensorflow.keras.models import load_model
-from skimage.metrics import structural_similarity
+from skimage.metrics import structural_similarity, peak_signal_noise_ratio
 from skimage.io import imread, imsave
 import tensorflow as tf
 import cv2
@@ -267,7 +267,7 @@ def compare_to_closest_training_patch(patch: np.ndarray, training_patches: np.nd
         patch = patch.reshape(patch.shape[0], patch.shape[1])
         if comparison_metric == 'psnr':
             # Get the PSNR between y_patch and y_low_noise_patch
-            score = image_utils.my_peak_signal_noise_ratio(patch, training_patch)
+            score = peak_signal_noise_ratio(patch, training_patch)
         elif comparison_metric == 'ssim':
             # Get the SSIM between y_patch and y_low_noise_patch
             score = structural_similarity(training_patch, patch)
@@ -382,7 +382,7 @@ def cleanup(args):
                 '''
 
                 # Get the PSNR and SSIM for x
-                psnr_x = image_utils.my_peak_signal_noise_ratio(x, x_pred)
+                psnr_x = peak_signal_noise_ratio(x, x_pred)
                 ssim_x = structural_similarity(x, x_pred, multichannel=True)
 
                 # If we want to save the result...
@@ -531,7 +531,7 @@ def main(args):
                 '''
 
                 # Get the PSNR and SSIM for x
-                psnr_x = image_utils.my_peak_signal_noise_ratio(x, x_pred)
+                psnr_x = peak_signal_noise_ratio(x, x_pred)
                 ssim_x = structural_similarity(x, x_pred, multichannel=True)
 
                 # If we want to save the result...
@@ -639,7 +639,7 @@ def reanalyze_denoised_images(set_dir: str, set_names: List[str], result_dir: st
                     cv2.imwrite(filename=os.path.join(result_dir, set_name, image_name), img=comparison_image)
 
                 # Get the PSNR and SSIM between clear_image and denoised_image
-                psnr = image_utils.my_peak_signal_noise_ratio(clear_image, comparison_image)
+                psnr = peak_signal_noise_ratio(clear_image, comparison_image)
                 ssim = structural_similarity(clear_image, comparison_image, multichannel=True)
 
                 # Add the psnr and ssim to the psnrs and ssim lists, respectively
