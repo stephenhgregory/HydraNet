@@ -64,22 +64,22 @@
 #    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj4/train" \
 #    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
 #    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj3Trained"
-# Run inference for subj3
-printf "Calling inference_left_middle_right.py for model trained on all but subj3...\n"
-python scripts/inference_left_middle_right.py \
-    --set_dir="subj1_coregistered_data/subj3" \
-    --result_dir="left_middle_right_results/subj3_results" \
-    --model_dir_left="left_middle_right_models/AllButsubj3Trained/MyDnCNN_low_id" \
-    --model_dir_middle="left_middle_right_models/AllButsubj3Trained/MyDnCNN_middle_id" \
-    --model_dir_right="left_middle_right_models/AllButsubj3Trained/MyDnCNN_high_id"
+## Run inference for subj3
+#printf "Calling inference_left_middle_right.py for model trained on all but subj3...\n"
+#python scripts/inference_left_middle_right.py \
+#    --set_dir="subj1_coregistered_data/subj3" \
+#    --result_dir="left_middle_right_results/subj3_results" \
+#    --model_dir_left="left_middle_right_models/AllButsubj3Trained/MyDnCNN_low_id" \
+#    --model_dir_middle="left_middle_right_models/AllButsubj3Trained/MyDnCNN_middle_id" \
+#    --model_dir_right="left_middle_right_models/AllButsubj3Trained/MyDnCNN_high_id"
 #############
 
 ### SUBJ4 ###
 #printf "Training AllButsubj4Trained model...\n"
-##python scripts/train.py --is_left_middle_right=true --id_portion="low" \
-##    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
-##    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
-##    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj4Trained"
+#python scripts/train.py --is_left_middle_right=true --id_portion="low" \
+#    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
+#    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
+#    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj4Trained"
 #python scripts/train.py --is_left_middle_right=true --id_portion="middle" \
 #    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
 #    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
@@ -88,14 +88,14 @@ python scripts/inference_left_middle_right.py \
 #    --train_data="subj1_coregistered_data/subj1/train" --train_data="subj1_coregistered_data/subj2/train" --train_data="subj1_coregistered_data/subj3/train" \
 #    --train_data="subj1_coregistered_data/subj5/train" --train_data="subj1_coregistered_data/subj6/train" \
 #    --val_data="subj1_coregistered_data/subj1/train" --result_dir="left_middle_right_models/AllButsubj4Trained"
-## Run inference for subj4
-#printf "Calling inference_left_middle_right.py for model trained on all but subj4...\n"
-#python scripts/inference_left_middle_right.py \
-#    --set_dir="subj1_coregistered_data/subj4" \
-#    --result_dir="left_middle_right_results/subj4_results" \
-#    --model_dir_left="left_middle_right_models/AllButsubj4Trained/MyDnCNN_low_id" \
-#    --model_dir_middle="left_middle_right_models/AllButsubj4Trained/MyDnCNN_middle_id" \
-#    --model_dir_right="left_middle_right_models/AllButsubj4Trained/MyDnCNN_high_id"
+# Run inference for subj4
+printf "Calling inference_left_middle_right.py for model trained on all but subj4...\n"
+python scripts/inference_left_middle_right.py \
+    --set_dir="subj1_coregistered_data/subj4" \
+    --result_dir="left_middle_right_results/subj4_results_all_noise" \
+    --model_dir_left="left_middle_right_models/AllButsubj4Trained/MyDnCNN_low_id" \
+    --model_dir_middle="models/AllButsubj4Trained/MyDnCNN_all_noise" \
+    --model_dir_right="left_middle_right_models/AllButsubj4Trained/MyDnCNN_high_id"
 #############
 
 ### SUBJ5 ###
@@ -145,6 +145,6 @@ python scripts/inference_left_middle_right.py \
 #    --model_dir_left="left_middle_right_models/AllButsubj6Trained/MyDnCNN_low_id" \
 #    --model_dir_middle="left_middle_right_models/AllButsubj6Trained/MyDnCNN_middle_id" \
 #    --model_dir_right="left_middle_right_models/AllButsubj6Trained/MyDnCNN_high_id"
-#############
+##############
 
 
