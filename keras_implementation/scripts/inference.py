@@ -68,6 +68,10 @@ def parse_args():
                         default=os.path.join('models', 'AllButsubj1Trained', 'MyDnCNN_cleanup'),
                         type=str,
                         help='directory of the cleanup denoising model')
+    parser.add_argument('--model_dir_dncnn',
+                        default='',
+                        type=str,
+                        help='directory of the cleanup denoising model')
     parser.add_argument('--result_dir', default='', type=str,
                         help='directory of results')
     parser.add_argument('--cleanup_result_dir', default='results/subj1_cleanup_results/', type=str,
@@ -84,6 +88,8 @@ def parse_args():
     parser.add_argument('--cleanup_denoise', default=False, type=bool,
                         help='True if we wish to run cleanup denoising after '
                              'patch-based denoising')
+    parser.add_argument('--dncnn_denoise', default=False, type=bool,
+                        help='True if we are simply using a DnCNN for denoising')
     return parser.parse_args()
 
 
@@ -430,6 +436,101 @@ def cleanup(args):
                                                                                              ssim_avg))
 
 
+def dncnn_main(args):
+    """Runs a classic DnCNN for denoising"""
+    """Runs cleanup denoising on patch-denoised images"""
+
+    print('\n\n\nInside of the dncnn_main function of inference.py\n\n\n')
+
+    # Get the latest epoch numbers
+    latest_epoch = model_functions.findLastCheckpoint(save_dir=args.model_dir_dncnn)
+    ##########################################################################
+    # Load the cleanup denoiser model
+    model = load_model(os.path.join(args.model_dir_dncnn, 'model_%03d.hdf5' % latest_epoch), compile=False)
+
+    # For each dataset that we wish to test on...
+    for set_name in args.set_names:
+
+        # If the <result directory>/<dataset name> doesn't exist already, exit.
+        if not os.path.exists(args.result_dir):
+            print(f"\n\nThe result directory: \n\t{args.result_dir}\nDoes not exist. Exiting "
+                  f"now...")
+            exit(0)
+
+        # Create a List of Peak Signal-To-Noise ratios (PSNRs) and Structural Similarities (SSIMs)
+        psnrs = []
+        ssims = []
+
+        for image_name in os.listdir(os.path.join(args.set_dir, 'ClearImages')):
+            if image_name.endswith(".jpg") or image_name.endswith(".bmp") or image_name.endswith(".png"):
+
+                print(f'Image found in {args.set_dir}')
+
+                # Get the image name minus the file extension
+                image_name_no_extension, _ = os.path.splitext(image_name)
+
+                # 1. Load the Clear Image x (as grayscale), and standardize the pixel values, and..
+                # 2. Save the original mean and standard deviation of x
+                x, x_orig_mean, x_orig_std = image_utils.standardize(imread(os.path.join(args.set_dir,
+                                                                                         'ClearImages',
+                                                                                         str(image_name)), 0))
+
+                # Load the patch-denoised Image y (as grayscale), and standardize the pixel values, and...
+                # 2. Save the original mean and standard deviation of y
+                y, y_orig_mean, y_orig_std = image_utils.standardize(imread(os.path.join(args.set_dir,
+                                                                                         'CoregisteredBlurryImages',
+                                                                                         str(image_name)), 0))
+
+                # Get a version of y as a tensor
+                y_tensor = image_utils.to_tensor(y)
+
+                # Start a timer
+                start_time = time.time()
+
+                # Denoise the image
+                x_pred = model.predict(y_tensor)
+
+                # Reshape the prediction from (1, x, x, 1) to (x, x) by squeezing size 1 dimensions
+                x_pred = np.squeeze(x_pred)
+
+                # Record the inference time
+                print('%10s : %10s : %2.4f second' % (set_name, image_name, time.time() - start_time))
+
+                # Reverse the standardization of x and x_pred (we actually don't need y at this point, only for logging)
+                x = image_utils.reverse_standardize(x, original_mean=x_orig_mean, original_std=x_orig_std)
+                x_pred = image_utils.reverse_standardize(x_pred, original_mean=x_orig_mean, original_std=x_orig_std)
+                # y = image_utils.reverse_standardize(y, original_mean=y_orig_mean, original_std=y_orig_std)
+
+                # Get the PSNR and SSIM for x
+                psnr_x = peak_signal_noise_ratio(x, x_pred)
+                ssim_x = structural_similarity(x, x_pred, multichannel=True)
+
+                # If we want to save the result...
+                if args.save_result:
+                    # Then save the denoised image
+                    cv2.imwrite(filename=os.path.join(args.result_dir, image_name), img=x_pred)
+
+                # Add the PSNR and SSIM to the lists of PSNRs and SSIMs, respectively
+                if psnr_x > 0:
+                    psnrs.append(psnr_x)
+                ssims.append(ssim_x)
+
+        # Get the average PSNR and SSIM and add into their respective lists
+        psnr_avg = np.mean(psnrs)
+        ssim_avg = np.mean(ssims)
+        psnrs.append(psnr_avg)
+        ssims.append(ssim_avg)
+
+        # If we want to save the result
+        if args.save_result:
+            # Save the result to <cleanup_result_dir>/<set_name>/results.txt
+            save_result(np.hstack((psnrs, ssims)), path=os.path.join(args.result_dir, 'results.txt'))
+
+        # Log the average PSNR and SSIM to the Terminal
+        log('Dataset: {0:10s} \n  Average PSNR = {1:2.2f}dB, Average SSIM = {2:1.4f}'.format(set_name, psnr_avg,
+                                                                                             ssim_avg))
+
+
 def main(args):
     """The main function of the program"""
 
@@ -449,6 +550,7 @@ def main(args):
     # If we are denoising with a single denoiser...
     if args.single_denoiser:
         # Load our single all-noise denoising model
+        # latest_epoch_all_noise = 20  # TODO: Delete this line
         model_dict["all"] = load_model(os.path.join(args.model_dir_all_noise,
                                                     'model_%03d.hdf5' % latest_epoch_all_noise),
                                        compile=False)
@@ -458,13 +560,13 @@ def main(args):
     # Otherwise...
     else:
         # Load our 3 denoising models
-        # model_dict["original"] = load_model(
-        #     os.path.join(args.model_dir_original, 'model_%03d.hdf5' % latest_epoch_original),
-        #     compile=False)
         ''' TODO: Uncomment this '''
         # model_dict["all"] = load_model(
         #     os.path.join(args.model_dir_all_noise, 'model_%03d.hdf5' % latest_epoch_all_noise),
         #     compile=False)
+        latest_epoch_low_noise = 20  # TODO: Delete this line
+        latest_epoch_medium_noise = 20  # TODO: Delete this line
+        latest_epoch_high_noise = 20  # TODO: Delete this line
         model_dict["low"] = load_model(
             os.path.join(args.model_dir_low_noise, 'model_%03d.hdf5' % latest_epoch_low_noise),
             compile=False)
@@ -533,7 +635,7 @@ def main(args):
                 # Record the inference time
                 print('%10s : %10s : %2.4f second' % (set_name, image_name, time.time() - start_time))
 
-                ''' Just logging '''
+                ''' Just logging
                 # Reverse the standardization
                 x_pred_reversed = image_utils.reverse_standardize(x_pred,
                                                                   original_mean=x_orig_mean,
@@ -551,6 +653,7 @@ def main(args):
                                     ("x_pred_reversed", x_pred_reversed),
                                     ("y", y),
                                     ("y_reversed", y_reversed)])
+                '''
 
                 # Reverse the standardization of x and x_pred (we actually don't need y at this point, only for logging)
                 x = image_utils.reverse_standardize(x, original_mean=x_orig_mean, original_std=x_orig_std)
@@ -726,6 +829,10 @@ if __name__ == '__main__':
     # Run (cleanup) denoising
     if args.cleanup_denoise:
         cleanup(args)
+
+    # Run (DnCNN) denoising:
+    if args.dncnn_denoise:
+        dncnn_main(args)
 
     if args.cleanup_denoise:
         # Run post-processing (masking) and analysis of results
