@@ -16,19 +16,20 @@ import tensorflow as tf
 import cv2
 import copy
 from typing import List, Tuple, Dict
+import math
 
 # This is for running normally, where the root directory is MyDenoiser/keras_implementation
 from utilities import image_utils, logger, data_generator, model_functions
 
-# Set Memory Growth to true to fix a small bug in Tensorflow
-physical_devices = tf.config.list_physical_devices('GPU')
-try:
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
-except (ValueError, RuntimeError) as err:
-    # Invalid device or cannot modify virtual devices once initialized.
-    print(f'tf.config.experimental.set_memory_growth(physical_devices[0], True) threw an error: ')
-    print(err)
-    pass
+# # Set Memory Growth to true to fix a small bug in Tensorflow
+# physical_devices = tf.config.list_physical_devices('GPU')
+# try:
+#     tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# except (ValueError, RuntimeError) as err:
+#     # Invalid device or cannot modify virtual devices once initialized.
+#     print(f'tf.config.experimental.set_memory_growth(physical_devices[0], True) threw an error: ')
+#     print(err)
+#     pass
 
 # Initialize global variable to keep track of # of patches per noise level
 total_patches_per_category = {
@@ -45,7 +46,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--set_dir', default='data/subj1', type=str, help='parent directory of test dataset')
-    parser.add_argument('--set_names', default=['train'], type=list, help='name of test dataset')
+    parser.add_argument('--set_names', default=[''], type=list, help='name of test dataset')
     # parser.add_argument('--model_dir_original', default=os.path.join('models', 'Volume1Trained', 'MyDnCNN'), type=str,
     #                     help='directory of the original, single-network denoising model')
     parser.add_argument('--model_dir_all_noise',
@@ -466,13 +467,19 @@ def dncnn_main(args):
 
                 print(f'Image found in {args.set_dir}')
 
+                if not os.path.exists(os.path.join(args.set_dir, 'train/ClearImages', str(image_name))):
+                    continue
+                if not os.path.exists(os.path.join(args.set_dir, 'CoregisteredBlurryImages', str(image_name))):
+                    continue
+
+
                 # Get the image name minus the file extension
                 image_name_no_extension, _ = os.path.splitext(image_name)
 
                 # 1. Load the Clear Image x (as grayscale), and standardize the pixel values, and..
                 # 2. Save the original mean and standard deviation of x
                 x, x_orig_mean, x_orig_std = image_utils.standardize(imread(os.path.join(args.set_dir,
-                                                                                         'ClearImages',
+                                                                                         'train/ClearImages',
                                                                                          str(image_name)), 0))
 
                 # Load the patch-denoised Image y (as grayscale), and standardize the pixel values, and...
@@ -511,7 +518,7 @@ def dncnn_main(args):
                     cv2.imwrite(filename=os.path.join(args.result_dir, image_name), img=x_pred)
 
                 # Add the PSNR and SSIM to the lists of PSNRs and SSIMs, respectively
-                if psnr_x > 0:
+                if psnr_x > 0 and not math.isinf(psnr_x):
                     psnrs.append(psnr_x)
                 ssims.append(ssim_x)
 
@@ -719,9 +726,6 @@ def reanalyze_denoised_images(set_dir: str, set_names: List[str], result_dir: st
         (TODO: Make this a generator because multiple set names will break this function!)
     """
 
-    # Set up whether we are comparing clear data with denoised or blurry data
-    comparison_image_type = "denoised_image" if analyze_denoised_data else "blurry_image"
-
     # TODO: Make this a generator because multiple set names will break this function!
     psnr_avg = 0.0
     ssim_avg = 0.0
@@ -740,15 +744,11 @@ def reanalyze_denoised_images(set_dir: str, set_names: List[str], result_dir: st
                 assert (os.path.exists(os.path.join(set_dir, set_name, 'ClearImages', image_name)))
                 assert (os.path.exists(os.path.join(set_dir, set_name, 'Masks', image_name)))
                 if analyze_denoised_data:
-                    # assert (os.path.exists(os.path.join(result_dir, set_name, image_name))) # TODO: UNCOMMENT THIS!!!
-                    pass
+                    # Just skip this image if it doesn't have a matching result
+                    if not os.path.exists(os.path.join(result_dir, set_name, image_name)):
+                        continue
                 else:
                     assert (os.path.exists(os.path.join(set_dir, set_name, 'CoregisteredBlurryImages', image_name)))
-
-                # TODO: DELETE THIS!!!!!!
-                if not os.path.exists(os.path.join(result_dir, set_name, image_name)):
-                    continue
-                #########################
 
                 # Load the images
                 mask_image = imread(os.path.join(set_dir, set_name, 'Masks', image_name), 0)

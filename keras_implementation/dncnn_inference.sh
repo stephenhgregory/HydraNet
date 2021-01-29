@@ -2,13 +2,13 @@
 # Used to run DnCNN denoising (inference) on all subj1-subj6
 
 ### SUBJ1 ###
-# Run inference for subj1
-printf "Calling test.py for model trained on all but subj1...\n"
-python scripts/inference.py \
-    --set_dir="dncnn_data/subj1" \
-    --result_dir="dncnn_data/subj1_results" \
-    --model_dir_dncnn="dncnn_models/AllButsubj1Trained/MyDnCNN_cleanup" \
-    --skip_patch_denoise=1 --dncnn_denoise=1
+## Run inference for subj1
+#printf "Calling test.py for model trained on all but subj1...\n"
+#python scripts/inference.py \
+#    --set_dir="data/subj1" \
+#    --result_dir="dncnn_results/subj1_results_train_no_forgiveness" \
+#    --model_dir_dncnn="dncnn_models/subj2Trained" \
+#    --skip_patch_denoise=1 --dncnn_denoise=1
 #############
 
 #### SUBJ2 ###
@@ -22,13 +22,13 @@ python scripts/inference.py \
 ##############
 #
 #### SUBJ3 ###
-## Run inference for subj3
-#printf "Calling test.py for model trained on all but subj3...\n"
-#python scripts/inference.py \
-#    --set_dir="dncnn_data/subj3" \
-#    --result_dir="dncnn_data/subj3_results" \
-#    --model_dir_dncnn="dncnn_models/AllButsubj3Trained/MyDnCNN_cleanup" \
-#    --skip_patch_denoise=1 --dncnn_denoise=1
+# Run inference for subj3
+printf "Calling test.py for model trained on all but subj3...\n"
+python scripts/inference.py \
+    --set_dir="data/subj3" \
+    --result_dir="dncnn_results/subj3_results" \
+    --model_dir_dncnn="dncnn_models/subj2Trained" \
+    --skip_patch_denoise=1 --dncnn_denoise=1
 ##############
 #
 #### SUBJ4 ###
