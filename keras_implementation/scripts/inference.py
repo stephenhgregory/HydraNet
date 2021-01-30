@@ -47,26 +47,26 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--set_dir', default='data/subj1', type=str, help='parent directory of test dataset')
     parser.add_argument('--set_names', default=[''], type=list, help='name of test dataset')
-    # parser.add_argument('--model_dir_original', default=os.path.join('models', 'Volume1Trained', 'MyDnCNN'), type=str,
+    # parser.add_argument('--model_dir_original', default=os.path.join('residual_std_models', 'Volume1Trained', 'MyDnCNN'), type=str,
     #                     help='directory of the original, single-network denoising model')
     parser.add_argument('--model_dir_all_noise',
-                        default=os.path.join('models', 'AllButsubj1Trained', 'MyDnCNN_all_noise'),
+                        default=os.path.join('residual_std_models', 'AllButsubj1Trained', 'MyDnCNN_all_noise'),
                         type=str,
                         help='directory of the all-noise-denoising model')
     parser.add_argument('--model_dir_low_noise',
-                        default=os.path.join('models', 'AllButsubj1Trained', 'MyDnCNN_low_noise'),
+                        default=os.path.join('residual_std_models', 'AllButsubj1Trained', 'MyDnCNN_low_noise'),
                         type=str,
                         help='directory of the low-noise-denoising model')
     parser.add_argument('--model_dir_medium_noise',
-                        default=os.path.join('models', 'AllButsubj1Trained', 'MyDnCNN_medium_noise'),
+                        default=os.path.join('residual_std_models', 'AllButsubj1Trained', 'MyDnCNN_medium_noise'),
                         type=str,
                         help='directory of the medium-noise-denoising model')
     parser.add_argument('--model_dir_high_noise',
-                        default=os.path.join('models', 'AllButsubj1Trained', 'MyDnCNN_high_noise'),
+                        default=os.path.join('residual_std_models', 'AllButsubj1Trained', 'MyDnCNN_high_noise'),
                         type=str,
                         help='directory of the high-noise-denoising model')
     parser.add_argument('--model_dir_cleanup',
-                        default=os.path.join('models', 'AllButsubj1Trained', 'MyDnCNN_cleanup'),
+                        default=os.path.join('residual_std_models', 'AllButsubj1Trained', 'MyDnCNN_cleanup'),
                         type=str,
                         help='directory of the cleanup denoising model')
     parser.add_argument('--model_dir_dncnn',
@@ -156,7 +156,7 @@ def denoise_image_by_patches(y: np.ndarray, file_name: str, set_name: str, origi
                             used to standardize the image
     :param save_patches: True if we wish to save the individual patches
     :param single_denoiser: True if we wish to denoise patches using only a single denoiser
-    :param model_dict: A dictionary of all the TF models used to denoise image patches
+    :param model_dict: A dictionary of all the TF residual_std_models used to denoise image patches
     :param training_patches: A nested dictionary of training patches and their residual stds
 
     :return: x_pred: A denoised image as a numpy array
@@ -550,7 +550,7 @@ def main(args):
     latest_epoch_medium_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_medium_noise)
     latest_epoch_high_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_high_noise)
 
-    # Create dictionaries to store models and training patches
+    # Create dictionaries to store residual_std_models and training patches
     model_dict = {}
     training_patches = {}
 
@@ -566,7 +566,7 @@ def main(args):
 
     # Otherwise...
     else:
-        # Load our 3 denoising models
+        # Load our 3 denoising residual_std_models
         ''' TODO: Uncomment this '''
         # model_dict["all"] = load_model(
         #     os.path.join(args.model_dir_all_noise, 'model_%03d.hdf5' % latest_epoch_all_noise),
@@ -583,7 +583,7 @@ def main(args):
         model_dict["high"] = load_model(
             os.path.join(args.model_dir_high_noise, 'model_%03d.hdf5' % latest_epoch_high_noise),
             compile=False)
-        log(f'Loaded all 3 trained models: '
+        log(f'Loaded all 3 trained residual_std_models: '
             f'{os.path.join(args.model_dir_low_noise, "model_%03d.hdf5" % latest_epoch_low_noise)}, '
             f'{os.path.join(args.model_dir_medium_noise, "model_%03d.hdf5" % latest_epoch_medium_noise)}, and '
             f'{os.path.join(args.model_dir_high_noise, "model_%03d.hdf5" % latest_epoch_high_noise)}')

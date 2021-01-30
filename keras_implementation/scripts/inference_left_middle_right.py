@@ -54,24 +54,24 @@ def parse_args():
     parser.add_argument('--set_dir', default='data/subj1', type=str, help='parent directory of test dataset')
     parser.add_argument('--set_names', default=['train'], type=list, help='name of test dataset')
     parser.add_argument('--model_dir_left',
-                        default=os.path.join('left_middle_right_models', 'AllButsubj1Trained', 'MyDnCNN_low_id'),
+                        default=os.path.join('slice_location_models', 'AllButsubj1Trained', 'MyDnCNN_low_id'),
                         type=str,
                         help='directory of the left brain (low-id) denoising model')
     parser.add_argument('--model_dir_middle',
-                        default=os.path.join('left_middle_right_models', 'AllButsubj1Trained', 'MyDnCNN_middle_id'),
+                        default=os.path.join('slice_location_models', 'AllButsubj1Trained', 'MyDnCNN_middle_id'),
                         type=str,
                         help='directory of the middle brain (middle-id) denoising model')
     parser.add_argument('--model_dir_right',
-                        default=os.path.join('left_middle_right_models', 'AllButsubj1Trained', 'MyDnCNN_high_id'),
+                        default=os.path.join('slice_location_models', 'AllButsubj1Trained', 'MyDnCNN_high_id'),
                         type=str,
                         help='directory of the right brain (high-id) denoising model')
     parser.add_argument('--model_dir_cleanup',
-                        default=os.path.join('models', 'AllButsubj1Trained', 'MyDnCNN_cleanup'),
+                        default=os.path.join('residual_std_models', 'AllButsubj1Trained', 'MyDnCNN_cleanup'),
                         type=str,
                         help='directory of the cleanup denoising model')
-    parser.add_argument('--result_dir', default='left_middle_right_results/subj1_results', type=str,
+    parser.add_argument('--result_dir', default='slice_location_results/subj1_results', type=str,
                         help='directory of results')
-    parser.add_argument('--cleanup_result_dir', default='left_middle_right_results/subj1_cleanup_results/', type=str,
+    parser.add_argument('--cleanup_result_dir', default='slice_location_results/subj1_cleanup_results/', type=str,
                         help='directory of cleanup results')
     parser.add_argument('--reanalyze_data', default=False, type=bool, help='True if we want to simply reanalyze '
                                                                            'results that have already been produced '
@@ -136,7 +136,7 @@ def denoise_image_by_patches(y: np.ndarray, file_name: str, set_name: str, origi
                             used to standardize the image
     :param save_patches: True if we wish to save the individual patches
     :param single_denoiser: True if we wish to denoise patches using only a single denoiser
-    :param model_dict: A dictionary of all the TF models used to denoise image patches
+    :param model_dict: A dictionary of all the TF residual_std_models used to denoise image patches
     :param training_patches: A nested dictionary of training patches and their residual stds
 
     :return: x_pred: A denoised image as a numpy array
@@ -427,7 +427,7 @@ def main(args):
     latest_epoch_middle = model_functions.findLastCheckpoint(save_dir=args.model_dir_middle)
     latest_epoch_right = model_functions.findLastCheckpoint(save_dir=args.model_dir_right)
 
-    # Load our 3 denoising models
+    # Load our 3 denoising residual_std_models
     model_left = load_model(
         os.path.join(args.model_dir_left, 'model_%03d.hdf5' % latest_epoch_left),
         compile=False)

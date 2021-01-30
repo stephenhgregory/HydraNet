@@ -13,7 +13,7 @@ import re
 
 def findLastCheckpoint(save_dir: str):
     """
-    Finds the most epoch number from a directory of saved models
+    Finds the most epoch number from a directory of saved residual_std_models
 
     :param save_dir: The directory where the model_*.hdf5 files are located
     :return: initial_epoch: The most recent epoch number

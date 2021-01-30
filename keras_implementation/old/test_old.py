@@ -32,7 +32,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--set_dir', default='/data/Volume1', type=str, help='parent directory of test dataset')
     parser.add_argument('--set_names', default=['train'], type=list, help='name of test dataset')
-    parser.add_argument('--model_dir', default='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/models/old_models/DnCNN_sigma25/', type=str,
+    parser.add_argument('--model_dir', default='/home/ubuntu/PycharmProjects/MyDenoiser/keras_implementation/residual_std_models/old_models/DnCNN_sigma25/', type=str,
                         help='directory of the low-noise-denoising model')
     parser.add_argument('--model_name', default='model_004.hdf5', type=str,
                         help='name of the high-noise model')

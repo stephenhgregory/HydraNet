@@ -2,6 +2,6 @@
 # Saved model files
 #**/*.hdf5
 
-keras_implementation/models/old_models/subj2Trained/MyDnCNN_high_noise/log.csv
-keras_implementation/models/old_models/subj2Trained/MyDnCNN_low_noise/log.csv
-keras_implementation/models/old_models/subj2Trained/MyDnCNN_medium_noise/log.csv
+keras_implementation/models/residual_std_models/old_models/subj2Trained/MyDnCNN_high_noise/log.csv
+keras_implementation/models/residual_std_models/old_models/subj2Trained/MyDnCNN_low_noise/log.csv
+keras_implementation/models/residual_std_models/old_models/subj2Trained/MyDnCNN_medium_noise/log.csv

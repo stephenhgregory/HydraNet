@@ -9,7 +9,7 @@ def modified_main(args):
     latest_epoch_medium_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_medium_noise)
     latest_epoch_high_noise = model_functions.findLastCheckpoint(save_dir=args.model_dir_high_noise)
 
-    # Create dictionaries to store models and training patches and load our 3 denoising models
+    # Create dictionaries to store residual_std_models and training patches and load our 3 denoising residual_std_models
     model_dict = {
         "low": load_model(os.path.join(args.model_dir_low_noise, 'model_%03d.hdf5' % latest_epoch_low_noise),
                           compile=False),
@@ -151,7 +151,7 @@ def denoise_image_by_patches_no_cross_reference(y: np.ndarray, file_name: str, s
       :param upper_std_thresh: The upper std threshold used to decide which denoiser to send each patch to
       :param save_patches: True if we wish to save the individual patches
       :param single_denoiser: True if we wish to denoise patches using only a single denoiser
-      :param model_dict: A dictionary of all the TF models used to denoise image patches
+      :param model_dict: A dictionary of all the TF residual_std_models used to denoise image patches
 
       :return: x_pred: A denoised image as a numpy array
       :rtype: numpy array

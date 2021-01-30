@@ -912,7 +912,7 @@ def train_left_middle_right():
     """
     Creates and trains the MyDenoiser Keras model.
 
-    Trains separate models for each of the left, middle, and right parts of the brain.
+    Trains separate residual_std_models for each of the left, middle, and right parts of the brain.
 
     If no checkpoints exist, we will start from scratch.
     Otherwise, training will resume from previous checkpoints.
