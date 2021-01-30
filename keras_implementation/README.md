@@ -97,7 +97,7 @@ python3 train.py /
 
 | Image dataset | Noisy Image                           | Denoised Image                          |
 |:-------------:|:-------------------------------------:|:---------------------------------------:|
-| train         | ![](resources/BlurryMRItrain.gif)     | ![](resources/DenoisedMRItrain.gif)     |
+| train         | ![](resources/miscellaneous/BlurryMRItrain.gif)     | ![](resources/miscellaneous/DenoisedMRItrain.gif)     |
 
 
 
@@ -105,54 +105,54 @@ python3 train.py /
 
 ## Volume 1 Residual Patches Distribution
 
-![](resources/Volume1ResidualStdPlot.png)
+![](resources/miscellaneous/Volume1ResidualStdPlot.png)
 
 ## Volume 2 Residual Patches Distribution
 
-![](resources/Volume2ResidualStdPlot.png)
+![](resources/miscellaneous/Volume2ResidualStdPlot.png)
 
 ## subj1 Residual Patches Distribution
 
-![](resources/subj1ResidualStdPlot.png)
+![](resources/miscellaneous/subj1ResidualStdPlot.png)
 
 ## subj2 Residual Patches Distribution
 
-![](resources/subj2ResidualStdPlot.png)
+![](resources/miscellaneous/subj2ResidualStdPlot.png)
 
 ## subj1 + subj2 Residual Patches Distribution
 
-![](resources/subj1Andsubj2ResidualStdPlot.png)
+![](resources/miscellaneous/subj1Andsubj2ResidualStdPlot.png)
 
 ## subj1 + subj2 + subj3 + subj4 + subj5 Residual Patches Distribution
 
-![](resources/subj1subj2subj3subj4Andsubj5ResidualStdPlot.png)
+![](resources/miscellaneous/subj1subj2subj3subj4Andsubj5ResidualStdPlot.png)
 
 
 # PSNR Distributions
 
 ## subj1 Patches PSNR distribution 
 
-![](resources/subj1_psnrs.png)
+![](resources/miscellaneous/subj1_psnrs.png)
 
 ## subj2 Patches PSNR distribution 
 
-![](resources/subj2_psnrs.png)
+![](resources/miscellaneous/subj2_psnrs.png)
 
 ## subj3 Patches PSNR distribution 
 
-![](resources/subj3_psnrs.png)
+![](resources/miscellaneous/subj3_psnrs.png)
 
 ## subj4 Patches PSNR distribution 
 
-![](resources/subj4_psnrs.png)
+![](resources/miscellaneous/subj4_psnrs.png)
 
 ## subj5 Patches PSNR distribution 
 
-![](resources/subj5_psnrs.png)
+![](resources/miscellaneous/subj5_psnrs.png)
 
 ## subj6 Patches PSNR distribution 
 
-![](resources/subj6_psnrs.png)
+![](resources/miscellaneous/subj6_psnrs.png)
 
 ## Creating TIFF from Results - *Dependencies: ImageMagick*
 
